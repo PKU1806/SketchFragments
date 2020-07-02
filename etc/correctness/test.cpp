@@ -32,12 +32,14 @@ int main(){
     timestamp_t k1;
     flow_t k2_128;
     rep2(i, 0, N){
-        if(i %(N/10) == 0) cout << i/(N/100) << '%' << endl;
+        if(i %(N/10) == 0) cout << "Loading... "<< i/(N/100) << '%' << endl;
 
         fin.read((char*)&k2_128, 13);
         fin.read((char*)&k1, sizeof(timestamp_t));
 
-        unsigned delay = get_Union(0,100);
+        unsigned delay = get_ChiSquare(5, 3);
+        //unsigned delay = get_Union(0, 100);
+
         int delay_lev = get_delay_lev(delay);
         //cout << delay <<',' << delay_lev << endl;
         sketch->insert(k2_128, delay);
@@ -73,4 +75,28 @@ int main(){
         }
         cout << endl;
     }
+    unsigned flow_num = keyvalue.size();
+    
+    cout << "********* statistical analysis *********" << endl;
+    
+    double aae_sum = 0;
+    double are_sum = 0;
+    int aae_num = flow_num;
+    int are_num = 100;
+
+    rep2(i, 0, aae_num){
+        rep2(j, 0, Lev_Num){
+            aae_sum += (double)ABS((sketch->query_lev(keyvalue[i].first, j) - GT[keyvalue[i].first][j]));
+        }
+    }
+    rep2(i, 0, are_num){
+        rep2(j, 0, Lev_Num){
+            are_sum += ((double)ABS((sketch->query_lev(keyvalue[i].first, j) - GT[keyvalue[i].first][j]))+1.0) / (GT[keyvalue[i].first][j]+1.0);
+        }
+    }
+
+    aae_sum = aae_sum / (double)(aae_num*Lev_Num);
+    are_sum = are_sum / (double)(are_num*Lev_Num);
+    cout << "aae:                       " << aae_sum << endl;
+    cout << "are:                       " << are_sum << endl;
 }
