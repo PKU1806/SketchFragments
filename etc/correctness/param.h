@@ -22,5 +22,6 @@ typedef __uint128_t flow_t;
 typedef double_t timestamp_t;
 typedef map<__uint128_t, vector<unsigned> > gtmap;
 
-unsigned delayLevThres[Lev_Num] = {3, 10, 30, 70, 180, 400, 1000, 2000, 5000, 15000};
+//unsigned delayLevThres[Lev_Num] = {3, 10, 30, 70, 180, 400, 1000, 2000, 5000, 15000};
+unsigned delayLevThres[Lev_Num] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
 unsigned Zeros[Lev_Num] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};

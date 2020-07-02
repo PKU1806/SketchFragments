@@ -18,7 +18,7 @@ int main(){
         fin.read((char*)&k2_128, 13);
         fin.read((char*)&k1, sizeof(timestamp_t));
 
-        unsigned delay = get_ChiSquare(5);
+        unsigned delay = get_Union(0,100);
         int delay_lev = get_delay_lev(delay);
         sketch->insert(k2_128, delay);
         if(GT.find(k2_128) == GT.end()){
