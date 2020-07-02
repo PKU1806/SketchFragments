@@ -14,9 +14,16 @@
 #define ABS(a) ((a)>0?(a):(-(a)))
 
 #define Lev_Num 10
-#define Buck_Num_PerRow 1000
+#define Buck_Num_PerRow 10000
 #define Row_Num 3
+
+#define znq
+
+#ifdef znq
+#define datapath "/mnt/e/Research/2020SketchFragments/130000.dat"
+#else
 #define datapath "/usr/share/dataset/CAIDA2018/dataset/130000.dat"
+#endif
 
 typedef __uint128_t flow_t;
 typedef double_t timestamp_t;

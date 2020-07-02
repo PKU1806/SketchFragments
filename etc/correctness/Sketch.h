@@ -37,7 +37,7 @@ public:
         rep2(i, 0, Buck_Num_PerRow){
             bucket[i] = new buck();
         }
-        bobhash = new BOBHash32(unsigned(rand()));
+        bobhash = new BOBHash32();
     }
     ~row(){
         rep2(i, 0, Buck_Num_PerRow) if(bucket[i]) delete bucket[i];
@@ -54,6 +54,7 @@ public:
     }
     unsigned query(const flow_t flow, const unsigned delay){
         int pos = get_hash(flow);
+        //cout << "pos " << pos << endl;
         return bucket[pos]->query(delay);
     }
 };
@@ -76,6 +77,7 @@ public:
         unsigned Min = 0x5fffffff;
         rep2(i, 0, Row_Num){
             unsigned curr = Row[i]->query(flow, delay);
+            //cout << "curr " << curr << endl;
             if(curr <= Min){
                 Row[i]->insert(flow, delay);
                 Min = curr;
