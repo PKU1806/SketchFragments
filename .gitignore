@@ -1,4 +1,6 @@
 /.vscode/
 /utils/__pycache__
 /client/__pycache__
-/etc/correctness/test
+/etc/correctness/*.out
+/etc/correctness/*.csv
+/etc/correctness/*.xlsx
