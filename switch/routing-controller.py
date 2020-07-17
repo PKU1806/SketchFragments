@@ -58,8 +58,6 @@ class RoutingController(object):
         for sw, controller in self.controllers.items():
             for register in controller.get_register_arrays():
                 controller.register_reset(register)
-            controller.register_write("swap_control",0,0)
-            controller.register_write("sketch_flag",0,0)
 
     def set_table_init(self):
         for controller in self.controllers.values():
@@ -162,10 +160,14 @@ class RoutingController(object):
 
     def main(self):
         self.route()
-        for switch_id, controllers in enumerate(self.controllers.values()):
-            controllers.table_set_default("bring_switch_id", "_bring_switch_id", [str(switch_id)])
+
+        for switch_id, controller in enumerate(self.controllers.values()):
+            controller.register_write("switch_id", 0, switch_id + 8001)
+            controller.register_write("swap_control", 0, 0)
+            controller.register_write("sketch_fg", 0, 0)
+
         for switch_id, switch_name in enumerate(self.controllers.keys()):
-            print "{} {}".format(switch_id, switch_name)
+            print "{} {}".format(switch_id + 1, switch_name)
 
 
 

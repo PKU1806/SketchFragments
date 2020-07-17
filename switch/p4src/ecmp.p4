@@ -6,13 +6,14 @@
 #include "include/headers.p4"
 #include "include/parsers.p4"
 
-#define BUCKET_NUM 10000
+#define BUCKET_NUM 16
 #define BIN_NUM 10
 #define BIN_CELL_BIT_WIDTH 32
-#define LOW_BOUND 1
-#define HIGH_BOUND 30
+
+#define RANDOM_BOUND 4
 
 #define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
+
 
 //6crc
 //this is for sketch
@@ -21,8 +22,8 @@
              (bit<16>)0,\
              {hdr.ipv4.srcAddr,\
               hdr.ipv4.dstAddr,\
-              hdr.tcp.srcPort,\
-              hdr.tcp.dstPort,\
+              meta.ipv4_srcPort,\
+              meta.ipv4_dstPort,\
               hdr.ipv4.protocol},\
              (bit<32>)BUCKET_NUM);
 
@@ -32,8 +33,8 @@
             (bit<16>)0,\
             {hdr.ipv4.srcAddr,     \
             hdr.ipv4.dstAddr,     \
-            hdr.tcp.srcPort,      \
-            hdr.tcp.dstPort,      \
+            meta.ipv4_srcPort,      \
+            meta.ipv4_dstPort,      \
             hdr.ipv4.protocol},   \
             (bit<32>)BUCKET_NUM);       \
 
@@ -44,8 +45,8 @@
              (bit<16>)0,\
              {hdr.ipv4.srcAddr,\
               hdr.ipv4.dstAddr,\
-              hdr.tcp.srcPort,\
-              hdr.tcp.dstPort,\
+              meta.ipv4_srcPort,\
+              meta.ipv4_dstPort,\
               hdr.ipv4.protocol},\
              (bit<32>)(BUCKET_NUM*3));
 
@@ -65,8 +66,10 @@ register<bit<48>>(BUCKET_NUM) timestamp_array1;
 register<bit<48>>(BUCKET_NUM) timestamp_array2;
 
 //control plane used
-register<bit<1>>(1) sketch_flag;
+register<bit<1>>(1) sketch_fg;
 register<bit<1>>(1) swap_control;
+
+register<bit<16>>(1) switch_id;
 
 /*************************************************************************
 ************   C H E C K S U M    V E R I F I C A T I O N   *************
@@ -88,20 +91,23 @@ control MyIngress(inout headers hdr,
 
     action predispose(){
         COMPUTE_SFH_HASH
-        if(meta.SFH_index0<10000){
+
+		hdr.SFH.sfh_fgment_id = meta.SFH_index0;
+
+        if(meta.SFH_index0 < BUCKET_NUM){
             meta.SFH_target_bucket=meta.SFH_index0;
             meta.SFH_target_array=0;
         }
-        else if(meta.SFH_index0<20000){
-            meta.SFH_target_bucket=meta.SFH_index0-10000;
+        else if(meta.SFH_index0 < BUCKET_NUM * 2){
+            meta.SFH_target_bucket=meta.SFH_index0 - BUCKET_NUM;
             meta.SFH_target_array=1;
         }
         else{
-            meta.SFH_target_bucket=meta.SFH_index0-20000;
+            meta.SFH_target_bucket=meta.SFH_index0 - BUCKET_NUM * 2;
             meta.SFH_target_array=2;
         }
 
-        if(meta.sketch_flag==0){
+        if(meta.sketch_fg==0){
             meta.SFH_target_array=meta.SFH_target_array+3;
         }
         return ;
@@ -144,40 +150,40 @@ control MyIngress(inout headers hdr,
        array2.read(meta.tmp29,meta.SFH_target_bucket*BIN_NUM+9);
 
        if(meta.SFH_target_array==0){
-           hdr.SFH.delay0=meta.tmp00;
-           hdr.SFH.delay1=meta.tmp01;
-           hdr.SFH.delay2=meta.tmp02;
-           hdr.SFH.delay3=meta.tmp03;
-           hdr.SFH.delay4=meta.tmp04;
-           hdr.SFH.delay5=meta.tmp05;
-           hdr.SFH.delay6=meta.tmp06;
-           hdr.SFH.delay7=meta.tmp07;
-           hdr.SFH.delay8=meta.tmp08;
-           hdr.SFH.delay9=meta.tmp09;
+           hdr.SFH.sfh_delay0=meta.tmp00;
+           hdr.SFH.sfh_delay1=meta.tmp01;
+           hdr.SFH.sfh_delay2=meta.tmp02;
+           hdr.SFH.sfh_delay3=meta.tmp03;
+           hdr.SFH.sfh_delay4=meta.tmp04;
+           hdr.SFH.sfh_delay5=meta.tmp05;
+           hdr.SFH.sfh_delay6=meta.tmp06;
+           hdr.SFH.sfh_delay7=meta.tmp07;
+           hdr.SFH.sfh_delay8=meta.tmp08;
+           hdr.SFH.sfh_delay9=meta.tmp09;
        }
        else if(meta.SFH_target_array==1){
-           hdr.SFH.delay0=meta.tmp10;
-           hdr.SFH.delay1=meta.tmp11;
-           hdr.SFH.delay2=meta.tmp12;
-           hdr.SFH.delay3=meta.tmp13;
-           hdr.SFH.delay4=meta.tmp14;
-           hdr.SFH.delay5=meta.tmp15;
-           hdr.SFH.delay6=meta.tmp16;
-           hdr.SFH.delay7=meta.tmp17;
-           hdr.SFH.delay8=meta.tmp18;
-           hdr.SFH.delay9=meta.tmp19;
+           hdr.SFH.sfh_delay0=meta.tmp10;
+           hdr.SFH.sfh_delay1=meta.tmp11;
+           hdr.SFH.sfh_delay2=meta.tmp12;
+           hdr.SFH.sfh_delay3=meta.tmp13;
+           hdr.SFH.sfh_delay4=meta.tmp14;
+           hdr.SFH.sfh_delay5=meta.tmp15;
+           hdr.SFH.sfh_delay6=meta.tmp16;
+           hdr.SFH.sfh_delay7=meta.tmp17;
+           hdr.SFH.sfh_delay8=meta.tmp18;
+           hdr.SFH.sfh_delay9=meta.tmp19;
        }
        else{
-           hdr.SFH.delay0=meta.tmp20;
-           hdr.SFH.delay1=meta.tmp21;
-           hdr.SFH.delay2=meta.tmp22;
-           hdr.SFH.delay3=meta.tmp23;
-           hdr.SFH.delay4=meta.tmp24;
-           hdr.SFH.delay5=meta.tmp25;
-           hdr.SFH.delay6=meta.tmp26;
-           hdr.SFH.delay7=meta.tmp27;
-           hdr.SFH.delay8=meta.tmp28;
-           hdr.SFH.delay9=meta.tmp29;
+           hdr.SFH.sfh_delay0=meta.tmp20;
+           hdr.SFH.sfh_delay1=meta.tmp21;
+           hdr.SFH.sfh_delay2=meta.tmp22;
+           hdr.SFH.sfh_delay3=meta.tmp23;
+           hdr.SFH.sfh_delay4=meta.tmp24;
+           hdr.SFH.sfh_delay5=meta.tmp25;
+           hdr.SFH.sfh_delay6=meta.tmp26;
+           hdr.SFH.sfh_delay7=meta.tmp27;
+           hdr.SFH.sfh_delay8=meta.tmp28;
+           hdr.SFH.sfh_delay9=meta.tmp29;
        }
     }
 
@@ -217,46 +223,46 @@ control MyIngress(inout headers hdr,
        array5.read(meta.tmp29,meta.SFH_target_bucket*BIN_NUM+9);
 
        if(meta.SFH_target_array==3){
-           hdr.SFH.delay0=meta.tmp00;
-           hdr.SFH.delay1=meta.tmp01;
-           hdr.SFH.delay2=meta.tmp02;
-           hdr.SFH.delay3=meta.tmp03;
-           hdr.SFH.delay4=meta.tmp04;
-           hdr.SFH.delay5=meta.tmp05;
-           hdr.SFH.delay6=meta.tmp06;
-           hdr.SFH.delay7=meta.tmp07;
-           hdr.SFH.delay8=meta.tmp08;
-           hdr.SFH.delay9=meta.tmp09;
+           hdr.SFH.sfh_delay0=meta.tmp00;
+           hdr.SFH.sfh_delay1=meta.tmp01;
+           hdr.SFH.sfh_delay2=meta.tmp02;
+           hdr.SFH.sfh_delay3=meta.tmp03;
+           hdr.SFH.sfh_delay4=meta.tmp04;
+           hdr.SFH.sfh_delay5=meta.tmp05;
+           hdr.SFH.sfh_delay6=meta.tmp06;
+           hdr.SFH.sfh_delay7=meta.tmp07;
+           hdr.SFH.sfh_delay8=meta.tmp08;
+           hdr.SFH.sfh_delay9=meta.tmp09;
        }
        else if(meta.SFH_target_array==4){
-           hdr.SFH.delay0=meta.tmp10;
-           hdr.SFH.delay1=meta.tmp11;
-           hdr.SFH.delay2=meta.tmp12;
-           hdr.SFH.delay3=meta.tmp13;
-           hdr.SFH.delay4=meta.tmp14;
-           hdr.SFH.delay5=meta.tmp15;
-           hdr.SFH.delay6=meta.tmp16;
-           hdr.SFH.delay7=meta.tmp17;
-           hdr.SFH.delay8=meta.tmp18;
-           hdr.SFH.delay9=meta.tmp19;
+           hdr.SFH.sfh_delay0=meta.tmp10;
+           hdr.SFH.sfh_delay1=meta.tmp11;
+           hdr.SFH.sfh_delay2=meta.tmp12;
+           hdr.SFH.sfh_delay3=meta.tmp13;
+           hdr.SFH.sfh_delay4=meta.tmp14;
+           hdr.SFH.sfh_delay5=meta.tmp15;
+           hdr.SFH.sfh_delay6=meta.tmp16;
+           hdr.SFH.sfh_delay7=meta.tmp17;
+           hdr.SFH.sfh_delay8=meta.tmp18;
+           hdr.SFH.sfh_delay9=meta.tmp19;
        }
        else{
-           hdr.SFH.delay0=meta.tmp20;
-           hdr.SFH.delay1=meta.tmp21;
-           hdr.SFH.delay2=meta.tmp22;
-           hdr.SFH.delay3=meta.tmp23;
-           hdr.SFH.delay4=meta.tmp24;
-           hdr.SFH.delay5=meta.tmp25;
-           hdr.SFH.delay6=meta.tmp26;
-           hdr.SFH.delay7=meta.tmp27;
-           hdr.SFH.delay8=meta.tmp28;
-           hdr.SFH.delay9=meta.tmp29;
+           hdr.SFH.sfh_delay0=meta.tmp20;
+           hdr.SFH.sfh_delay1=meta.tmp21;
+           hdr.SFH.sfh_delay2=meta.tmp22;
+           hdr.SFH.sfh_delay3=meta.tmp23;
+           hdr.SFH.sfh_delay4=meta.tmp24;
+           hdr.SFH.sfh_delay5=meta.tmp25;
+           hdr.SFH.sfh_delay6=meta.tmp26;
+           hdr.SFH.sfh_delay7=meta.tmp27;
+           hdr.SFH.sfh_delay8=meta.tmp28;
+           hdr.SFH.sfh_delay9=meta.tmp29;
        }
     }
 
     table update_SFH{
         key={
-            meta.sketch_flag:exact;
+            meta.sketch_fg:exact;
         }
         actions={
             NoAction;
@@ -278,8 +284,8 @@ control MyIngress(inout headers hdr,
             (bit<1>)0,
             {hdr.ipv4.srcAddr,
             hdr.ipv4.dstAddr,
-            hdr.tcp.srcPort,
-            hdr.tcp.dstPort,
+            meta.ipv4_srcPort,
+            meta.ipv4_dstPort,
             hdr.ipv4.protocol},
             num_nhops);
 
@@ -325,22 +331,6 @@ control MyIngress(inout headers hdr,
         default_action = drop;
     }
 
-    action _bring_switch_id(bit<16> switch_id){
-        hdr.SFH.switch_id=switch_id;
-    }
-
-    table bring_switch_id{
-        key={
-
-        }
-        actions={
-            _bring_switch_id;
-            NoAction;
-        }
-        size=256;
-        default_action=NoAction;
-    }
-
     action update_SFH_timestamp()
     {
         COMPUTE_TIMESTAMP_HASH(0)
@@ -355,50 +345,50 @@ control MyIngress(inout headers hdr,
         meta.timestamp_value1=standard_metadata.ingress_global_timestamp-meta.timestamp_value1;
         meta.timestamp_value2=standard_metadata.ingress_global_timestamp-meta.timestamp_value2;
 
-        if(meta.timestamp_value0>hdr.SFH.max_bucket_interval){
-            hdr.SFH.max_interval_switch_id=hdr.SFH.switch_id;
-            hdr.SFH.max_bucket_interval=meta.timestamp_value0;
+        if(meta.timestamp_value0>hdr.SFH.mih_timestamp){
+            hdr.SFH.mih_switch_id=meta.switch_id;
+            hdr.SFH.mih_timestamp=meta.timestamp_value0;
         }
-        if(meta.timestamp_value1>hdr.SFH.max_bucket_interval){
-            hdr.SFH.max_interval_switch_id=hdr.SFH.switch_id;
-            hdr.SFH.max_bucket_interval=meta.timestamp_value1;
+        if(meta.timestamp_value1>hdr.SFH.mih_timestamp){
+            hdr.SFH.mih_switch_id=meta.switch_id;
+            hdr.SFH.mih_timestamp=meta.timestamp_value1;
         }
-        if(meta.timestamp_value2>hdr.SFH.max_bucket_interval){
-            hdr.SFH.max_interval_switch_id=hdr.SFH.switch_id;
-            hdr.SFH.max_bucket_interval=meta.timestamp_value2;
+        if(meta.timestamp_value2>hdr.SFH.mih_timestamp){
+            hdr.SFH.mih_switch_id=meta.switch_id;
+            hdr.SFH.mih_timestamp=meta.timestamp_value2;
         }
     }
 
 
     apply
     {
-        if (hdr.ipv4.isValid())
-        {
-            if (hdr.SFH.isValid())
-            {
-                
-                swap_control.read(meta.swap_control,0);//0 bring-able 1 forbidden
-                if (meta.swap_control==0&&hdr.SFH.switch_id <= 0 )
-                {
+        if (hdr.ipv4.isValid()) {
+            if (hdr.SFH.isValid()) {
+				hdr.udp.checksum = 0;
+
+				switch_id.read(meta.switch_id, 0);
+				update_SFH_timestamp();
+
+				swap_control.read(meta.swap_control,0);//0 bring-able 1 forbidden
+
+				if (meta.swap_control == 0 && hdr.SFH.sfh_switch_id <= 0 ) {
                     //this packet is vacant 
 
-                    update_SFH_timestamp();
-
-
                     //the probility allows
-                    random(meta.random_number, (bit<32>)LOW_BOUND, (bit<32>)HIGH_BOUND);
-                    if (meta.random_number == (LOW_BOUND + 1))
-                    {
-                        bring_switch_id.apply();
-                        sketch_flag.read(meta.sketch_flag,0);
-                        hdr.SFH.sketch_flag=meta.sketch_flag;
-                        //hash suspend
-                        predispose();
-                        update_SFH.apply();
-                    }
-                }
+					random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
+					if (meta.random_number == 0) {
+						hdr.SFH.sfh_switch_id = meta.switch_id;
 
+						sketch_fg.read(meta.sketch_fg,0);
+						hdr.SFH.sfh_sketch_fg = meta.sketch_fg;
+
+							//hash suspend
+						predispose();
+						update_SFH.apply();
+					}
+				}
             }
+
             switch (ipv4_lpm.apply().action_run)
             {
                 ecmp_group:
@@ -436,39 +426,39 @@ control MyEgress(inout headers hdr,
     action get_delay_lev()
     {
         //whether p4 support switch && > ?
-        if (meta.switch_delay < 10){
+        if (meta.switch_delay < 1 * 1000){
             meta.delay_lev = 0;
             return;
         }
-        else if (meta.switch_delay < 20){
+        else if (meta.switch_delay < 2 * 1000){
             meta.delay_lev = 1;
             return;
         }
-        else if (meta.switch_delay < 30){
+        else if (meta.switch_delay < 3 * 1000){
             meta.delay_lev = 2;
             return;
         }
-        else if (meta.switch_delay < 40){
+        else if (meta.switch_delay < 4 * 1000){
             meta.delay_lev = 3;
             return;
         }
-        else if (meta.switch_delay < 50){
+        else if (meta.switch_delay < 5 * 1000){
             meta.delay_lev = 4;
             return;
         }
-        else if (meta.switch_delay < 60){
+        else if (meta.switch_delay < 6 * 1000){
             meta.delay_lev = 5;
             return;
         }
-        else if (meta.switch_delay < 70){
+        else if (meta.switch_delay < 7 * 1000){
             meta.delay_lev = 6;
             return;
         }
-        else if (meta.switch_delay < 80){
+        else if (meta.switch_delay < 8 * 1000){
             meta.delay_lev = 7;
             return;
         }
-        else if (meta.switch_delay < 90){
+        else if (meta.switch_delay < 9 * 1000){
             meta.delay_lev = 8;
             return;
         }
@@ -555,7 +545,7 @@ control MyEgress(inout headers hdr,
     table update_sketch
     {
         key = {
-            meta.sketch_flag : exact;
+            meta.sketch_fg : exact;
         }
         actions = {
             update_sketch0;
@@ -571,9 +561,11 @@ control MyEgress(inout headers hdr,
     {
         if(hdr.ipv4.isValid()){
             update_timestamp();
+
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
             get_delay_lev();
-            sketch_flag.read(meta.sketch_flag,0);
+
+            sketch_fg.read(meta.sketch_fg,0);
             update_sketch.apply();
         }
         
@@ -604,6 +596,20 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta)
              hdr.ipv4.dstAddr},
             hdr.ipv4.hdrChecksum,
             HashAlgorithm.csum16);
+
+		update_checksum_with_payload(
+			hdr.SFH.isValid(),
+			{hdr.ipv4.srcAddr,
+			 hdr.ipv4.dstAddr,
+			 8w0,
+			 hdr.ipv4.protocol,
+			 hdr.udp.length,
+			 hdr.udp.srcPort,
+			 hdr.udp.dstPort,
+			 hdr.udp.length,
+			 hdr.SFH},
+			hdr.udp.checksum,
+			HashAlgorithm.csum16);
     }
 }
 

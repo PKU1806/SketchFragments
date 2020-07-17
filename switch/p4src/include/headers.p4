@@ -3,6 +3,8 @@
 *************************************************************************/
 
 const bit<16> TYPE_IPV4 = 0x0800;
+const bit<8> TYPE_TCP = 6;
+const bit<8> TYPE_UDP = 17;
 
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
@@ -50,40 +52,50 @@ header tcp_t{
     bit<16> urgentPtr;
 }
 
+header udp_t {
+	bit<16> srcPort;
+	bit<16> dstPort;
+	bit<16> length;
+	bit<16> checksum;
+}
+
 //sketch fragment header
 header SFH_t{
-	//bit<8> cnt;//historically inherited
-	//bit<8> protocol;//historically inherited
-
     //the followings are the newly defined domains
     //comply with the sequence of slide
 
+    //part 1 
+    bit<16> mih_switch_id;
+
+	bit<16> mih_padding;
+    bit<48> mih_timestamp;//modified from 32 to 48
+
+
     //part 0:
-    bit<16> switch_id;//switch id
-    bit<1> sketch_flag;//0 stands for group0,vice versa
-    bit<3> padding;
-    bit<4> hash_id;
+    bit<16> sfh_switch_id;//switch id
+
+    bit<7>  sfh_padding;
+    bit<1>  sfh_sketch_fg;//0 stands for group0,vice versa
+
+    bit<32> sfh_fgment_id;
 
     //sketch fragments: a bucket which contains 10 bins
-    bit<32> delay0;
-    bit<32> delay1;
-	bit<32> delay2;
-	bit<32> delay3;
-	bit<32> delay4;
-	bit<32> delay5;
-	bit<32> delay6;
-	bit<32> delay7;
-	bit<32> delay8;
-	bit<32> delay9;
-
-    //part 1 
-    bit<16> max_interval_switch_id;
-    bit<48> max_bucket_interval;//modified from 32 to 48
-
-
+    bit<32> sfh_delay0;
+    bit<32> sfh_delay1;
+	bit<32> sfh_delay2;
+	bit<32> sfh_delay3;
+	bit<32> sfh_delay4;
+	bit<32> sfh_delay5;
+	bit<32> sfh_delay6;
+	bit<32> sfh_delay7;
+	bit<32> sfh_delay8;
+	bit<32> sfh_delay9;
 }
 
 struct metadata {
+	bit<16> ipv4_srcPort;
+	bit<16> ipv4_dstPort;
+
     //for sketch register
     bit<32> array_index1;
     bit<32> array_index2;
@@ -99,10 +111,6 @@ struct metadata {
     bit<32> array_value4;
     bit<32> array_value5;
     
-    //for int hash
-    //bit<32> SFH_index1;
-    //bit<32> SFH_index2;
-    //bit<32> SFH_index3;
     bit<32> SFH_index0;
 
     bit<32> timestamp_index0;    //for timestamp register
@@ -116,9 +124,11 @@ struct metadata {
     //the above can be refined into at most 4 indexes and 4 values  I suppose
     // but for convenience , we used a lot of them
 
+	bit<16> switch_id;
     bit<48> switch_delay;           //the subst
-    bit<1> sketch_flag;             //
-    bit<1> swap_control;            //
+    bit<1>  sketch_fg;             //
+    bit<1>  swap_control;            //
+
     bit<32> delay_lev;
     bit<48> previous_ingress_global_timestamp;   //the previous one of timestamp
     bit<48> max_bucket_interval;    //
@@ -170,6 +180,7 @@ struct headers {
     ethernet_t   ethernet;
     ipv4_t       ipv4;
     tcp_t        tcp;
+	udp_t        udp;
     SFH_t	     SFH;
 }
 
