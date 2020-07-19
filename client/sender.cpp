@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
 
 	int send_num;
 	for(auto _ = 0; _ < atoi(argv[1]); _++) {
-		printf ("client send: %d\n", header_len);
+		// printf ("client send: %d\n", header_len);
 
 		send_num = sendto(sock_fd, (char *)&sf_header, header_len, 0,
 				(struct sockaddr *)&addr_recv, addr_len);

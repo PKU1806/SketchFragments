@@ -10,7 +10,7 @@
 #define BIN_NUM 10
 #define BIN_CELL_BIT_WIDTH 32
 
-#define RANDOM_BOUND 4
+#define RANDOM_BOUND 100
 
 #define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
 
@@ -380,7 +380,7 @@ control MyIngress(inout headers hdr,
 						hdr.SFH.sfh_switch_id = meta.switch_id;
 
 						sketch_fg.read(meta.sketch_fg,0);
-						hdr.SFH.sfh_sketch_fg = meta.sketch_fg;
+						hdr.SFH.sfh_sketch_fg = 1 - meta.sketch_fg;
 
 							//hash suspend
 						predispose();
