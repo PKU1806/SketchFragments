@@ -345,17 +345,17 @@ control MyIngress(inout headers hdr,
         meta.timestamp_value1=standard_metadata.ingress_global_timestamp-meta.timestamp_value1;
         meta.timestamp_value2=standard_metadata.ingress_global_timestamp-meta.timestamp_value2;
 
-        if(meta.timestamp_value0>hdr.SFH.mih_timestamp){
-            hdr.SFH.mih_switch_id=meta.switch_id;
-            hdr.SFH.mih_timestamp=meta.timestamp_value0;
+        if(meta.timestamp_value0>hdr.MIH.mih_timestamp){
+            hdr.MIH.mih_switch_id=meta.switch_id;
+            hdr.MIH.mih_timestamp=meta.timestamp_value0;
         }
-        if(meta.timestamp_value1>hdr.SFH.mih_timestamp){
-            hdr.SFH.mih_switch_id=meta.switch_id;
-            hdr.SFH.mih_timestamp=meta.timestamp_value1;
+        if(meta.timestamp_value1>hdr.MIH.mih_timestamp){
+            hdr.MIH.mih_switch_id=meta.switch_id;
+            hdr.MIH.mih_timestamp=meta.timestamp_value1;
         }
-        if(meta.timestamp_value2>hdr.SFH.mih_timestamp){
-            hdr.SFH.mih_switch_id=meta.switch_id;
-            hdr.SFH.mih_timestamp=meta.timestamp_value2;
+        if(meta.timestamp_value2>hdr.MIH.mih_timestamp){
+            hdr.MIH.mih_switch_id=meta.switch_id;
+            hdr.MIH.mih_timestamp=meta.timestamp_value2;
         }
     }
 
@@ -371,7 +371,7 @@ control MyIngress(inout headers hdr,
 
 				swap_control.read(meta.swap_control,0);//0 bring-able 1 forbidden
 
-				if (meta.swap_control == 0 && hdr.SFH.sfh_switch_id <= 0 ) {
+				if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {
                     //this packet is vacant 
 
                     //the probility allows
@@ -385,6 +385,8 @@ control MyIngress(inout headers hdr,
 							//hash suspend
 						predispose();
 						update_SFH.apply();
+                        hdr.MIH.SFH_fg=1;
+                        hdr.SFH.setValid();
 					}
 				}
             }
@@ -413,9 +415,6 @@ control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata)
 {
-    //egress part successfully compiled and refigured into semi-cu
-    //time:2020-07-13-15:56 
-    //tested by @leo
     //function:we can only get the egress time in this part ,so we implement the insert of delay here
     //first get the level of bin
     //then insert
@@ -598,7 +597,7 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta)
             HashAlgorithm.csum16);
 
 		update_checksum_with_payload(
-			hdr.SFH.isValid(),
+			hdr.MIH.isValid(),
 			{hdr.ipv4.srcAddr,
 			 hdr.ipv4.dstAddr,
 			 8w0,
@@ -607,7 +606,7 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta)
 			 hdr.udp.srcPort,
 			 hdr.udp.dstPort,
 			 hdr.udp.length,
-			 hdr.SFH},
+			 hdr.MIH},
 			hdr.udp.checksum,
 			HashAlgorithm.csum16);
     }
