@@ -59,23 +59,23 @@ header udp_t {
 	bit<16> checksum;
 }
 
+//part one of the bringing data
+header MIH_t{
+    //max interval header
+    bit<16> mih_switch_id;
+    bit<1>  SFH_fg;                 //if SFH_fg==0 no SFH,
+	bit<7>  mih_padding;            //
+    bit<48> mih_timestamp;          //modified from 32 to 48
+}
+
 //sketch fragment header
 header SFH_t{
-    //the followings are the newly defined domains
-    //comply with the sequence of slide
-
-    //part 1 
-    bit<16> mih_switch_id;
-
-	bit<16> mih_padding;
-    bit<48> mih_timestamp;//modified from 32 to 48
-
 
     //part 0:
-    bit<16> sfh_switch_id;//switch id
+    bit<16> sfh_switch_id;          //switch id
 
     bit<7>  sfh_padding;
-    bit<1>  sfh_sketch_fg;//0 stands for group0,vice versa
+    bit<1>  sfh_sketch_fg;          //0 stands for group0,vice versa
 
     bit<32> sfh_fgment_id;
 
@@ -125,17 +125,17 @@ struct metadata {
     // but for convenience , we used a lot of them
 
 	bit<16> switch_id;
-    bit<48> switch_delay;           //the subst
-    bit<1>  sketch_fg;             //
-    bit<1>  swap_control;            //
+    bit<48> switch_delay;                           //the subst
+    bit<1>  sketch_fg;                              //
+    bit<1>  swap_control;                           //
 
     bit<32> delay_lev;
-    bit<48> previous_ingress_global_timestamp;   //the previous one of timestamp
-    bit<48> max_bucket_interval;    //
+    bit<48> previous_ingress_global_timestamp;      //the previous one of timestamp
+    bit<48> max_bucket_interval;                    //
 
-    bit<3> SFH_target_array;   //the sketch selected
-    bit<32> SFH_target_bucket;   //the bucket selected
-    bit<32> random_number;          //
+    bit<3> SFH_target_array;                        //the sketch selected
+    bit<32> SFH_target_bucket;                      //the bucket selected
+    bit<32> random_number;                          //
     
 
     bit<14> ecmp_hash;
@@ -181,6 +181,7 @@ struct headers {
     ipv4_t       ipv4;
     tcp_t        tcp;
 	udp_t        udp;
+    MIH_t        MIH;
     SFH_t	     SFH;
 }
 
