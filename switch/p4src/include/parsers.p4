@@ -46,8 +46,19 @@ parser MyParser(packet_in packet,
 		meta.ipv4_srcPort = hdr.udp.srcPort;
 		meta.ipv4_dstPort = hdr.udp.dstPort;
 
-        transition parse_SFH;
+        transition parse_MIH;
     }
+
+    state parse_MIH {
+		packet.extract(hdr.MIH);
+        
+        transition select(hdr.MIH.SFH_fg) {
+			0 : accept;
+			1 : parse_SFH;
+			default : accept;
+		}
+		
+	}
 
 	state parse_SFH {
 		packet.extract(hdr.SFH);
@@ -72,6 +83,8 @@ control MyDeparser(packet_out packet, in headers hdr) {
         packet.emit(hdr.tcp);
 
         packet.emit(hdr.udp);
+
+        packet.emit(hdr.MIH);
 
         packet.emit(hdr.SFH);
     }
