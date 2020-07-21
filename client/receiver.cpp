@@ -9,6 +9,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <chrono>
+#include <iostream>
+
 #include "header.h"
 
 #define RECV_PORT 8000
@@ -21,6 +24,59 @@ const int BUCKET_NUM = 16;
 SF_Header sketch[SWITCH_NUM][ARRAY_NUM][BUCKET_NUM];
 
 int sketch_flag[SWITCH_NUM], sketch_fnum[SWITCH_NUM];
+
+int packet_num, packet_start[SWITCH_NUM], packet_epoch[SWITCH_NUM];
+
+std::chrono::steady_clock::time_point time_start[SWITCH_NUM];
+std::chrono::milliseconds time_epoch[SWITCH_NUM];
+
+void visor_sketch(int switch_id, int sketch_fg, std::chrono::milliseconds time_epoch) {
+	std::cout << "switch " << switch_id + 1 << " recieve sketch " << sketch_fg << 
+		" using " << time_epoch.count() << " milliseconds." << std::endl;
+
+	for (int i = 0; i < ARRAY_NUM; i++) {
+		printf("sketch array %d.\n", i);
+
+		for (int j = 0; j < 10; j++) {
+			for (int k = 0; k < BUCKET_NUM; k++) {
+				printf("|%3u|", sketch[switch_id][i][k].sfh_delay[j]);
+			}
+			printf("\n");
+		}
+	}
+}
+
+void receive_fragment(SF_Header &sf_header) {
+	int switch_id = sf_header.sfh_switch_id - 8001;
+	int sketch_fg = sf_header.sfh_sketch_fg;
+	int array_id = sf_header.sfh_fgment_id / BUCKET_NUM;
+	int bucket_id = sf_header.sfh_fgment_id % BUCKET_NUM;
+
+	if (sketch_flag[switch_id] != sketch_fg) {
+		printf("switch %d detect sketch %d.\n", switch_id + 1, sketch_fg);
+
+		sketch_flag[switch_id] = sketch_fg;
+		sketch_fnum[switch_id] = 0;
+
+		memset(sketch[switch_id], 0x00, ARRAY_NUM * BUCKET_NUM * sizeof(SF_Header));
+
+		time_start[switch_id] = std::chrono::steady_clock::now();
+	}
+
+	if (sketch[switch_id][array_id][bucket_id].sfh_switch_id == 0) {
+		printf("switch %d detect new fragment %d.\n", switch_id + 1, sf_header.sfh_fgment_id);
+
+		sketch[switch_id][array_id][bucket_id] = sf_header;
+		sketch_fnum[switch_id] += 1;
+
+		if (sketch_fnum[switch_id] == BUCKET_NUM * ARRAY_NUM) {
+			auto time_end = std::chrono::steady_clock::now();
+			time_epoch[switch_id] = std::chrono::duration_cast<std::chrono::milliseconds>
+				(time_end - time_start[switch_id]);
+			visor_sketch(switch_id, sketch_fg, time_epoch[switch_id]);
+		}
+	}
+}
 
 int main() {
 	memset(sketch_flag, 0xFF, sizeof(sketch_flag));
@@ -88,41 +144,7 @@ int main() {
 			// }
 			// printf("\n");
 
-			int switch_id = sf_header.sfh_switch_id - 8001;
-			int sketch_fg = sf_header.sfh_sketch_fg;
-			int array_id = sf_header.sfh_fgment_id / BUCKET_NUM;
-			int bucket_id = sf_header.sfh_fgment_id % BUCKET_NUM;
-
-			if (sketch_flag[switch_id] != sketch_fg) {
-				printf("switch %d detect sketch %d.\n", switch_id + 1, sketch_fg);
-
-				sketch_flag[switch_id] = sketch_fg;
-				sketch_fnum[switch_id] = 0;
-
-				memset(sketch[switch_id], 0x00, ARRAY_NUM * BUCKET_NUM * sizeof(SF_Header));
-			}
-
-			if (sketch[switch_id][array_id][bucket_id].sfh_switch_id == 0) {
-				printf("switch %d detect new fragment %d.\n", switch_id + 1, sf_header.sfh_fgment_id);
-
-				sketch[switch_id][array_id][bucket_id] = sf_header;
-				sketch_fnum[switch_id] += 1;
-
-				if (sketch_fnum[switch_id] == BUCKET_NUM * ARRAY_NUM) {
-					printf("switch %d recieve sketch %d.\n", switch_id + 1, sketch_fg);
-
-					for (int i = 0; i < ARRAY_NUM; i++) {
-						printf("sketch array %d.\n", i);
-
-						for (int j = 0; j < 10; j++) {
-							for (int k = 0; k < BUCKET_NUM; k++) {
-								printf("|%3u|", sketch[switch_id][i][k].sfh_delay[j]);
-							}
-							printf("\n");
-						}
-					}
-				}
-			}
+			receive_fragment(sf_header);
 		}
 	}
 

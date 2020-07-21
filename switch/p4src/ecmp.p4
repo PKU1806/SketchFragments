@@ -10,7 +10,7 @@
 #define BIN_NUM 10
 #define BIN_CELL_BIT_WIDTH 32
 
-#define RANDOM_BOUND 100
+#define RANDOM_BOUND 10
 
 #define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
 
@@ -90,7 +90,8 @@ control MyIngress(inout headers hdr,
 {
 
     action predispose(){
-        COMPUTE_SFH_HASH
+        // COMPUTE_SFH_HASH
+		random(meta.SFH_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
 
 		hdr.SFH.sfh_fgment_id = meta.SFH_index0;
 

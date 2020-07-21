@@ -119,8 +119,9 @@ class Monitor(threading.Thread):
 
     def monitor(self):
         while True:
-            current_time = self.controller.sswitch_client.get_time_elapsed_us() % 600 * 1000 * 1000
+            current_time = self.controller.sswitch_client.get_time_elapsed_us() % (600 * 1000 * 1000)
             if current_time < 1 * 1000 * 1000:
+                print(self.controller.sswitch_client.get_time_elapsed_us())
                 self.sketch_swap()
 
     def run(self):
