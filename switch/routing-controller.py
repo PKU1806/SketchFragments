@@ -65,7 +65,17 @@ class RoutingController(object):
             controller.table_add("update_sketch","update_sketch1",[str(1)],[])
             controller.table_add("update_SFH","update_using_sketch0",[str(1)],[])
             controller.table_add("update_SFH","update_using_sketch1",[str(0)],[])
-            
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(0 -> 1000)],[str(0)])
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(1000 -> 2000)],[str(1)])
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(2000 -> 3000)],[str(2)])
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(3000 -> 4000)],[str(3)])
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(4000 -> 5000)],[str(4)])
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(5000 -> 6000)],[str(5)])
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(6000 -> 7000)],[str(6)])
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(7000 -> 8000)],[str(7)])
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(8000 -> 9000)],[str(8)])
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(9000 -> 10000000)],[str(9)])
+
 
     def reset_registers(self,sw_name):
         for i in range(self.register_num[sw_name]):
