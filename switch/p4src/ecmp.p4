@@ -1,3 +1,4 @@
+
 /* -*- P4_16 -*- */
 #include <core.p4>
 #include <v1model.p4>
@@ -387,8 +388,7 @@ control MyIngress(inout headers hdr,
 						//hash suspend
 						predispose();
 						update_SFH.apply();
-
-						hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
+                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
 						hdr.udp.length = hdr.udp.length + (58 - 11);
                         hdr.MIH.sfh_exists_fg = 1;
 					}
@@ -426,49 +426,11 @@ control MyEgress(inout headers hdr,
     //the insertion of timestamp can be moved to previous part
 
     //this action get the corresponding lev of bucket
-    action get_delay_lev()
+    action _get_delay_lev(bit<32> delay_lev)
     {
-        //whether p4 support switch && > ?
-        if (meta.switch_delay < 1 * 1000){
-            meta.delay_lev = 0;
-            return;
-        }
-        else if (meta.switch_delay < 2 * 1000){
-            meta.delay_lev = 1;
-            return;
-        }
-        else if (meta.switch_delay < 3 * 1000){
-            meta.delay_lev = 2;
-            return;
-        }
-        else if (meta.switch_delay < 4 * 1000){
-            meta.delay_lev = 3;
-            return;
-        }
-        else if (meta.switch_delay < 5 * 1000){
-            meta.delay_lev = 4;
-            return;
-        }
-        else if (meta.switch_delay < 6 * 1000){
-            meta.delay_lev = 5;
-            return;
-        }
-        else if (meta.switch_delay < 7 * 1000){
-            meta.delay_lev = 6;
-            return;
-        }
-        else if (meta.switch_delay < 8 * 1000){
-            meta.delay_lev = 7;
-            return;
-        }
-        else if (meta.switch_delay < 9 * 1000){
-            meta.delay_lev = 8;
-            return;
-        }
-        else {
-            meta.delay_lev = 9;
-            return;
-        }
+        meta.delay_lev = delay_lev;
+        
+        
     }
 
     //semi-CU-sketch    
@@ -559,6 +521,17 @@ control MyEgress(inout headers hdr,
         default_action = NoAction;
     }
 
+    table get_delay_lev{
+        key={
+            meta.switch_delay:range;
+        }
+        actions={
+            _get_delay_lev;
+            NoAction;
+        }
+        size=256;
+        default_action=NoAction;
+    }
 
     apply
     {
@@ -566,7 +539,7 @@ control MyEgress(inout headers hdr,
             update_timestamp();
 
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
-            get_delay_lev();
+            get_delay_lev.apply();
 
             sketch_fg.read(meta.sketch_fg,0);
             update_sketch.apply();
