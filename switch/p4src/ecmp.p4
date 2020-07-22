@@ -364,7 +364,7 @@ control MyIngress(inout headers hdr,
     apply
     {
         if (hdr.ipv4.isValid()) {
-            if (hdr.SFH.isValid()) {
+            if (hdr.MIH.isValid()) {
 				hdr.udp.checksum = 0;
 
 				switch_id.read(meta.switch_id, 0);
@@ -387,6 +387,9 @@ control MyIngress(inout headers hdr,
 						//hash suspend
 						predispose();
 						update_SFH.apply();
+
+						hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
+						hdr.udp.length = hdr.udp.length + (58 - 11);
                         hdr.MIH.sfh_exists_fg = 1;
 					}
 				}

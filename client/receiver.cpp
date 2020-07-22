@@ -109,6 +109,7 @@ int main() {
 		exit(1);
 	}
 
+	int recv_pkt = 0;
 	int recv_num;
 	while (true) {
 		// printf("recver wait.\n");
@@ -116,8 +117,8 @@ int main() {
 		recv_num = recvfrom(sock_fd, (char *)&com_header, header_len, 0,
 			   	(struct sockaddr *)&addr_send, (socklen_t *)&addr_len);
 
-		printf("receive: %d / %d bytes (FG : %d)\n", recv_num, header_len,
-				com_header.mih.exists_fg);
+		printf("receive: %d / %d bytes (PKT : %d, FG : %d)\n", recv_num, header_len,
+				++recv_pkt, com_header.mih.exists_fg);
 
 		if (recv_num < 0) {
 			perror("recvfrom error.");
