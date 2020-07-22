@@ -66,8 +66,8 @@ register<bit<48>>(BUCKET_NUM) timestamp_array1;
 register<bit<48>>(BUCKET_NUM) timestamp_array2;
 
 //control plane used
-register<bit<1>>(1) sketch_fg;
-register<bit<1>>(1) swap_control;
+register<bit<8>>(1) sketch_fg;
+register<bit<8>>(1) swap_control;
 
 register<bit<16>>(1) switch_id;
 
@@ -378,16 +378,16 @@ control MyIngress(inout headers hdr,
                     //the probility allows
 					random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
 					if (meta.random_number == 0) {
+                        hdr.SFH.setValid();
 						hdr.SFH.sfh_switch_id = meta.switch_id;
 
 						sketch_fg.read(meta.sketch_fg,0);
 						hdr.SFH.sfh_sketch_fg = 1 - meta.sketch_fg;
 
-							//hash suspend
+						//hash suspend
 						predispose();
 						update_SFH.apply();
-                        hdr.MIH.SFH_fg=1;
-                        hdr.SFH.setValid();
+                        hdr.MIH.sfh_exists_fg = 1;
 					}
 				}
             }
@@ -598,7 +598,7 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta)
             HashAlgorithm.csum16);
 
 		update_checksum_with_payload(
-			hdr.MIH.isValid(),
+			hdr.MIH.isValid() && !hdr.SFH.isValid(),
 			{hdr.ipv4.srcAddr,
 			 hdr.ipv4.dstAddr,
 			 8w0,
@@ -608,6 +608,21 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta)
 			 hdr.udp.dstPort,
 			 hdr.udp.length,
 			 hdr.MIH},
+			hdr.udp.checksum,
+			HashAlgorithm.csum16);
+
+		update_checksum_with_payload(
+			hdr.MIH.isValid() && hdr.SFH.isValid(),
+			{hdr.ipv4.srcAddr,
+			 hdr.ipv4.dstAddr,
+			 8w0,
+			 hdr.ipv4.protocol,
+			 hdr.udp.length,
+			 hdr.udp.srcPort,
+			 hdr.udp.dstPort,
+			 hdr.udp.length,
+			 hdr.MIH,
+			 hdr.SFH},
 			hdr.udp.checksum,
 			HashAlgorithm.csum16);
     }

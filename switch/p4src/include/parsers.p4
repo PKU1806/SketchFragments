@@ -52,7 +52,7 @@ parser MyParser(packet_in packet,
     state parse_MIH {
 		packet.extract(hdr.MIH);
         
-        transition select(hdr.MIH.SFH_fg) {
+        transition select(hdr.MIH.sfh_exists_fg) {
 			0 : accept;
 			1 : parse_SFH;
 			default : accept;

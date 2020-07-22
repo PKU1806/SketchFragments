@@ -21,7 +21,7 @@ const int SWITCH_NUM = 6;
 const int ARRAY_NUM = 3;
 const int BUCKET_NUM = 16;
 
-SF_Header sketch[SWITCH_NUM][ARRAY_NUM][BUCKET_NUM];
+COM_Header sketch[SWITCH_NUM][ARRAY_NUM][BUCKET_NUM];
 
 int sketch_flag[SWITCH_NUM], sketch_fnum[SWITCH_NUM];
 
@@ -39,18 +39,18 @@ void visor_sketch(int switch_id, int sketch_fg, std::chrono::milliseconds time_e
 
 		for (int j = 0; j < 10; j++) {
 			for (int k = 0; k < BUCKET_NUM; k++) {
-				printf("|%3u|", sketch[switch_id][i][k].sfh_delay[j]);
+				printf("|%3u|", sketch[switch_id][i][k].sfh.delay[j]);
 			}
 			printf("\n");
 		}
 	}
 }
 
-void receive_fragment(SF_Header &sf_header) {
-	int switch_id = sf_header.sfh_switch_id - 8001;
-	int sketch_fg = sf_header.sfh_sketch_fg;
-	int array_id = sf_header.sfh_fgment_id / BUCKET_NUM;
-	int bucket_id = sf_header.sfh_fgment_id % BUCKET_NUM;
+void receive_fragment(COM_Header &com_header) {
+	int switch_id = com_header.sfh.switch_id - 8001;
+	int sketch_fg = com_header.sfh.sketch_fg;
+	int array_id = com_header.sfh.fgment_id / BUCKET_NUM;
+	int bucket_id = com_header.sfh.fgment_id % BUCKET_NUM;
 
 	if (sketch_flag[switch_id] != sketch_fg) {
 		printf("switch %d detect sketch %d.\n", switch_id + 1, sketch_fg);
@@ -58,15 +58,15 @@ void receive_fragment(SF_Header &sf_header) {
 		sketch_flag[switch_id] = sketch_fg;
 		sketch_fnum[switch_id] = 0;
 
-		memset(sketch[switch_id], 0x00, ARRAY_NUM * BUCKET_NUM * sizeof(SF_Header));
+		memset(sketch[switch_id], 0x00, ARRAY_NUM * BUCKET_NUM * sizeof(COM_Header));
 
 		time_start[switch_id] = std::chrono::steady_clock::now();
 	}
 
-	if (sketch[switch_id][array_id][bucket_id].sfh_switch_id == 0) {
-		printf("switch %d detect new fragment %d.\n", switch_id + 1, sf_header.sfh_fgment_id);
+	if (sketch[switch_id][array_id][bucket_id].sfh.switch_id == 0) {
+		printf("switch %d detect new fragment %d.\n", switch_id + 1, com_header.sfh.fgment_id);
 
-		sketch[switch_id][array_id][bucket_id] = sf_header;
+		sketch[switch_id][array_id][bucket_id] = com_header;
 		sketch_fnum[switch_id] += 1;
 
 		if (sketch_fnum[switch_id] == BUCKET_NUM * ARRAY_NUM) {
@@ -96,9 +96,9 @@ int main() {
 	memset(&addr_recv, 0, addr_len);
 
 
-	SF_Header sf_header;
-	int header_len = sizeof(sf_header);
-	memset((char *)&sf_header, 0x00, header_len);
+	COM_Header com_header;
+	int header_len = sizeof(com_header);
+	memset((char *)&com_header, 0x00, header_len);
 
 	addr_recv.sin_family = AF_INET;
 	addr_recv.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -113,38 +113,41 @@ int main() {
 	while (true) {
 		// printf("recver wait.\n");
 
-		recv_num = recvfrom(sock_fd, (char *)&sf_header, header_len, 0,
+		recv_num = recvfrom(sock_fd, (char *)&com_header, header_len, 0,
 			   	(struct sockaddr *)&addr_send, (socklen_t *)&addr_len);
+
+		printf("receive: %d / %d bytes (FG : %d)\n", recv_num, header_len,
+				com_header.mih.exists_fg);
 
 		if (recv_num < 0) {
 			perror("recvfrom error.");
 			exit(1);
 		}
 
-		sf_header.mih_switch_id = be16toh(sf_header.mih_switch_id);
-		sf_header.mih_timestamp = be64toh(sf_header.mih_timestamp);
-		sf_header.sfh_switch_id = be16toh(sf_header.sfh_switch_id);
-		sf_header.sfh_fgment_id = be32toh(sf_header.sfh_fgment_id);
+		com_header.mih.switch_id = be16toh(com_header.mih.switch_id);
+		com_header.mih.timestamp = be64toh(com_header.mih.timestamp);
+		com_header.sfh.switch_id = be16toh(com_header.sfh.switch_id);
+		com_header.sfh.fgment_id = be32toh(com_header.sfh.fgment_id);
 
 		for (int i = 0; i < 10; i++) {
-			sf_header.sfh_delay[i] = be32toh(sf_header.sfh_delay[i]);
+			com_header.sfh.delay[i] = be32toh(com_header.sfh.delay[i]);
 		}
 
-		if (sf_header.sfh_switch_id != 0) {
-			// printf("mih_switch_id : %u\n" , sf_header.mih_switch_id);
-			// printf("mih_timestamp : %lu\n", sf_header.mih_timestamp);
-			// printf("sfh_switch_id : %u\n" , sf_header.sfh_switch_id);
-			// printf("sfh_sketch_fg : %u\n" , sf_header.sfh_sketch_fg);
-			// printf("sfh_fgment_id : %u\n" , sf_header.sfh_fgment_id);
+		if (com_header.mih.exists_fg != 0) {
+			// printf("mih.switch_id : %u\n" , com_header.mih.switch_id);
+			// printf("mih.timestamp : %lu\n", com_header.mih.timestamp);
+			// printf("sfh.switch_id : %u\n" , com_header.sfh.switch_id);
+			// printf("sfh.sketch_fg : %u\n" , com_header.sfh.sketch_fg);
+			// printf("sfh.fgment_id : %u\n" , com_header.sfh.fgment_id);
 
 			// printf("sketch fragment :\n");
 
 			// for (int i = 0; i < 10; i++) {
-			// 	printf("sfh_delay_%d : %u\n", i, sf_header.sfh_delay[i]);
+			// 	printf("sfh.delay_%d : %u\n", i, com_header.sfh.delay[i]);
 			// }
 			// printf("\n");
 
-			receive_fragment(sf_header);
+			// receive_fragment(com_header);
 		}
 	}
 

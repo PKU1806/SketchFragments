@@ -1,15 +1,19 @@
 #pragma pack(1)
 
-struct SF_Header {
-    uint16_t mih_switch_id;
+struct MIH_Header {
+    uint16_t switch_id;
+    uint64_t timestamp;
+	uint8_t  exists_fg;
+};
 
-    uint64_t mih_timestamp;
+struct SFH_Header {
+    uint16_t switch_id;
+    uint8_t  sketch_fg;
+    uint32_t fgment_id;
+    uint32_t delay[10];
+};
 
-    uint16_t sfh_switch_id;
-
-    uint8_t  sfh_sketch_fg;
-
-    uint32_t sfh_fgment_id;
-
-    uint32_t sfh_delay[10];
+struct COM_Header {
+	MIH_Header mih;
+	SFH_Header sfh;
 };

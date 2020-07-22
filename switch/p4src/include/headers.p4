@@ -62,10 +62,10 @@ header udp_t {
 //part one of the bringing data
 header MIH_t{
     //max interval header
-    bit<16> mih_switch_id;
-    bit<1>  SFH_fg;                 //if SFH_fg==0 no SFH,
-	bit<7>  mih_padding;            //
-    bit<48> mih_timestamp;          //modified from 32 to 48
+    bit<16>  mih_switch_id;
+    bit<48>  mih_timestamp;          //modified from 32 to 48
+	bit<16>  mih_padding;            //
+    bit<8>   sfh_exists_fg;                 //if SFH_fg==0 no SFH,
 }
 
 //sketch fragment header
@@ -73,10 +73,7 @@ header SFH_t{
 
     //part 0:
     bit<16> sfh_switch_id;          //switch id
-
-    bit<7>  sfh_padding;
-    bit<1>  sfh_sketch_fg;          //0 stands for group0,vice versa
-
+    bit<8>  sfh_sketch_fg;          //0 stands for group0,vice versa
     bit<32> sfh_fgment_id;
 
     //sketch fragments: a bucket which contains 10 bins
@@ -126,14 +123,14 @@ struct metadata {
 
 	bit<16> switch_id;
     bit<48> switch_delay;                           //the subst
-    bit<1>  sketch_fg;                              //
-    bit<1>  swap_control;                           //
+    bit<8>  sketch_fg;                              //
+    bit<8>  swap_control;                           //
 
     bit<32> delay_lev;
     bit<48> previous_ingress_global_timestamp;      //the previous one of timestamp
     bit<48> max_bucket_interval;                    //
 
-    bit<3> SFH_target_array;                        //the sketch selected
+    bit<8> SFH_target_array;                        //the sketch selected
     bit<32> SFH_target_bucket;                      //the bucket selected
     bit<32> random_number;                          //
     

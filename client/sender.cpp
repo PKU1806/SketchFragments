@@ -31,11 +31,11 @@ int main(int argc, char **argv) {
 	int addr_len = sizeof(addr_recv);
 	memset(&addr_recv, 0, addr_len);
 
-	SF_Header sf_header;
-	int header_len = sizeof(sf_header);
-	memset((char *)&sf_header, 0x00, header_len);
+	MIH_Header mih_header;
+	int header_len = sizeof(mih_header);
+	memset((char *)&mih_header, 0x00, header_len);
 
-	sf_header.sfh_switch_id = 0;
+	mih_header.exists_fg = 0;
 
 	addr_recv.sin_family = AF_INET;
 	addr_recv.sin_addr.s_addr = inet_addr(RECV_IP_ADDRESS);
@@ -43,10 +43,10 @@ int main(int argc, char **argv) {
 
 	int send_num;
 	for(auto _ = 0; _ < atoi(argv[1]); _++) {
-		// printf ("client send: %d\n", header_len);
-
-		send_num = sendto(sock_fd, (char *)&sf_header, header_len, 0,
+		send_num = sendto(sock_fd, (char *)&mih_header, header_len, 0,
 				(struct sockaddr *)&addr_recv, addr_len);
+
+		printf("send: %d / %d bytes\n", send_num, header_len);
 
 		if (send_num < 0) {
 			perror("sendto error.");
