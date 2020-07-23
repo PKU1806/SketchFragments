@@ -14,7 +14,7 @@
 #define RANDOM_BOUND 10
 
 #define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
-
+#define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM) counter##num
 
 //6crc
 //this is for sketch
@@ -61,6 +61,10 @@ ARRAY_REGISTER(3);
 ARRAY_REGISTER(4);
 ARRAY_REGISTER(5);
 
+ARRAY_COUNTER(0);
+ARRAY_COUNTER(1);
+ARRAY_COUNTER(2);
+
 //timestamps
 register<bit<48>>(BUCKET_NUM) timestamp_array0;
 register<bit<48>>(BUCKET_NUM) timestamp_array1;
@@ -92,27 +96,47 @@ control MyIngress(inout headers hdr,
 
     action predispose(){
         // COMPUTE_SFH_HASH
-		random(meta.SFH_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3*BUCKET_NUM -1));
+        counter0.read(meta.counter_value0,meta.counter_index0);
+		
+        random(meta.counter_index1, (bit<32>)0, (bit<32>)(3*BUCKET_NUM -1));
+        counter1.read(meta.counter_value1,meta.counter_index1);
+		
+        random(meta.counter_index2, (bit<32>)0, (bit<32>)(3*BUCKET_NUM -1));
+        counter2.read(meta.counter_value2,meta.counter_index2);
 
-		hdr.SFH.sfh_fgment_id = meta.SFH_index0;
+        meta.tmp00=(bit<32>)meta.counter_value0;
+        meta.tmp01=(bit<32>)meta.counter_value1;
+        meta.tmp02=(bit<32>)meta.counter_value2;
 
-        if(meta.SFH_index0 < BUCKET_NUM){
-            meta.SFH_target_bucket=meta.SFH_index0;
-            meta.SFH_target_array=0;
-        }
-        else if(meta.SFH_index0 < BUCKET_NUM * 2){
-            meta.SFH_target_bucket=meta.SFH_index0 - BUCKET_NUM;
-            meta.SFH_target_array=1;
-        }
-        else{
-            meta.SFH_target_bucket=meta.SFH_index0 - BUCKET_NUM * 2;
-            meta.SFH_target_array=2;
-        }
+        meta.SFH_index=meta.counter_index0*(1-meta.tmp00);
+        meta.SFH_index=meta.SFH_index+meta.counter_index1*(1-meta.tmp01)*meta.tmp00;
+        meta.SFH_index=meta.SFH_index+meta.counter_index2*(1-meta.tmp02)*meta.tmp01*meta.tmp00;
+        
+        meta.counter_value0=meta.counter_value0|1;
+        meta.counter_value1=meta.counter_value1|meta.counter_value0;
+        meta.counter_value2=meta.counter_value2|meta.counter_value1;
 
-        if(meta.sketch_fg==0){
-            meta.SFH_target_array=meta.SFH_target_array+3;
+        counter0.write(meta.counter_index0,meta.counter_value0);
+        counter1.write(meta.counter_index1,meta.counter_value1);
+        counter2.write(meta.counter_index2,meta.counter_value2);
+
+    }
+
+    action _choose_fragment(bit<8> SFH_target_array){
+        meta.SFH_target_array=SFH_target_array+(1-meta.sketch_fg)*3;
+    }
+
+    table choose_fragment{
+        key={
+            meta.SFH_index:range;
         }
-        return ;
+        actions={
+            NoAction;
+            _choose_fragment;
+        }
+        size=256;
+        default_action=NoAction;
     }
 
     action update_using_sketch0(){
@@ -387,6 +411,7 @@ control MyIngress(inout headers hdr,
 
 						//hash suspend
 						predispose();
+                        choose_fragment.apply();
 						update_SFH.apply();
                         hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
 						hdr.udp.length = hdr.udp.length + (58 - 11);
