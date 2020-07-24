@@ -6,6 +6,11 @@ from p4utils.utils.sswitch_API import *
 import threading
 import time
 
+BUCKET_NUM = 64
+BIN_BUM = 10
+ARRAY_NUM = 3
+
+UPDATE_INTERVAL = 600
 
 lock = threading.Lock()
 
@@ -28,7 +33,7 @@ class Monitor(threading.Thread):
         present_sketch=self.controller.register_read("sketch_fg",0)
         
         if present_sketch == 0 :
-            for index in range(0, 16 * 10):
+            for index in range(0, BUCKET_NUM * BUN_NUM):
                 # temp=self.controller.register_read("array0",index)
                 # self.controller.register_write("array3",index,temp)
                 # temp=self.controller.register_read("array1",index)
@@ -40,7 +45,7 @@ class Monitor(threading.Thread):
                 self.controller.register_write("array4",index,0)
                 self.controller.register_write("array5",index,0)
         else :
-            for index in range(0, 16 * 10):
+            for index in range(0, BUCKET_NUM * BIN_BUM):
                 # temp=self.controller.register_read("array3",index)
                 # self.controller.register_write("array0",index,temp)
                 # temp=self.controller.register_read("array4",index)
@@ -52,6 +57,11 @@ class Monitor(threading.Thread):
                 self.controller.register_write("array1",index,0)
                 self.controller.register_write("array2",index,0)
 
+        for index in range(0, BUCKET_NUM * ARRAY_NUM):
+            self.controller.register_write("counter0", index, 0);
+            self.controller.register_write("counter1", index, 0);
+            self.controller.register_write("counter2", index, 0);
+
         self.controller.register_write("swap_control",0,0)
         self.controller.register_write("sketch_fg",0,1-present_sketch)
 
@@ -59,7 +69,7 @@ class Monitor(threading.Thread):
         self.visor()
         lock.release()
 
-        time.sleep(598)
+        time.sleep(UPDATE_INTERVAL - 2)
     
     def visor(self):
         sf = self.controller.register_read("sketch_fg", 0)
@@ -119,7 +129,8 @@ class Monitor(threading.Thread):
 
     def monitor(self):
         while True:
-            current_time = self.controller.sswitch_client.get_time_elapsed_us() % (600 * 1000 * 1000)
+            current_time = self.controller.sswitch_client.get_time_elapsed_us() \
+                    % (UPDATE_INTERVAL * 1000 * 1000)
             if current_time < 1 * 1000 * 1000:
                 print(self.controller.sswitch_client.get_time_elapsed_us())
                 self.sketch_swap()
@@ -135,6 +146,10 @@ if __name__ == "__main__":
     monitor_4 = Monitor("s4")
     monitor_5 = Monitor("s5")
     monitor_6 = Monitor("s6")
+    monitor_7 = Monitor("s7")
+    monitor_8 = Monitor("s8")
+    monitor_9 = Monitor("s9")
+    monitor_10 = Monitor("s10")
 
     monitor_1.start()
     monitor_2.start()
@@ -142,6 +157,10 @@ if __name__ == "__main__":
     monitor_4.start()
     monitor_5.start()
     monitor_6.start()
+    monitor_7.start()
+    monitor_8.start()
+    monitor_9.start()
+    monitor_10.start()
 
     monitor_1.join()
     monitor_2.join()
@@ -149,3 +168,7 @@ if __name__ == "__main__":
     monitor_4.join()
     monitor_5.join()
     monitor_6.join()
+    monitor_7.join()
+    monitor_8.join()
+    monitor_9.join()
+    monitor_10.join()

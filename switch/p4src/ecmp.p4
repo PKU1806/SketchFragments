@@ -7,11 +7,11 @@
 #include "include/headers.p4"
 #include "include/parsers.p4"
 
-#define BUCKET_NUM 16
+#define BUCKET_NUM 64
 #define BIN_NUM 10
 #define BIN_CELL_BIT_WIDTH 32
 
-#define RANDOM_BOUND 1
+#define RANDOM_BOUND 10
 
 #define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
 #define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM) counter##num
@@ -97,6 +97,7 @@ control MyIngress(inout headers hdr,
     action predispose(){
         // COMPUTE_SFH_HASH
 
+		// random(meta.SFH_index, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
 		meta.SFH_index = 3 * BUCKET_NUM;
 
 		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
@@ -139,6 +140,8 @@ control MyIngress(inout headers hdr,
     }
 
     action _choose_fragment(bit<8> SFH_target_array){
+		meta.SFH_target_bucket = meta.SFH_index - 
+			(bit<32>)meta.SFH_target_array * BUCKET_NUM;
         meta.SFH_target_array = SFH_target_array + (1 - meta.sketch_fg) * 3;
     }
 
@@ -428,6 +431,7 @@ control MyIngress(inout headers hdr,
 							hdr.MIH.sfh_exists_fg = 1;
 							hdr.SFH.setValid();
 							hdr.SFH.sfh_switch_id = meta.switch_id;
+							hdr.SFH.sfh_fgment_id = meta.SFH_index;
 							sketch_fg.read(meta.sketch_fg,0);
 							hdr.SFH.sfh_sketch_fg = 1 - meta.sketch_fg;
 

@@ -9,7 +9,7 @@ import sys
 crc32_polinomials = [0x04C11DB7, 0xEDB88320, 0xDB710641, 0x82608EDB, 0x741B8CD7, 0xEB31D82E,
                      0xD663B05, 0xBA0DC66B, 0x32583499, 0x992C1A4C, 0x32583499, 0x992C1A4C]
 
-BUCKET_NUM = 16
+BUCKET_NUM = 64
 BIN_NUM  = 10
 TIME_INTERVAL = 1000
 
@@ -83,10 +83,6 @@ class RoutingController(object):
             controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*1)+"->"+str(BUCKET_NUM*2)],[str(1)],1)
             controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*2)+"->"+str(BUCKET_NUM*3)],[str(2)],2)
             
-
-    def reset_registers(self,sw_name):
-        for i in range(self.register_num[sw_name]):
-            self.controllers[sw_name].register_reset("sketch{}".format(i))
 
     def set_crc_custom_hashes(self):
         for sw_name in self.controllers.keys():
