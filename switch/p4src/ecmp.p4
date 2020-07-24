@@ -112,6 +112,7 @@ control MyIngress(inout headers hdr,
         counter1.read(meta.counter_value1, meta.counter_index1);
 		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value1 == 0) {
 			meta.SFH_index = meta.counter_index1;
+			meta.counter_value1 = 1;
 		}
 		counter1.write(meta.counter_index1, meta.counter_value1);
 		
@@ -119,6 +120,7 @@ control MyIngress(inout headers hdr,
         counter2.read(meta.counter_value2, meta.counter_index2);
 		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value2 == 0) {
 			meta.SFH_index = meta.counter_index2;
+			meta.counter_value2 = 1;
 		}
 		counter2.write(meta.counter_index2, meta.counter_value2);
 

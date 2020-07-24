@@ -3,8 +3,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <thread>
-#include <chrono>
+#include <string>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -20,7 +19,7 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
-	Sender sender(argv[1], atoi(argv[2]));
+	Sender sender(std::string(argv[1]), atoi(argv[2]));
 
 	sender.send(atoi(argv[3]));
 

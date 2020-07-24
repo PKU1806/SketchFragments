@@ -1,3 +1,6 @@
+#ifndef __HEADER_H__
+#define __HEADER_H__
+
 #pragma pack(1)
 
 struct MIH_Header {
@@ -17,3 +20,5 @@ struct COM_Header {
 	MIH_Header mih;
 	SFH_Header sfh;
 };
+
+#endif

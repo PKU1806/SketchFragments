@@ -1,3 +1,18 @@
+#ifndef __RECEIVER_H__
+#define __RECEIVER_H__
+
+#include <cstdlib>
+#include <cstring>
+#include <chrono>
+#include <thread>
+
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#include "header.h"
+
 #define MAX_IP_LENGTH 1024
 
 #define SWITCH_NUM 10
@@ -59,8 +74,10 @@ struct Receiver {
 			int recv_num = recvfrom(sock_fd, (char *)&com_header, header_len,
 				   	0, (sockaddr *)&addr_send, (socklen_t *)&addr_len);
 
-			// printf("receive: %d / %d bytes (PKT : %d, FG : %d)\n", recv_num,
-			// 	   	header_len, recv_pkt, com_header.mih.exists_fg);
+			printf("receive: %d / %d bytes (PKT : %d, FG : %d)\n", recv_num,
+				   	header_len, recv_pkt, com_header.mih.exists_fg);
+			printf("send ip: %s, send port: %d.\n",
+				   	inet_ntoa(addr_send.sin_addr), addr_send.sin_port);
 
 			if (recv_num < 0) {
 				perror("recvfrom error.");
@@ -175,3 +192,4 @@ struct Receiver {
 };
 }
 
+#endif
