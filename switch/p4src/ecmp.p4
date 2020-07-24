@@ -142,12 +142,8 @@ control MyIngress(inout headers hdr,
     }
 
     action _choose_fragment(bit<8> SFH_target_array){
-<<<<<<< HEAD
-        meta.SFH_target_bucket=meta.SFH_index-SFH_target_array*BUCKET_NUM;
-=======
 		meta.SFH_target_bucket = meta.SFH_index - 
 			(bit<32>)meta.SFH_target_array * BUCKET_NUM;
->>>>>>> afdbe097e71b0cba4b7ee771c4fec574e34315a1
         meta.SFH_target_array = SFH_target_array + (1 - meta.sketch_fg) * 3;
     }
 
