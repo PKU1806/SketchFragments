@@ -35,11 +35,11 @@ struct Sender {
 	}
 
 	void send(int max_pkt) {
-		for (int send_pkt = 0; send_pkt < max_pkt; send_pkt++) {
+		for (int send_pkt = 0; send_pkt < max_pkt || max_pkt < 0; send_pkt++) {
 			int send_num = sendto(sock_fd, (char *)&mih_header, header_len,
 				   	0, (sockaddr *)&addr_recv, addr_len);
 
-			printf("send: %d / %d bytes (PKT : %d)\n", send_num, header_len, send_pkt);
+			// printf("send: %d / %d bytes (PKT : %d)\n", send_num, header_len, send_pkt);
 
 			if (send_num < 0) {
 				perror("sendto error.");
