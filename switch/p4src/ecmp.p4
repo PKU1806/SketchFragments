@@ -1,3 +1,4 @@
+
 /* -*- P4_16 -*- */
 #include <core.p4>
 #include <v1model.p4>
@@ -13,7 +14,7 @@
 #define RANDOM_BOUND 10
 
 #define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
-
+#define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM) counter##num
 
 //6crc
 //this is for sketch
@@ -60,6 +61,10 @@ ARRAY_REGISTER(3);
 ARRAY_REGISTER(4);
 ARRAY_REGISTER(5);
 
+ARRAY_COUNTER(0);
+ARRAY_COUNTER(1);
+ARRAY_COUNTER(2);
+
 //timestamps
 register<bit<48>>(BUCKET_NUM) timestamp_array0;
 register<bit<48>>(BUCKET_NUM) timestamp_array1;
@@ -91,27 +96,47 @@ control MyIngress(inout headers hdr,
 
     action predispose(){
         // COMPUTE_SFH_HASH
-		random(meta.SFH_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3*BUCKET_NUM -1));
+        counter0.read(meta.counter_value0,meta.counter_index0);
+		
+        random(meta.counter_index1, (bit<32>)0, (bit<32>)(3*BUCKET_NUM -1));
+        counter1.read(meta.counter_value1,meta.counter_index1);
+		
+        random(meta.counter_index2, (bit<32>)0, (bit<32>)(3*BUCKET_NUM -1));
+        counter2.read(meta.counter_value2,meta.counter_index2);
 
-		hdr.SFH.sfh_fgment_id = meta.SFH_index0;
+        meta.tmp00=(bit<32>)meta.counter_value0;
+        meta.tmp01=(bit<32>)meta.counter_value1;
+        meta.tmp02=(bit<32>)meta.counter_value2;
 
-        if(meta.SFH_index0 < BUCKET_NUM){
-            meta.SFH_target_bucket=meta.SFH_index0;
-            meta.SFH_target_array=0;
-        }
-        else if(meta.SFH_index0 < BUCKET_NUM * 2){
-            meta.SFH_target_bucket=meta.SFH_index0 - BUCKET_NUM;
-            meta.SFH_target_array=1;
-        }
-        else{
-            meta.SFH_target_bucket=meta.SFH_index0 - BUCKET_NUM * 2;
-            meta.SFH_target_array=2;
-        }
+        meta.SFH_index=meta.counter_index0*(1-meta.tmp00);
+        meta.SFH_index=meta.SFH_index+meta.counter_index1*(1-meta.tmp01)*meta.tmp00;
+        meta.SFH_index=meta.SFH_index+meta.counter_index2*(1-meta.tmp02)*meta.tmp01*meta.tmp00;
+        
+        meta.counter_value0=meta.counter_value0|1;
+        meta.counter_value1=meta.counter_value1|meta.counter_value0;
+        meta.counter_value2=meta.counter_value2|meta.counter_value1;
 
-        if(meta.sketch_fg==0){
-            meta.SFH_target_array=meta.SFH_target_array+3;
+        counter0.write(meta.counter_index0,meta.counter_value0);
+        counter1.write(meta.counter_index1,meta.counter_value1);
+        counter2.write(meta.counter_index2,meta.counter_value2);
+
+    }
+
+    action _choose_fragment(bit<8> SFH_target_array){
+        meta.SFH_target_array=SFH_target_array+(1-meta.sketch_fg)*3;
+    }
+
+    table choose_fragment{
+        key={
+            meta.SFH_index:range;
         }
-        return ;
+        actions={
+            NoAction;
+            _choose_fragment;
+        }
+        size=256;
+        default_action=NoAction;
     }
 
     action update_using_sketch0(){
@@ -386,9 +411,9 @@ control MyIngress(inout headers hdr,
 
 						//hash suspend
 						predispose();
+                        choose_fragment.apply();
 						update_SFH.apply();
-
-						hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
+                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
 						hdr.udp.length = hdr.udp.length + (58 - 11);
                         hdr.MIH.sfh_exists_fg = 1;
 					}
@@ -426,49 +451,11 @@ control MyEgress(inout headers hdr,
     //the insertion of timestamp can be moved to previous part
 
     //this action get the corresponding lev of bucket
-    action get_delay_lev()
+    action _get_delay_lev(bit<32> delay_lev)
     {
-        //whether p4 support switch && > ?
-        if (meta.switch_delay < 1 * 1000){
-            meta.delay_lev = 0;
-            return;
-        }
-        else if (meta.switch_delay < 2 * 1000){
-            meta.delay_lev = 1;
-            return;
-        }
-        else if (meta.switch_delay < 3 * 1000){
-            meta.delay_lev = 2;
-            return;
-        }
-        else if (meta.switch_delay < 4 * 1000){
-            meta.delay_lev = 3;
-            return;
-        }
-        else if (meta.switch_delay < 5 * 1000){
-            meta.delay_lev = 4;
-            return;
-        }
-        else if (meta.switch_delay < 6 * 1000){
-            meta.delay_lev = 5;
-            return;
-        }
-        else if (meta.switch_delay < 7 * 1000){
-            meta.delay_lev = 6;
-            return;
-        }
-        else if (meta.switch_delay < 8 * 1000){
-            meta.delay_lev = 7;
-            return;
-        }
-        else if (meta.switch_delay < 9 * 1000){
-            meta.delay_lev = 8;
-            return;
-        }
-        else {
-            meta.delay_lev = 9;
-            return;
-        }
+        meta.delay_lev = delay_lev;
+        
+        
     }
 
     //semi-CU-sketch    
@@ -559,6 +546,17 @@ control MyEgress(inout headers hdr,
         default_action = NoAction;
     }
 
+    table get_delay_lev{
+        key={
+            meta.switch_delay:range;
+        }
+        actions={
+            _get_delay_lev;
+            NoAction;
+        }
+        size=256;
+        default_action=NoAction;
+    }
 
     apply
     {
@@ -566,7 +564,7 @@ control MyEgress(inout headers hdr,
             update_timestamp();
 
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
-            get_delay_lev();
+            get_delay_lev.apply();
 
             sketch_fg.read(meta.sketch_fg,0);
             update_sketch.apply();

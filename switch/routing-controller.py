@@ -9,6 +9,10 @@ import sys
 crc32_polinomials = [0x04C11DB7, 0xEDB88320, 0xDB710641, 0x82608EDB, 0x741B8CD7, 0xEB31D82E,
                      0xD663B05, 0xBA0DC66B, 0x32583499, 0x992C1A4C, 0x32583499, 0x992C1A4C]
 
+BUCKET_NUM = 16
+BIN_NUM  = 10
+TIME_INTERVAL = 1000
+
 class RoutingController(object):
 
     def __init__(self):
@@ -65,6 +69,19 @@ class RoutingController(object):
             controller.table_add("update_sketch","update_sketch1",[str(1)],[])
             controller.table_add("update_SFH","update_using_sketch0",[str(1)],[])
             controller.table_add("update_SFH","update_using_sketch1",[str(0)],[])
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*0)+"->"+str(TIME_INTERVAL*1)],[str(0)],0)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*1)+"->"+str(TIME_INTERVAL*2)],[str(1)],1)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*2)+"->"+str(TIME_INTERVAL*3)],[str(2)],2)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*3)+"->"+str(TIME_INTERVAL*4)],[str(3)],3)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*4)+"->"+str(TIME_INTERVAL*5)],[str(4)],4)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*5)+"->"+str(TIME_INTERVAL*6)],[str(5)],5)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*6)+"->"+str(TIME_INTERVAL*7)],[str(6)],6)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*7)+"->"+str(TIME_INTERVAL*8)],[str(7)],7)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*8)+"->"+str(TIME_INTERVAL*9)],[str(8)],8)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*9)+"->"+str(TIME_INTERVAL*1000)],[str(9)],9)
+            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*0)+"->"+str(BUCKET_NUM*1)],[str(0)],0)
+            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*1)+"->"+str(BUCKET_NUM*2)],[str(1)],1)
+            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*2)+"->"+str(BUCKET_NUM*3)],[str(2)],2)
             
 
     def reset_registers(self,sw_name):

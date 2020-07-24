@@ -4,3 +4,8 @@
 /etc/correctness/*.out
 /etc/correctness/*.csv
 /etc/correctness/*.xlsx
+/switch/log/*
+/switch/p4src/ecmp.p4i
+/switch/p4src/ecmp.json
+/switch/topology.db
+/switch/pcap/*

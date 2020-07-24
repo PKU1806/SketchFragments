@@ -108,7 +108,7 @@ struct metadata {
     bit<32> array_value4;
     bit<32> array_value5;
     
-    bit<32> SFH_index0;
+    bit<32> SFH_index;
 
     bit<32> timestamp_index0;    //for timestamp register
     bit<32> timestamp_index1;    //for timestamp register
@@ -117,6 +117,15 @@ struct metadata {
     bit<48> timestamp_value0;
     bit<48> timestamp_value1;
     bit<48> timestamp_value2;
+
+    bit<32> counter_index0;
+    bit<32> counter_index1;
+    bit<32> counter_index2;
+
+    bit<1> counter_value0;
+    bit<1> counter_value1;
+    bit<1> counter_value2;
+
 
     //the above can be refined into at most 4 indexes and 4 values  I suppose
     // but for convenience , we used a lot of them
