@@ -59,8 +59,8 @@ struct Receiver {
 			int recv_num = recvfrom(sock_fd, (char *)&com_header, header_len,
 				   	0, (sockaddr *)&addr_send, (socklen_t *)&addr_len);
 
-			// printf("receive: %d / %d bytes (PKT : %d, FG : %d)\n", recv_num,
-			// 	   	header_len, recv_pkt, com_header.mih.exists_fg);
+			printf("receive: %d / %d bytes (PKT : %d, FG : %d)\n", recv_num,
+				   	header_len, recv_pkt, com_header.mih.exists_fg);
 
 			if (recv_num < 0) {
 				perror("recvfrom error.");
@@ -109,6 +109,9 @@ struct Receiver {
 		if (sketch_flag[switch_id] != sketch_fg) {
 			receive_next_sketch(switch_id, sketch_fg);
 		}
+
+		printf("switch id: %d, array id: %d, bucket id: %d.\n",
+				switch_id, array_id, bucket_id);
 
 		if (sketch[switch_id][array_id][bucket_id].switch_id == 0) {
 			receive_next_fgment(com_header.sfh, 

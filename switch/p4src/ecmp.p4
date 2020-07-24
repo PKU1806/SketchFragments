@@ -11,7 +11,7 @@
 #define BIN_NUM 10
 #define BIN_CELL_BIT_WIDTH 32
 
-#define RANDOM_BOUND 10
+#define RANDOM_BOUND 1
 
 #define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
 #define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM) counter##num
@@ -96,35 +96,50 @@ control MyIngress(inout headers hdr,
 
     action predispose(){
         // COMPUTE_SFH_HASH
-		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3*BUCKET_NUM -1));
-        counter0.read(meta.counter_value0,meta.counter_index0);
+
+		meta.SFH_index = 3 * BUCKET_NUM;
+
+		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+        counter0.read(meta.counter_value0, meta.counter_index0);
+		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value0 == 0) {
+			meta.SFH_index = meta.counter_index0;
+			meta.counter_value0 = 1;
+		}
+		counter0.write(meta.counter_index0, meta.counter_value0);
 		
-        random(meta.counter_index1, (bit<32>)0, (bit<32>)(3*BUCKET_NUM -1));
-        counter1.read(meta.counter_value1,meta.counter_index1);
+        random(meta.counter_index1, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+        counter1.read(meta.counter_value1, meta.counter_index1);
+		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value1 == 0) {
+			meta.SFH_index = meta.counter_index1;
+		}
+		counter1.write(meta.counter_index1, meta.counter_value1);
 		
-        random(meta.counter_index2, (bit<32>)0, (bit<32>)(3*BUCKET_NUM -1));
-        counter2.read(meta.counter_value2,meta.counter_index2);
+        random(meta.counter_index2, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+        counter2.read(meta.counter_value2, meta.counter_index2);
+		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value2 == 0) {
+			meta.SFH_index = meta.counter_index2;
+		}
+		counter2.write(meta.counter_index2, meta.counter_value2);
 
-        meta.tmp00=(bit<32>)meta.counter_value0;
-        meta.tmp01=(bit<32>)meta.counter_value1;
-        meta.tmp02=(bit<32>)meta.counter_value2;
+        // meta.tmp00=(bit<32>)meta.counter_value0;
+        // meta.tmp01=(bit<32>)meta.counter_value1;
+        // meta.tmp02=(bit<32>)meta.counter_value2;
 
-        meta.SFH_index=meta.counter_index0*(1-meta.tmp00);
-        meta.SFH_index=meta.SFH_index+meta.counter_index1*(1-meta.tmp01)*meta.tmp00;
-        meta.SFH_index=meta.SFH_index+meta.counter_index2*(1-meta.tmp02)*meta.tmp01*meta.tmp00;
-        
-        meta.counter_value0=meta.counter_value0|1;
-        meta.counter_value1=meta.counter_value1|meta.counter_value0;
-        meta.counter_value2=meta.counter_value2|meta.counter_value1;
+        // meta.SFH_index=meta.counter_index0*(1-meta.tmp00);
+        // meta.SFH_index=meta.SFH_index+meta.counter_index1*(1-meta.tmp01)*meta.tmp00;
+        // meta.SFH_index=meta.SFH_index+meta.counter_index2*(1-meta.tmp02)*meta.tmp01*meta.tmp00;
+        // 
+        // meta.counter_value0=meta.counter_value0|1;
+        // meta.counter_value1=meta.counter_value1|meta.counter_value0;
+        // meta.counter_value2=meta.counter_value2|meta.counter_value1;
 
-        counter0.write(meta.counter_index0,meta.counter_value0);
-        counter1.write(meta.counter_index1,meta.counter_value1);
-        counter2.write(meta.counter_index2,meta.counter_value2);
-
+        // counter0.write(meta.counter_index0,meta.counter_value0);
+        // counter1.write(meta.counter_index1,meta.counter_value1);
+        // counter2.write(meta.counter_index2,meta.counter_value2);
     }
 
     action _choose_fragment(bit<8> SFH_target_array){
-        meta.SFH_target_array=SFH_target_array+(1-meta.sketch_fg)*3;
+        meta.SFH_target_array = SFH_target_array + (1 - meta.sketch_fg) * 3;
     }
 
     table choose_fragment{
@@ -402,20 +417,23 @@ control MyIngress(inout headers hdr,
 
                     //the probility allows
 					random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
-					if (meta.random_number == 0) {
-                        hdr.SFH.setValid();
-						hdr.SFH.sfh_switch_id = meta.switch_id;
-
-						sketch_fg.read(meta.sketch_fg,0);
-						hdr.SFH.sfh_sketch_fg = 1 - meta.sketch_fg;
-
+					if (meta.random_number <= 0) {
 						//hash suspend
 						predispose();
-                        choose_fragment.apply();
-						update_SFH.apply();
-                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
-						hdr.udp.length = hdr.udp.length + (58 - 11);
-                        hdr.MIH.sfh_exists_fg = 1;
+						
+						if (meta.SFH_index < 3 * BUCKET_NUM) {
+							hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
+							hdr.udp.length = hdr.udp.length + (58 - 11);
+
+							hdr.MIH.sfh_exists_fg = 1;
+							hdr.SFH.setValid();
+							hdr.SFH.sfh_switch_id = meta.switch_id;
+							sketch_fg.read(meta.sketch_fg,0);
+							hdr.SFH.sfh_sketch_fg = 1 - meta.sketch_fg;
+
+							choose_fragment.apply();
+							update_SFH.apply();
+						}
 					}
 				}
             }
