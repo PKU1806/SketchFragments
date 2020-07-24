@@ -7,12 +7,14 @@
 #include "include/headers.p4"
 #include "include/parsers.p4"
 
+//test factors , volatile
 #define BUCKET_NUM 64
 #define BIN_NUM 10
 #define BIN_CELL_BIT_WIDTH 32
-
 #define RANDOM_BOUND 10
 
+
+//data structure
 #define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
 #define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM) counter##num
 
@@ -61,6 +63,7 @@ ARRAY_REGISTER(3);
 ARRAY_REGISTER(4);
 ARRAY_REGISTER(5);
 
+//counter
 ARRAY_COUNTER(0);
 ARRAY_COUNTER(1);
 ARRAY_COUNTER(2);
@@ -94,10 +97,8 @@ control MyIngress(inout headers hdr,
                   inout standard_metadata_t standard_metadata)
 {
 
+    //get the bringable bucket index 
     action predispose(){
-        // COMPUTE_SFH_HASH
-
-		// random(meta.SFH_index, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
 		meta.SFH_index = 3 * BUCKET_NUM;
 
 		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
@@ -319,6 +320,7 @@ control MyIngress(inout headers hdr,
         default_action=NoAction;
     }
 
+    /******************* inherited code start here       ************************/
     action drop(){
         mark_to_drop();
     }
@@ -377,7 +379,10 @@ control MyIngress(inout headers hdr,
         default_action = drop;
     }
 
-    action update_SFH_timestamp()
+    /******************* inherited code end here       ************************/
+
+
+    action update_MIH_timestamp()
     {
         COMPUTE_TIMESTAMP_HASH(0)
         COMPUTE_TIMESTAMP_HASH(1)
@@ -413,9 +418,9 @@ control MyIngress(inout headers hdr,
 				hdr.udp.checksum = 0;
 
 				switch_id.read(meta.switch_id, 0);
-				update_SFH_timestamp();
+				update_MIH_timestamp();
 
-				swap_control.read(meta.swap_control,0);//0 bring-able 1 forbidden
+				swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
 
 				if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {
                     //this packet is vacant 
@@ -423,7 +428,7 @@ control MyIngress(inout headers hdr,
                     //the probility allows
 					random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
 					if (meta.random_number <= 0) {
-						//hash suspend
+						
 						predispose();
 						
 						if (meta.SFH_index < 3 * BUCKET_NUM) {
@@ -453,11 +458,6 @@ control MyIngress(inout headers hdr,
             }
         }
     }
-    /*
-    apply
-    {
-        //do nothing
-    }*/
 }
 
 /*************************************************************************

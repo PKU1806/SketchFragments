@@ -63,8 +63,8 @@ header udp_t {
 header MIH_t{
     //max interval header
     bit<16>  mih_switch_id;
-    bit<48>  mih_timestamp;          //modified from 32 to 48
-	bit<16>  mih_padding;            //
+    bit<48>  mih_timestamp;
+	bit<16>  mih_padding;                   //？？why？ padding so big ,8 bit align?
     bit<8>   sfh_exists_fg;                 //if SFH_fg==0 no SFH,
 }
 
@@ -72,7 +72,7 @@ header MIH_t{
 header SFH_t{
 
     //part 0:
-    bit<16> sfh_switch_id;          //switch id
+    bit<16> sfh_switch_id;
     bit<8>  sfh_sketch_fg;          //0 stands for group0,vice versa
     bit<32> sfh_fgment_id;
 
