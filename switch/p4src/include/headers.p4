@@ -110,14 +110,16 @@ struct metadata {
     
     bit<32> SFH_index;
 
-    bit<32> timestamp_index0;    //for timestamp register
-    bit<32> timestamp_index1;    //for timestamp register
-    bit<32> timestamp_index2;    //for timestamp register
+    //for timestamp register
+    bit<32> timestamp_index0;
+    bit<32> timestamp_index1;
+    bit<32> timestamp_index2;
 
     bit<48> timestamp_value0;
     bit<48> timestamp_value1;
     bit<48> timestamp_value2;
 
+    //for counter registers
     bit<32> counter_index0;
     bit<32> counter_index1;
     bit<32> counter_index2;
@@ -131,23 +133,23 @@ struct metadata {
     // but for convenience , we used a lot of them
 
 	bit<16> switch_id;
-    bit<48> switch_delay;                           //the subst
-    bit<8>  sketch_fg;                              //
-    bit<8>  swap_control;                           //
+    bit<48> switch_delay;
+    bit<8>  sketch_fg;
+    bit<8>  swap_control;
 
     bit<32> delay_lev;
-    bit<48> previous_ingress_global_timestamp;      //the previous one of timestamp
-    bit<48> max_bucket_interval;                    //
+    bit<48> previous_ingress_global_timestamp;
+    bit<48> max_bucket_interval;
 
     bit<8> SFH_target_array;                        //the sketch selected
     bit<32> SFH_target_bucket;                      //the bucket selected
-    bit<32> random_number;                          //
+    bit<32> random_number;
     
 
     bit<14> ecmp_hash;
     bit<14> ecmp_group_id;
 
-    //
+    //tmp use
     bit<32> tmp00;
     bit<32> tmp01;
     bit<32> tmp02;

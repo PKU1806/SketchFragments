@@ -111,6 +111,7 @@ control MyIngress(inout headers hdr,
         counter1.read(meta.counter_value1, meta.counter_index1);
 		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value1 == 0) {
 			meta.SFH_index = meta.counter_index1;
+			meta.counter_value1 = 1;
 		}
 		counter1.write(meta.counter_index1, meta.counter_value1);
 		
@@ -118,6 +119,7 @@ control MyIngress(inout headers hdr,
         counter2.read(meta.counter_value2, meta.counter_index2);
 		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value2 == 0) {
 			meta.SFH_index = meta.counter_index2;
+			meta.counter_value2 = 1;
 		}
 		counter2.write(meta.counter_index2, meta.counter_value2);
 
@@ -129,9 +131,9 @@ control MyIngress(inout headers hdr,
         // meta.SFH_index=meta.SFH_index+meta.counter_index1*(1-meta.tmp01)*meta.tmp00;
         // meta.SFH_index=meta.SFH_index+meta.counter_index2*(1-meta.tmp02)*meta.tmp01*meta.tmp00;
         // 
-        // meta.counter_value0=meta.counter_value0|1;
-        // meta.counter_value1=meta.counter_value1|meta.counter_value0;
         // meta.counter_value2=meta.counter_value2|meta.counter_value1;
+        // meta.counter_value1=meta.counter_value1|meta.counter_value0;
+        // meta.counter_value0=meta.counter_value0|1;
 
         // counter0.write(meta.counter_index0,meta.counter_value0);
         // counter1.write(meta.counter_index1,meta.counter_value1);
@@ -139,6 +141,7 @@ control MyIngress(inout headers hdr,
     }
 
     action _choose_fragment(bit<8> SFH_target_array){
+        meta.SFH_target_bucket=meta.SFH_index-SFH_target_array*BUCKET_NUM;
         meta.SFH_target_array = SFH_target_array + (1 - meta.sketch_fg) * 3;
     }
 
