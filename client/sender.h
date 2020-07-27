@@ -1,28 +1,12 @@
 #ifndef __SENDER_H__
 #define __SENDER_H__
 
-#include <cstdlib>
-#include <cstring>
-#include <chrono>
-#include <thread>
-#include <iostream>
-#include <fstream>
-
-#include <unistd.h>
-#include <syscall.h>
-#include <fcntl.h>
-#include <sched.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "header.h"
+#include "host.h" 
 
 namespace Simulator {
 
-struct Sender {
+struct Sender : Host {
 	std::string recv_ip;
 
 	sockaddr_in addr_recv;
@@ -30,7 +14,8 @@ struct Sender {
 
 	int recv_port, sock_fd, addr_len, header_len;
 
-	Sender(std::string ip, int port) {
+	Sender(std::string ip, int port, std::string pid) : Host(pid) {
+
 		sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
 
 		if (sock_fd < 0) {
@@ -61,15 +46,15 @@ struct Sender {
 			int send_num = sendto(sock_fd, (char *)&mih_header, header_len,
 				   	0, (sockaddr *)&addr_recv, addr_len);
 
-			printf("send: %d / %d bytes (PKT : %d)\n", send_num, header_len, sendp);
-			printf("recv ip: %s, recv port: %d\n", recv_ip.c_str(), recv_port);
+			// printf("send: %d / %d bytes (PKT : %d)\n", send_num, header_len, sendp);
+			// printf("recv ip: %s, recv port: %d\n", recv_ip.c_str(), recv_port);
 
 			if (send_num < 0) {
 				perror("sendto error.");
 				exit(1);
 			}
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		}
 	}
 
@@ -77,18 +62,17 @@ struct Sender {
 		char path[MAX_PATH_LENGTH];
 
 		sprintf(path, "/proc/%s/ns/net", pid.c_str());
-		std::cout << path << std::endl;
 		printf("attach net: %d.\n", attachToNS(path));
 
 		sprintf(path, "/proc/%s/ns/pid", pid.c_str());
-		std::cout << path << std::endl;
 		printf("attach pid: %d.\n", attachToNS(path));
 
 		sprintf(path, "/proc/%s/ns/mnt", pid.c_str());
-		std::cout << path << std::endl;
 		printf("attach mnt: %d.\n", attachToNS(path));
 
-		system("ifconfig | grep inet");
+		if(system("ifconfig | grep inet") != 0) {
+			exit(0);
+		}
 	}
 
 	int attachToNS(char *path) {

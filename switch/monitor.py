@@ -6,11 +6,11 @@ from p4utils.utils.sswitch_API import *
 import threading
 import time
 
-BUCKET_NUM = 64
-BIN_BUM = 10
-ARRAY_NUM = 3
+buc_num = 64
+bin_num = 10
+arr_num = 3
 
-UPDATE_INTERVAL = 600
+upd_int = 600
 
 lock = threading.Lock()
 
@@ -33,7 +33,7 @@ class Monitor(threading.Thread):
         present_sketch=self.controller.register_read("sketch_fg",0)
         
         if present_sketch == 0 :
-            for index in range(0, BUCKET_NUM * BUN_NUM):
+            for index in range(0, buc_num * bin_num):
                 # temp=self.controller.register_read("array0",index)
                 # self.controller.register_write("array3",index,temp)
                 # temp=self.controller.register_read("array1",index)
@@ -45,7 +45,7 @@ class Monitor(threading.Thread):
                 self.controller.register_write("array4",index,0)
                 self.controller.register_write("array5",index,0)
         else :
-            for index in range(0, BUCKET_NUM * BIN_BUM):
+            for index in range(0, buc_num * bin_num):
                 # temp=self.controller.register_read("array3",index)
                 # self.controller.register_write("array0",index,temp)
                 # temp=self.controller.register_read("array4",index)
@@ -57,7 +57,7 @@ class Monitor(threading.Thread):
                 self.controller.register_write("array1",index,0)
                 self.controller.register_write("array2",index,0)
 
-        for index in range(0, BUCKET_NUM * ARRAY_NUM):
+        for index in range(0, buc_num * arr_num):
             self.controller.register_write("counter0", index, 0);
             self.controller.register_write("counter1", index, 0);
             self.controller.register_write("counter2", index, 0);
@@ -69,7 +69,7 @@ class Monitor(threading.Thread):
         self.visor()
         lock.release()
 
-        time.sleep(UPDATE_INTERVAL - 2)
+        time.sleep(upd_int - 2)
     
     def visor(self):
         sf = self.controller.register_read("sketch_fg", 0)
@@ -130,7 +130,7 @@ class Monitor(threading.Thread):
     def monitor(self):
         while True:
             current_time = self.controller.sswitch_client.get_time_elapsed_us() \
-                    % (UPDATE_INTERVAL * 1000 * 1000)
+                    % (upd_int * 1000 * 1000)
             if current_time < 1 * 1000 * 1000:
                 print(self.controller.sswitch_client.get_time_elapsed_us())
                 self.sketch_swap()

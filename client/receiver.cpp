@@ -20,14 +20,14 @@ const int ar_num = 3;
 const int bu_num = 64;
 
 int main(int argc, char **argv) {
-	if (argc != 3) {
+	if (argc != 4) {
 		perror("args error.");
 		exit(1);
 	}
 
 	Simulator::Aggregator agg(sw_num, ar_num, bu_num);
 
-	Simulator::Receiver receiver(atoi(argv[1]), agg);
+	Simulator::Receiver receiver(atoi(argv[1]), agg, argv[3]);
 
 	receiver.receive(atoi(argv[2]));
 

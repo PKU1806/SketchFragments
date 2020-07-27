@@ -1,27 +1,13 @@
 #ifndef __RECEIVER_H__
 #define __RECEIVER_H__
 
-#include <cstdlib>
-#include <cstring>
-#include <chrono>
-#include <thread>
-
-#include <unistd.h>
-#include <syscall.h>
-#include <fcntl.h>
-#include <sched.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "header.h"
+#include "host.h"
 #include "aggregator.h"
 
 namespace Simulator {
 
-struct Receiver {
+struct Receiver : Host {
 	sockaddr_in addr_send, addr_recv;
 	COM_Header com_header;
 
@@ -29,7 +15,8 @@ struct Receiver {
 
 	Aggregator &aggregator;
 
-	Receiver(int port, Aggregator agg) : aggregator(agg) {
+	Receiver(int port, Aggregator agg, std::string pid) : 
+		Host(pid), aggregator(agg) {
 		sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
 
 		if (sock_fd < 0) {
@@ -63,10 +50,10 @@ struct Receiver {
 			int recv_num = recvfrom(sock_fd, (char *)&com_header, header_len,
 				   	0, (sockaddr *)&addr_send, (socklen_t *)&addr_len);
 
-			printf("receive: %d / %d bytes (PKT : %d, FG : %d)\n", recv_num,
-				   	header_len, recvp, com_header.mih.exists_fg);
-			printf("send ip: %s, send port: %d.\n",
-				   	inet_ntoa(addr_send.sin_addr), addr_send.sin_port);
+			// printf("receive: %d / %d bytes (PKT : %d, FG : %d)\n", recv_num,
+			// 	   	header_len, recvp, com_header.mih.exists_fg);
+			// printf("send ip: %s, send port: %d.\n",
+			// 	   	inet_ntoa(addr_send.sin_addr), addr_send.sin_port);
 
 			if (recv_num < 0) {
 				perror("recvfrom error.");
@@ -89,29 +76,6 @@ struct Receiver {
 		for (int i = 0; i < 10; i++) {
 			com_header.sfh.delay[i] = be32toh(com_header.sfh.delay[i]);
 		}
-	}
-
-	void switch_namespace(std::string pid) {
-		char path[MAX_PATH_LENGTH];
-
-		sprintf(path, "/proc/%s/ns/net", pid.c_str());
-		std::cout << path << std::endl;
-		printf("attach net: %d.\n", attachToNS(path));
-
-		sprintf(path, "/proc/%s/ns/pid", pid.c_str());
-		std::cout << path << std::endl;
-		printf("attach pid: %d.\n", attachToNS(path));
-
-		sprintf(path, "/proc/%s/ns/mnt", pid.c_str());
-		std::cout << path << std::endl;
-		printf("attach mnt: %d.\n", attachToNS(path));
-
-		system("ifconfig | grep inet");
-	}
-
-	int attachToNS(char *path) {
-		int nsid = open(path, O_RDONLY);
-		return setns(nsid, 0);
 	}
 
 	~Receiver() {
