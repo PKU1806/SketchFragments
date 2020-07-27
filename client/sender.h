@@ -5,6 +5,13 @@
 #include <cstring>
 #include <chrono>
 #include <thread>
+#include <iostream>
+#include <fstream>
+
+#include <unistd.h>
+#include <syscall.h>
+#include <fcntl.h>
+#include <sched.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -13,7 +20,7 @@
 
 #include "header.h"
 
-#define MAX_IP_LENGTH 128
+namespace Simulator {
 
 struct Sender {
 	std::string recv_ip;
@@ -49,13 +56,13 @@ struct Sender {
 		mih_header.exists_fg = 0;
 	}
 
-	void send(int max_pkt) {
-		for (int send_pkt = 0; send_pkt < max_pkt || max_pkt < 0; send_pkt++) {
+	void send(int maxp) {
+		for (int sendp = 0; sendp < maxp || maxp < 0; sendp++) {
 			int send_num = sendto(sock_fd, (char *)&mih_header, header_len,
 				   	0, (sockaddr *)&addr_recv, addr_len);
 
-			// printf("send: %d / %d bytes (PKT : %d)\n", send_num, header_len, send_pkt);
-			// printf("recv ip: %s, recv port: %d\n", recv_ip.c_str(), recv_port);
+			printf("send: %d / %d bytes (PKT : %d)\n", send_num, header_len, sendp);
+			printf("recv ip: %s, recv port: %d\n", recv_ip.c_str(), recv_port);
 
 			if (send_num < 0) {
 				perror("sendto error.");
@@ -66,9 +73,33 @@ struct Sender {
 		}
 	}
 
+	void switch_namespace(std::string pid) {
+		char path[MAX_PATH_LENGTH];
+
+		sprintf(path, "/proc/%s/ns/net", pid.c_str());
+		std::cout << path << std::endl;
+		printf("attach net: %d.\n", attachToNS(path));
+
+		sprintf(path, "/proc/%s/ns/pid", pid.c_str());
+		std::cout << path << std::endl;
+		printf("attach pid: %d.\n", attachToNS(path));
+
+		sprintf(path, "/proc/%s/ns/mnt", pid.c_str());
+		std::cout << path << std::endl;
+		printf("attach mnt: %d.\n", attachToNS(path));
+
+		system("ifconfig | grep inet");
+	}
+
+	int attachToNS(char *path) {
+		int nsid = open(path, O_RDONLY);
+		return setns(nsid, 0);
+	}
+
 	~Sender() {
 		close(sock_fd);
 	}
 };
+}
 
 #endif

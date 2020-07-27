@@ -9,20 +9,25 @@
 #include <fcntl.h>
 #include <sched.h>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include "sender.h"
+#include "receiver.h"
+#include "aggregator.h"
 
 using namespace std;
 
-#define MAX_PATH 1024
-
-map<string, string> sender_pid, receiver_ip;
+map<string, string> host_pid, host_ip;
 
 void load_sender_config(const char * path) {
 	ifstream sender_config(path, std::ios::in);
 
 	string sender, pid;
 	while (sender_config >> sender >> pid) {
-		sender_pid[sender] = pid;
+		host_pid[sender] = pid;
 	}
 }
 
@@ -31,57 +36,34 @@ void load_receiver_config(const char * path) {
 
 	string receiver, ip;
 	while (receiver_config >> receiver >> ip) {
-		receiver_ip[receiver] = ip;
+		host_ip[receiver] = ip;
 	}
 }
 
-struct Thread_Sender {
-	Sender *sender;
+void Connector_S(string sname, string rname, int rport, int maxp) {
+	Simulator::Sender sender(host_ip[rname], rport);
 
-	Thread_Sender(string send_pid, string recv_ip, int recv_port) {
-		switch_namespace(send_pid);
-		sender = new Sender(recv_ip, recv_port);
-	}
+	sender.switch_namespace(host_pid[sname]);
+	sender.send(maxp);
 
-	void send(int max_pkt) {
-		sender->send(max_pkt);
-	}
-
-	void switch_namespace(string pid) {
-		char path[MAX_PATH];
-
-		sprintf(path, "/proc/%s/ns/net", pid.c_str());
-		std::cout << path << std::endl;
-		printf("attach net: %d.\n", attachToNS(path));
-
-		sprintf(path, "/proc/%s/ns/pid", pid.c_str());
-		std::cout << path << std::endl;
-		printf("attach pid: %d.\n", attachToNS(path));
-
-		sprintf(path, "/proc/%s/ns/mnt", pid.c_str());
-		std::cout << path << std::endl;
-		printf("attach mnt: %d.\n", attachToNS(path));
-	}
-
-	int attachToNS(char *path) {
-		int nsid = open(path, O_RDONLY);
-		return setns(nsid, 0);
-	}
-
-	~Thread_Sender() {
-		delete sender;
-	}
-};
-
-void Thread_Sender_Function(string sender_name, string receiver_name,
-	   	int recv_port, int max_pkt) {
-	Thread_Sender sender(sender_pid[sender_name], 
-			receiver_ip[receiver_name], recv_port);
-	sender.send(max_pkt);
-
-	std::cout << sender_name << " => " << receiver_name << ":" << 
-		recv_port << " : " << max_pkt << std::endl;
+	std::cout << sname << " => " << rname << ":" << rport << " : " <<
+	   	maxp << std::endl;
 }
+
+void Connector_R(string rname, int rport, int maxp, 
+		Simulator::Aggregator *agg) {
+	Simulator::Receiver receiver(rport, *agg);
+
+	receiver.switch_namespace(host_pid[rname]);
+	receiver.receive(maxp);
+
+	std::cout << " => " << rname << ":" << rport << " : " << maxp <<
+	   	std::endl;
+}
+
+const int sw_num = 10;
+const int ar_num = 3;
+const int bu_num = 16;
 
 int main(int argc, char **argv) {
 	system("./config.sh");
@@ -90,43 +72,58 @@ int main(int argc, char **argv) {
 	load_receiver_config("./receiver.config");
 
 	std::cout << "sender host:" << std:: endl;
-	for (auto i: sender_pid) {
+	for (auto i: host_pid) {
 		std::cout << i.first << " : " << i.second << std::endl;
 	}
 
 	std::cout << "receiver host:" << std:: endl;
-	for (auto i: receiver_ip) {
+	for (auto i: host_ip) {
 		std::cout << i.first << " : " << i.second << std::endl;
 	}
 
-	std::thread sender_3_1(Thread_Sender_Function, "h3", "h1", 8000, 100);
-	std::thread sender_4_1(Thread_Sender_Function, "h4", "h1", 8000, 100);
-	std::thread sender_5_1(Thread_Sender_Function, "h5", "h1", 8000, 100);
-	std::thread sender_6_1(Thread_Sender_Function, "h6", "h1", 8000, 100);
-	std::thread sender_7_1(Thread_Sender_Function, "h7", "h1", 8000, 100);
-	std::thread sender_8_1(Thread_Sender_Function, "h8", "h1", 8000, 100);
+	Simulator::Aggregator aggregator(sw_num, ar_num, bu_num);
+
+	
+
+	// std::thread receiver_1(Connector_R, "h1", 8000, 200, &aggregator);
+	// std::thread receiver_2(Connector_R, "h2", 8000, 200, &aggregator);
+
+	// std::thread sender_3_1(Connector_S, "h3", "h1", 8000, 100);
+	// std::thread sender_4_1(Connector_S, "h4", "h1", 8000, 100);
+	// std::thread sender_5_1(Connector_S, "h5", "h1", 8000, 100);
+	// std::thread sender_6_1(Connector_S, "h6", "h1", 8000, 100);
+	// std::thread sender_7_1(Connector_S, "h7", "h1", 8000, 100);
+	// std::thread sender_8_1(Connector_S, "h8", "h1", 8000, 100);
 
 
-	std::thread sender_3_2(Thread_Sender_Function, "h3", "h2", 8000, 100);
-	std::thread sender_4_2(Thread_Sender_Function, "h4", "h2", 8000, 100);
-	std::thread sender_5_2(Thread_Sender_Function, "h5", "h2", 8000, 100);
-	std::thread sender_6_2(Thread_Sender_Function, "h6", "h2", 8000, 100);
-	std::thread sender_7_2(Thread_Sender_Function, "h7", "h2", 8000, 100);
-	std::thread sender_8_2(Thread_Sender_Function, "h8", "h2", 8000, 100);
+	// std::thread sender_3_2(Connector_S, "h3", "h2", 8000, 100);
+	// std::thread sender_4_2(Connector_S, "h4", "h2", 8000, 100);
+	// std::thread sender_5_2(Connector_S, "h5", "h2", 8000, 100);
+	// std::thread sender_6_2(Connector_S, "h6", "h2", 8000, 100);
+	// std::thread sender_7_2(Connector_S, "h7", "h2", 8000, 100);
+	// std::thread sender_8_2(Connector_S, "h8", "h2", 8000, 100);
 
-	sender_3_1.join();
-	sender_4_1.join();
-	sender_5_1.join();
-	sender_6_1.join();
-	sender_7_1.join();
-	sender_8_1.join();
+	// receiver_1.join();
+	// receiver_2.join();
 
-	sender_3_2.join();
-	sender_4_2.join();
-	sender_5_2.join();
-	sender_6_2.join();
-	sender_7_2.join();
-	sender_8_2.join();
+	// sender_3_1.join();
+	// sender_4_1.join();
+	// sender_5_1.join();
+	// sender_6_1.join();
+	// sender_7_1.join();
+	// sender_8_1.join();
+
+	// sender_3_2.join();
+	// sender_4_2.join();
+	// sender_5_2.join();
+	// sender_6_2.join();
+	// sender_7_2.join();
+	// sender_8_2.join();
+
+	Simulator::Sender sender("10.7.1.2", 8000);
+
+	sender.switch_namespace(host_pid["h2"]);
+	sender.send(10);
 
 	return 0;
 }

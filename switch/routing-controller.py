@@ -9,7 +9,7 @@ import sys
 crc32_polinomials = [0x04C11DB7, 0xEDB88320, 0xDB710641, 0x82608EDB, 0x741B8CD7, 0xEB31D82E,
                      0xD663B05, 0xBA0DC66B, 0x32583499, 0x992C1A4C, 0x32583499, 0x992C1A4C]
 
-BUCKET_NUM = 64
+BUCKET_NUM = 16
 BIN_NUM  = 10
 TIME_INTERVAL = 1000
 
@@ -175,7 +175,7 @@ class RoutingController(object):
         self.route()
 
         for switch_id, controller in enumerate(self.controllers.values()):
-            controller.register_write("switch_id", 0, switch_id + 8001)
+            controller.register_write("switch_id", 0, switch_id)
             controller.register_write("swap_control", 0, 0)
             controller.register_write("sketch_fg", 0, 0)
 

@@ -3,9 +3,14 @@
 
 #pragma pack(1)
 
+namespace Simulator {
+
+#define MAX_IP_LENGTH 128
+#define MAX_PATH_LENGTH 1024
+
 struct MIH_Header {
     uint16_t switch_id;
-    uint64_t timestamp;
+    uint64_t tim_epoch;
 	uint8_t  exists_fg;
 };
 
@@ -20,5 +25,7 @@ struct COM_Header {
 	MIH_Header mih;
 	SFH_Header sfh;
 };
+
+}
 
 #endif

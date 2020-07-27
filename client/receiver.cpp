@@ -15,13 +15,20 @@
 #include "header.h"
 #include "receiver.h"
 
+const int sw_num = 10;
+const int ar_num = 3;
+const int bu_num = 64;
+
 int main(int argc, char **argv) {
 	if (argc != 3) {
 		perror("args error.");
 		exit(1);
 	}
 
-	Receiver::Receiver receiver(atoi(argv[1]));
+	Simulator::Aggregator agg(sw_num, ar_num, bu_num);
+
+	Simulator::Receiver receiver(atoi(argv[1]), agg);
+
 	receiver.receive(atoi(argv[2]));
 
 	return 0;

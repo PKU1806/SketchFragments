@@ -7,7 +7,7 @@
 #include "include/headers.p4"
 #include "include/parsers.p4"
 
-#define BUCKET_NUM 64
+#define BUCKET_NUM 16
 #define BIN_NUM 10
 #define BIN_CELL_BIT_WIDTH 32
 
