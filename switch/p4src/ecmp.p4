@@ -14,7 +14,7 @@
 #define RANDOM_BOUND 10
 
 #define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
-#define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM) counter##num
+#define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM*3) counter##num
 
 //6crc
 //this is for sketch
