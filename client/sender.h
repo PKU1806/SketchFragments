@@ -20,7 +20,9 @@ struct Sender {
 		recv_port = port;
 
 		printf("ip: %s, port: %d\n", recv_ip, recv_port);
-
+		//建立套接字
+		//打印ip和端口
+		
 		addr_len = sizeof(addr_recv);
 		header_len = sizeof(mih_header);
 

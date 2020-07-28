@@ -2,14 +2,36 @@ import nnpy
 import struct
 from p4utils.utils.topology import Topology
 from p4utils.utils.sswitch_API import SimpleSwitchAPI
-from scapy.all import Ether, sniff, Packet, BitField
+from scapy.all import *
 
 #need further modification
 # change to our structure
-class CpuHeader(Packet):
-    name = 'CpuPacket'
-    fields_desc = [BitField('macAddr',0,48), BitField('ingress_port', 0, 16)]
+class SFH(Packet):
+    name = 'SFH'
+    fields_desc = [\
+            BitField('sfh_switch_id',0,16),\
+            BitField('sfh_sketch_fg',0,8),\
+            BitField('sfh_fgment_id',0,32),\
+            BitField('sfh_delay0',0,32),\
+            BitField('sfh_delay1',0,32),\
+            BitField('sfh_delay2',0,32),\
+            BitField('sfh_delay3',0,32),\
+            BitField('sfh_delay4',0,32),\
+            BitField('sfh_delay5',0,32),\
+            BitField('sfh_delay6',0,32),\
+            BitField('sfh_delay7',0,32),\
+            BitField('sfh_delay8',0,32),\
+            BitField('sfh_delay9',0,32)]
 
+
+class MIH(Packet):
+    name="MIH"
+    #bitfiled(<name>,<default>,<length>)
+    fields_desc=[\
+            BitField("mih_switch_id",0,16),\
+            BitField("mih_timestamp",0,48),\
+            BitField("mih_padding",0,16),\
+            BitField("sfh_exists_fg",0,8)]
 class packetReceicer(object):
 
     def __init__(self, sw_name):
@@ -34,7 +56,7 @@ class packetReceicer(object):
         #need further modification
         
         if packet.type == 0x1234:
-            cpu_header = CpuHeader(packet.payload)
+            ipv4 = IP(packet.payload)
             print("success")
 
     def run_cpu_port_loop(self):
