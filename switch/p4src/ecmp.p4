@@ -7,14 +7,15 @@
 #include "include/headers.p4"
 #include "include/parsers.p4"
 
-#define BUCKET_NUM 16
+#define ARRAY_NUM 3
+#define BUCKET_NUM 64
 #define BIN_NUM 10
 #define BIN_CELL_BIT_WIDTH 32
 
 #define RANDOM_BOUND 10
 
 #define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
-#define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM) counter##num
+#define ARRAY_COUNTER(num) register<bit<1> >(ARRAY_NUM * BUCKET_NUM) counter##num
 
 //6crc
 //this is for sketch
@@ -97,32 +98,36 @@ control MyIngress(inout headers hdr,
     action predispose(){
         // COMPUTE_SFH_HASH
 
-		// random(meta.SFH_index, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
-		meta.SFH_index = 3 * BUCKET_NUM;
+		meta.SFH_index = ARRAY_NUM * BUCKET_NUM;
 
-		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+		random(meta.counter_index0, (bit<32>)0, (bit<32>)(ARRAY_NUM * BUCKET_NUM - 1));
         counter0.read(meta.counter_value0, meta.counter_index0);
-		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value0 == 0) {
+		if (meta.SFH_index >= ARRAY_NUM * BUCKET_NUM && meta.counter_value0 == 0) {
 			meta.SFH_index = meta.counter_index0;
 			meta.counter_value0 = 1;
 		}
 		counter0.write(meta.counter_index0, meta.counter_value0);
 		
-        random(meta.counter_index1, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+        random(meta.counter_index1, (bit<32>)0, (bit<32>)(ARRAY_NUM * BUCKET_NUM - 1));
         counter1.read(meta.counter_value1, meta.counter_index1);
-		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value1 == 0) {
+		if (meta.SFH_index >= ARRAY_NUM * BUCKET_NUM && meta.counter_value1 == 0) {
 			meta.SFH_index = meta.counter_index1;
 			meta.counter_value1 = 1;
 		}
 		counter1.write(meta.counter_index1, meta.counter_value1);
 		
-        random(meta.counter_index2, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+        random(meta.counter_index2, (bit<32>)0, (bit<32>)(ARRAY_NUM * BUCKET_NUM - 1));
         counter2.read(meta.counter_value2, meta.counter_index2);
-		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value2 == 0) {
+		if (meta.SFH_index >= ARRAY_NUM * BUCKET_NUM && meta.counter_value2 == 0) {
 			meta.SFH_index = meta.counter_index2;
 			meta.counter_value2 = 1;
 		}
 		counter2.write(meta.counter_index2, meta.counter_value2);
+
+		random(meta.SFH_random, (bit<32>)0, (bit<32>)(ARRAY_NUM * BUCKET_NUM - 1));
+		if (meta.SFH_index >= ARRAY_NUM * BUCKET_NUM) {
+			meta.SFH_index = meta.SFH_random;
+		}
 
         // meta.tmp00=(bit<32>)meta.counter_value0;
         // meta.tmp01=(bit<32>)meta.counter_value1;
@@ -426,7 +431,7 @@ control MyIngress(inout headers hdr,
 						//hash suspend
 						predispose();
 						
-						if (meta.SFH_index < 3 * BUCKET_NUM) {
+						if (meta.SFH_index < ARRAY_NUM * BUCKET_NUM) {
 							hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
 							hdr.udp.length = hdr.udp.length + (58 - 11);
 

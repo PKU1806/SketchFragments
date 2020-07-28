@@ -6,7 +6,7 @@ from p4utils.utils.sswitch_API import *
 import threading
 import time
 
-buc_num = 64
+buc_num = 16
 bin_num = 10
 arr_num = 3
 
@@ -79,47 +79,47 @@ class Monitor(threading.Thread):
         if sf == 1:
             print("array0:")
             for j in range(0, 10):
-                for i in range(0, 16):
+                for i in range(0, buc_num):
                     value = self.controller.register_read("array0", i * 10 + j)
                     print("|{:^3}|".format(value), end = "")
                 print()
 
             print("array1:")
             for j in range(0, 10):
-                for i in range(0, 16):
+                for i in range(0, buc_num):
                     value = self.controller.register_read("array1", i * 10 + j)
                     print("|{:^3}|".format(value), end = "")
                 print()
 
             print("array2:")
             for j in range(0, 10):
-                for i in range(0, 16):
+                for i in range(0, buc_num):
                     value = self.controller.register_read("array2", i * 10 + j)
                     print("|{:^3}|".format(value), end = "")
                 print()
         else:
             print("array3:")
             for j in range(0, 10):
-                for i in range(0, 16):
+                for i in range(0, buc_num):
                     value = self.controller.register_read("array3", i * 10 + j)
                     print("|{:^3}|".format(value), end = "")
                 print()
 
             print("array4:")
             for j in range(0, 10):
-                for i in range(0, 16):
+                for i in range(0, buc_num):
                     value = self.controller.register_read("array4", i * 10 + j)
                     print("|{:^3}|".format(value), end = "")
                 print()
 
             print("array5:")
             for j in range(0, 10):
-                for i in range(0, 16):
+                for i in range(0, buc_num):
                     value = self.controller.register_read("array5", i * 10 + j)
                     print("|{:^3}|".format(value), end = "")
                 print()
 
-        # for i in range(0, 16):
+        # for i in range(0, buc_num):
         #     value = self.controller.register_read("timestamp_array0", i)
         #     print("|{:^16}|".format(value), end = "")
         #     value = self.controller.register_read("timestamp_array1", i)

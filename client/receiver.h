@@ -13,9 +13,9 @@ struct Receiver : Host {
 
 	int sock_fd, recv_port, addr_len, header_len;
 
-	Aggregator &aggregator;
+	Aggregator *aggregator;
 
-	Receiver(int port, Aggregator agg, std::string pid) : 
+	Receiver(int port, Aggregator *agg, std::string pid) : 
 		Host(pid), aggregator(agg) {
 		sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -26,7 +26,7 @@ struct Receiver : Host {
 
 		recv_port = port;
 
-		printf("port: %d.\n", recv_port);
+		// printf("port: %d.\n", recv_port);
 
 		addr_len = sizeof(addr_recv);
 		header_len = sizeof(com_header);
@@ -62,7 +62,7 @@ struct Receiver : Host {
 
 			betoh_header(com_header);
 			if (com_header.mih.exists_fg != 0) {
-				aggregator.receive_header(com_header);
+				aggregator->receive_header(com_header);
 			}
 		}
 	}

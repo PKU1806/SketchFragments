@@ -88,7 +88,7 @@ struct Sketch {
 		printf("switch %d receive sketch %d using %ld ms.\n",
 			   	switch_id, sketch_fg, time_epoch.count());
 
-		visor_sketch();
+		// visor_sketch();
 	}
 
 	void visor_sketch() {

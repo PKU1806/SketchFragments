@@ -7,6 +7,11 @@ namespace Simulator {
 
 #define MAX_IP_LENGTH 128
 #define MAX_PATH_LENGTH 1024
+#define MAX_HOST_NUM 1024
+
+const int sw_num = 10;
+const int ar_num = 3;
+const int bu_num = 64;
 
 struct MIH_Header {
     uint16_t switch_id;

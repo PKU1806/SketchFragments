@@ -31,17 +31,20 @@ struct Host {
 		char path[MAX_PATH_LENGTH];
 
 		sprintf(path, "/proc/%s/ns/net", pid.c_str());
-		printf("attach net: %d.\n", attachToNS(path));
+		int status_net = attachToNS(path);
+		// printf("attach net: %d.\n", status_net);
 
 		sprintf(path, "/proc/%s/ns/pid", pid.c_str());
-		printf("attach pid: %d.\n", attachToNS(path));
+		int status_pid = attachToNS(path);
+		// printf("attach pid: %d.\n", status_pid);
 
 		sprintf(path, "/proc/%s/ns/mnt", pid.c_str());
-		printf("attach mnt: %d.\n", attachToNS(path));
+		int status_mnt = attachToNS(path);
+		// printf("attach mnt: %d.\n", status_mnt);
 
-		if (system("ifconfig | grep inet") != 0) {
-			exit(0);
-		}
+		// if (system("ifconfig | grep inet") != 0) {
+		// 	exit(0);
+		// }
 	}
 
 	int attachToNS(char *path) {

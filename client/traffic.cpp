@@ -14,113 +14,107 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "header.h"
 #include "sender.h"
 #include "receiver.h"
 #include "aggregator.h"
 
 using namespace std;
 
+const int udp_port = 1806;
+
+string hname[MAX_HOST_NUM];
 map<string, string> host_pid, host_ip;
-
-void load_sender_config(const char * path) {
-	ifstream sender_config(path, std::ios::in);
-
-	string sender, pid;
-	while (sender_config >> sender >> pid) {
-		host_pid[sender] = pid;
-	}
-}
-
-void load_receiver_config(const char * path) {
-	ifstream receiver_config(path, std::ios::in);
-
-	string receiver, ip;
-	while (receiver_config >> receiver >> ip) {
-		host_ip[receiver] = ip;
-	}
-}
 
 void Connector_S(string sname, string rname, int rport, int maxp) {
 	Simulator::Sender sender(host_ip[rname], rport, host_pid[sname]);
 
 	sender.send(maxp);
-
-	std::cout << sname << " => " << rname << ":" << rport << " : " <<
-	   	maxp << std::endl;
 }
 
 void Connector_R(string rname, int rport, int maxp, 
 		Simulator::Aggregator *agg) {
-	Simulator::Receiver receiver(rport, *agg, host_pid[rname]);
+	Simulator::Receiver receiver(rport, agg, host_pid[rname]);
 
 	receiver.receive(maxp);
-
-	std::cout << " => " << rname << ":" << rport << " : " << maxp <<
-	   	std::endl;
 }
 
-void config_loader() {
+int config_loader() {
 	if (system("./config.sh") != 0) {
 		exit(0);
 	}
 
-	load_sender_config("./sender.config");
-	load_receiver_config("./receiver.config");
+	ifstream loader("./host.config", std::ios::in);
 
-	std::cout << "sender host:" << std:: endl;
-	for (auto i: host_pid) {
-		std::cout << i.first << " : " << i.second << std::endl;
+	int host_num = 0;
+	string name, pid, ip;
+
+	while (loader >> hname[host_num] >> pid >> ip) {
+		host_pid[hname[host_num]] = pid;
+		host_ip[hname[host_num]] = ip;
+		host_num += 1;
 	}
 
-	std::cout << "receiver host:" << std:: endl;
-	for (auto i: host_ip) {
-		std::cout << i.first << " : " << i.second << std::endl;
+	std::cout << "hosts:" << std:: endl;
+	for (int i = 0; i < host_num; i++) {
+		std::cout << hname[i] << " : (" << host_pid[hname[i]] << ", " <<
+		   	host_ip[hname[i]] << ")" << std::endl;
+	}
+
+	return host_num;
+}
+
+void traffic_generator(int host_num, int conn_num, int maxp, int maxi) {
+	Simulator::Aggregator aggregator(Simulator::sw_num, Simulator::ar_num, 
+			Simulator::bu_num);
+
+	std::thread **receiver = new std::thread*[host_num];
+
+	for (int i = 0; i < host_num; i++) {
+		receiver[i] = new std::thread(Connector_R, hname[i], udp_port, -1,
+			   	&aggregator);
+	}
+
+	std::thread **sender = new std::thread*[conn_num];
+
+	for (int i = 0; i < conn_num; i++) {
+		int sendi = rand() % host_num;
+		int recvi = rand() % host_num;
+		int sendp = rand() % maxp + 1;
+		int iterv = rand() % maxi + 1;
+
+		string sname = hname[sendi];
+		string rname = hname[recvi];
+
+		sender[i] = new std::thread(Connector_S, sname, rname, udp_port, sendp);
+
+		std::cout << sname << " => " << rname << ":" << udp_port << "(" << 
+			sendp << ")" << std::endl;
+		std::this_thread::sleep_for(std::chrono::milliseconds(iterv));
+	}
+
+	for (int i = 0; i < host_num; i++) {
+		receiver[i]->join();
+	}
+	
+	for (int i = 0; i < conn_num; i++) {
+		sender[i]->join();
 	}
 }
 
-const int sw_num = 10;
-const int ar_num = 3;
-const int bu_num = 16;
-
 int main(int argc, char **argv) {
-	config_loader();
+	if (argc != 4) {
+		perror("args error.");
+		exit(1);
+	}
 
-	Simulator::Aggregator aggregator(sw_num, ar_num, bu_num);
+	int host_num = config_loader();
+	int conn_num = atoi(argv[1]);
 
-	std::thread receiver_1(Connector_R, "h1", 8000, -1, &aggregator);
-	std::thread receiver_2(Connector_R, "h2", 8000, -1, &aggregator);
+	int maxp = atoi(argv[2]);
+	int maxi = atoi(argv[3]);
 
-	std::thread sender_3_1(Connector_S, "h3", "h1", 8000, -1);
-	std::thread sender_4_1(Connector_S, "h4", "h1", 8000, -1);
-	std::thread sender_5_1(Connector_S, "h5", "h1", 8000, -1);
-	std::thread sender_6_1(Connector_S, "h6", "h1", 8000, -1);
-	std::thread sender_7_1(Connector_S, "h7", "h1", 8000, -1);
-	std::thread sender_8_1(Connector_S, "h8", "h1", 8000, -1);
-
-
-	std::thread sender_3_2(Connector_S, "h3", "h2", 8000, -1);
-	std::thread sender_4_2(Connector_S, "h4", "h2", 8000, -1);
-	std::thread sender_5_2(Connector_S, "h5", "h2", 8000, -1);
-	std::thread sender_6_2(Connector_S, "h6", "h2", 8000, -1);
-	std::thread sender_7_2(Connector_S, "h7", "h2", 8000, -1);
-	std::thread sender_8_2(Connector_S, "h8", "h2", 8000, -1);
-
-	receiver_1.join();
-	// receiver_2.join();
-
-	sender_3_1.join();
-	// sender_4_1.join();
-	// sender_5_1.join();
-	// sender_6_1.join();
-	// sender_7_1.join();
-	// sender_8_1.join();
-
-	// sender_3_2.join();
-	// sender_4_2.join();
-	// sender_5_2.join();
-	// sender_6_2.join();
-	// sender_7_2.join();
-	// sender_8_2.join();
+	traffic_generator(host_num, conn_num, maxp, maxi);
 
 	return 0;
 }
