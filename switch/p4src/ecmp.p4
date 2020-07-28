@@ -16,7 +16,7 @@
 
 //data structure
 #define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
-#define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM) counter##num
+#define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM*3) counter##num
 
 //6crc
 //this is for sketch
@@ -78,6 +78,8 @@ register<bit<8>>(1) sketch_fg;
 register<bit<8>>(1) swap_control;
 
 register<bit<16>>(1) switch_id;
+const bit<16> L2_LEARN_ETHER_TYPE = 0x1234;
+
 
 /*************************************************************************
 ************   C H E C K S U M    V E R I F I C A T I O N   *************
@@ -102,7 +104,7 @@ control MyIngress(inout headers hdr,
 		meta.SFH_index = 3 * BUCKET_NUM;
 
 		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
-        counter0.read(meta.counter_value0, meta.counter_index0);
+        counter0.read(meta.counter_value0,meta.counter_index1);
 		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value0 == 0) {
 			meta.SFH_index = meta.counter_index0;
 			meta.counter_value0 = 1;
@@ -410,13 +412,22 @@ control MyIngress(inout headers hdr,
         }
     }
 
+    action send_to_control_plane(){
+        clone3(CloneType.I2E,100,meta);//mirror id = 100
+    }
 
     apply
-    {
+    {   
+        //#need further modification 
+        send_to_control_plane();
+        //this line shall be moved in the judge but for testing we set it here
+        
+
         if (hdr.ipv4.isValid()) {
             if (hdr.MIH.isValid()) {
 				hdr.udp.checksum = 0;
 
+                
 				switch_id.read(meta.switch_id, 0);
 				update_MIH_timestamp();
 
@@ -584,7 +595,7 @@ control MyEgress(inout headers hdr,
 
     apply
     {
-        if(hdr.ipv4.isValid()){
+        if(hdr.ipv4.isValid()&&standard_metadata.instance_type != 1){
             update_timestamp();
 
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
@@ -592,6 +603,30 @@ control MyEgress(inout headers hdr,
 
             sketch_fg.read(meta.sketch_fg,0);
             update_sketch.apply();
+        }
+
+        //need further modification 
+        //what is really needed for count?
+        //
+        if (standard_metadata.instance_type == 1){
+            hdr.ethernet.etherType = L2_LEARN_ETHER_TYPE;//send to cpu
+            //ether: 16   Ipv4:20  tcp:20  udp:8  mih:11  sfh:47
+            if(hdr.tcp.isValid()){
+                if(hdr.SFH.isValid()){
+                    truncate((bit<32>)114);//16+20+20+11+47
+                }
+                else{
+                    truncate((bit<32>)67);//16+20+20+11
+                }
+            }
+            else {
+                if(hdr.SFH.isValid()){
+                    truncate((bit<32>)102);//16+20+8+11+47
+                }
+                else{
+                    truncate((bit<32>)55);//16+20+8+11
+                }
+            }
         }
         
     }
