@@ -14,32 +14,7 @@ class CPU(Packet):
             BitField('dstPort',0,16),\
             BitField('delay',0,48)]
 
-class SFH(Packet):
-    name = 'SFH'
-    fields_desc = [\
-            BitField('sfh_switch_id',0,16),\
-            BitField('sfh_sketch_fg',0,8),\
-            BitField('sfh_fgment_id',0,32),\
-            BitField('sfh_delay0',0,32),\
-            BitField('sfh_delay1',0,32),\
-            BitField('sfh_delay2',0,32),\
-            BitField('sfh_delay3',0,32),\
-            BitField('sfh_delay4',0,32),\
-            BitField('sfh_delay5',0,32),\
-            BitField('sfh_delay6',0,32),\
-            BitField('sfh_delay7',0,32),\
-            BitField('sfh_delay8',0,32),\
-            BitField('sfh_delay9',0,32)]
 
-
-class MIH(Packet):
-    name="MIH"
-    #bitfiled(<name>,<default>,<length>)
-    fields_desc=[\
-            BitField("mih_switch_id",0,16),\
-            BitField("mih_timestamp",0,48),\
-            BitField("mih_padding",0,16),\
-            BitField("sfh_exists_fg",0,8)]
 
 
 class packetReceicer(object):
@@ -66,6 +41,9 @@ class packetReceicer(object):
         print("received packet number:"+str(self.counter))
         self.counter+=1
         packet = Ether(str(pkt))
+        ls(packet)
+        print("Ether payload :")
+        print(packet.payload)
         #need further modification
         
         if packet.type == 0x1234:

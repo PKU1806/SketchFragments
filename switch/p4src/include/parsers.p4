@@ -87,5 +87,7 @@ control MyDeparser(packet_out packet, in headers hdr) {
         packet.emit(hdr.MIH);
 
         packet.emit(hdr.SFH);
+
+        packet.emit(hdr.CPU);
     }
 }

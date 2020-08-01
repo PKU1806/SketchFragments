@@ -413,6 +413,7 @@ control MyIngress(inout headers hdr,
     }
 
     action send_to_control_plane(){
+         
         clone3(CloneType.I2E,100,meta);//mirror id = 100
     }
 
@@ -430,11 +431,14 @@ control MyIngress(inout headers hdr,
                 hdr.MIH.sfh_exists_fg=0;
                 hdr.MIH.setValid();
             }
+            else{
+   				update_MIH_timestamp();
+
+            }
 
             //if (hdr.MIH.isValid()) {
                 send_to_control_plane();
 				hdr.udp.checksum = 0;
-				update_MIH_timestamp();
 
 				swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
 
@@ -611,13 +615,18 @@ control MyEgress(inout headers hdr,
         if (standard_metadata.instance_type == 1){
             hdr.ethernet.etherType = L2_LEARN_ETHER_TYPE;//send to cpu
             //ether: 16   Ipv4:20  tcp:20  udp:8  mih:11  sfh:47
-
+            
             hdr.CPU.srcAddr=hdr.ipv4.srcAddr;
             hdr.CPU.dstAddr=hdr.ipv4.dstAddr;
             hdr.CPU.protocol=hdr.ipv4.protocol;
             hdr.CPU.srcPort=meta.ipv4_srcPort;
             hdr.CPU.dstPort=meta.ipv4_dstPort;
             hdr.CPU.delay=standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
+            if(hdr.ipv4.srcAddr==0){
+            hdr.CPU.srcAddr=126548412;
+                
+            }
+            
             hdr.CPU.setValid();
 
             hdr.ipv4.setInvalid();
@@ -625,6 +634,7 @@ control MyEgress(inout headers hdr,
             hdr.udp.setInvalid();
             hdr.MIH.setInvalid();
             hdr.SFH.setInvalid();
+            truncate((bit<32>)35);
             
             
         }

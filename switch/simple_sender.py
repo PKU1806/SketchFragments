@@ -56,8 +56,9 @@ def send_packet(interface):
     pkt=pkt/IP(dst=dstAddr)
     '''
 
+    #if want to send TCP ,must change the parser of p4
     pkt=IP(dst=dstAddr)
-    pkt=pkt/TCP()
+    pkt=pkt/UDP()
     while True:
         raw_input("Testing! Press the return key to send a packet")
         print "Sending on interface %s \n"%(interface)
