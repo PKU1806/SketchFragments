@@ -418,29 +418,30 @@ control MyIngress(inout headers hdr,
 
     apply
     {   
-        //#need further modification 
-        send_to_control_plane();
-        //this line shall be moved in the judge but for testing we set it here
+
         
-
         if (hdr.ipv4.isValid()) {
-            if (hdr.MIH.isValid()) {
-				hdr.udp.checksum = 0;
+            
+            switch_id.read(meta.switch_id, 0);
 
-                
-				switch_id.read(meta.switch_id, 0);
+            if(!hdr.MIH.isValid()){// if we send a blank packet ,we shall add the MIH
+                hdr.MIH.mih_timestamp=standard_metadata.ingress_global_timestamp;
+                hdr.MIH.mih_switch_id=meta.switch_id;
+                hdr.MIH.sfh_exists_fg=0;
+                hdr.MIH.setValid();
+            }
+
+            //if (hdr.MIH.isValid()) {
+                send_to_control_plane();
+				hdr.udp.checksum = 0;
 				update_MIH_timestamp();
 
 				swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
 
-				if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {
-                    //this packet is vacant 
-
-                    //the probility allows
+				if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {//this packet is vacant 
 					random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
-					if (meta.random_number <= 0) {
-						
-						predispose();
+					if (meta.random_number <= 0) {//the probility allows
+						predispose();//compute the index of bucket
 						
 						if (meta.SFH_index < 3 * BUCKET_NUM) {
 							hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
@@ -458,7 +459,8 @@ control MyIngress(inout headers hdr,
 						}
 					}
 				}
-            }
+            //}
+            
 
             switch (ipv4_lpm.apply().action_run)
             {
@@ -605,28 +607,26 @@ control MyEgress(inout headers hdr,
             update_sketch.apply();
         }
 
-        //need further modification 
-        //what is really needed for count?
-        //
+        
         if (standard_metadata.instance_type == 1){
             hdr.ethernet.etherType = L2_LEARN_ETHER_TYPE;//send to cpu
             //ether: 16   Ipv4:20  tcp:20  udp:8  mih:11  sfh:47
-            if(hdr.tcp.isValid()){
-                if(hdr.SFH.isValid()){
-                    truncate((bit<32>)114);//16+20+20+11+47
-                }
-                else{
-                    truncate((bit<32>)67);//16+20+20+11
-                }
-            }
-            else {
-                if(hdr.SFH.isValid()){
-                    truncate((bit<32>)102);//16+20+8+11+47
-                }
-                else{
-                    truncate((bit<32>)55);//16+20+8+11
-                }
-            }
+
+            hdr.CPU.srcAddr=hdr.ipv4.srcAddr;
+            hdr.CPU.dstAddr=hdr.ipv4.dstAddr;
+            hdr.CPU.protocol=hdr.ipv4.protocol;
+            hdr.CPU.srcPort=meta.ipv4_srcPort;
+            hdr.CPU.dstPort=meta.ipv4_dstPort;
+            hdr.CPU.delay=standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
+            hdr.CPU.setValid();
+
+            hdr.ipv4.setInvalid();
+            hdr.tcp.setInvalid();
+            hdr.udp.setInvalid();
+            hdr.MIH.setInvalid();
+            hdr.SFH.setInvalid();
+            
+            
         }
         
     }

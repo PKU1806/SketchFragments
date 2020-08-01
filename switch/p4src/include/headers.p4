@@ -89,6 +89,17 @@ header SFH_t{
 	bit<32> sfh_delay9;
 }
 
+header cpu_t{
+    ip4Addr_t srcAddr;
+    ip4Addr_t dstAddr;
+    bit<8>    protocol;
+    bit<16> srcPort;
+	bit<16> dstPort;
+	//bit<16> length;
+    bit<48> delay;
+	//bit<16> checksum;
+}
+
 struct metadata {
 	bit<16> ipv4_srcPort;
 	bit<16> ipv4_dstPort;
@@ -191,5 +202,6 @@ struct headers {
 	udp_t        udp;
     MIH_t        MIH;
     SFH_t	     SFH;
+    cpu_t        CPU;
 }
 

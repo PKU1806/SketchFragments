@@ -2,7 +2,7 @@
 import sys
 import os
 
-from scapy.all import sniff, get_if_list, Ether, get_if_hwaddr, IP, Raw
+from scapy.all import *
 
 def get_if():
     iface=None
@@ -27,7 +27,8 @@ def handle_pkt(pkt):
     print "Packet Received:"
     ether = pkt.getlayer(Ether)
     ip = pkt.getlayer(IP)
-    msg = ip.payload
+    tcp=pkt.getlayer(TCP)
+    msg = tcp.payload
 
     print "###[ Ethernet ]###"
     print "  src: {}".format(ether.src)
@@ -35,6 +36,9 @@ def handle_pkt(pkt):
     print "###[ IP ]###"
     print "  src: {}".format(ip.src)
     print "  dst: {}".format(ip.dst)
+    print "###[ TCP/UDP ]###"
+    print "  sport: {}".format(tcp.sport)
+    print "  dport: {}".format(tcp.dport)
     print "###[ MESSAGE ]###"
     print "  msg: {}".format(str(msg))
     print

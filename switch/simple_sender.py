@@ -43,6 +43,7 @@ def send_packet(interface):
     print(sys.argv[1])
     dstAddr = socket.gethostbyname("10.8.4.2")
     print(dstAddr)
+    
     #print(socket.getaddrinfo(sys.argv[1], None, 0, socket.SOCK_STREAM))
     '''
     ether_dst = get_dst_mac(dstAddr)
@@ -54,6 +55,7 @@ def send_packet(interface):
     pkt= Ether(src=get_if_hwaddr(interface),dst=ether_dst)
     pkt=pkt/IP(dst=dstAddr)
     '''
+
     pkt=IP(dst=dstAddr)
     pkt=pkt/TCP()
     while True:
