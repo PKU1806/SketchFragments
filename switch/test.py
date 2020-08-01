@@ -69,5 +69,10 @@ if __name__ == "__main__":
     #"cpu_port" : true
 
     import sys
-    sw_name = sys.argv[1]
+    import argparse
+    parser=argparse.ArgumentParser()
+    
+    parser.add_argument("switch",help="this switch's name")
+    args=parser.parse_args()
+    sw_name = args.switch
     controller = packetReceicer(sw_name).run_cpu_port_loop()

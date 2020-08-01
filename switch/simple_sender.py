@@ -3,6 +3,7 @@ import sys
 import socket
 import random
 import time
+import argparse
 from subprocess import Popen, PIPE
 import re
 from threading import Thread, Event
@@ -38,43 +39,46 @@ def get_dst_mac(ip):
 
 #whether l3 send can be use?
 #and how to set?
-def send_packet(interface):
+def send_packet(interface,args):
     
-    print(sys.argv[1])
-    dstAddr = socket.gethostbyname("10.8.4.2")
-    print(dstAddr)
-    
+    dstAddr = socket.gethostbyname(args.d)
     #print(socket.getaddrinfo(sys.argv[1], None, 0, socket.SOCK_STREAM))
-    '''
-    ether_dst = get_dst_mac(dstAddr)
-
-    if not ether_dst:
-        print "Mac address for %s was not found in the ARP table" % dstAddr
-        exit(1)
+    #ether_dst = get_dst_mac(dstAddr)
+    #if not ether_dst:
+    #    print "Mac address for %s was not found in the ARP table" % dstAddr
+    #    exit(1)
+    #pkt= Ether(src=get_if_hwaddr(interface),dst=ether_dst)
+    #pkt=pkt/IP(dst=dstAddr)
     
-    pkt= Ether(src=get_if_hwaddr(interface),dst=ether_dst)
-    pkt=pkt/IP(dst=dstAddr)
-    '''
 
     #if want to send TCP ,must change the parser of p4
     pkt=IP(dst=dstAddr)
-    pkt=pkt/UDP()
+    
+    if args.type=="tcp" or args.type=="TCP":
+        pkt=pkt/TCP()
+    else:
+        pkt=pkt/UDP()
+    
     while True:
-        raw_input("Testing! Press the return key to send a packet")
+        raw_input("Testing! Press the return key to send a packet using "+args.type.lower())
         print "Sending on interface %s \n"%(interface)
         #sendp(pkt, iface=iface, verbose=False)
-        send(pkt)
+        for i in range(args.number):
+            send(pkt)
 
 
 
 def main():
-
-    if len(sys.argv)<2:
-        print 'pass 1 argument: <destination sw_name>'
-        exit(1)
+    parser=argparse.ArgumentParser()
+    
+    parser.add_argument("d",help="the dst IP addr of host")
+    parser.add_argument("-t","--type",help="the packet type to be sent",default="udp")
+    parser.add_argument("-n","--number",help="the packet number to be sent",type=int,default=1)
+    args=parser.parse_args()
+    
 
     interface=get_if()
-    send_packet(interface)
+    send_packet(interface,args)
 
 
 if __name__ == "__main__":
