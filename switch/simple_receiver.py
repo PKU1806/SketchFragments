@@ -4,7 +4,7 @@ import os
 
 from scapy.all import *
 
-counter=0;
+counter=1;
 
 class SFH(Packet):
     name = 'SFH'

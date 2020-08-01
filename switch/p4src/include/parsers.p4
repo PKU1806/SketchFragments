@@ -75,7 +75,9 @@ control MyDeparser(packet_out packet, in headers hdr) {
 
         //parsed headers have to be added again into the packet.
         packet.emit(hdr.ethernet);
-
+        
+        packet.emit(hdr.CPU);
+        
         packet.emit(hdr.ipv4);
 
         //Only emited if valid
@@ -88,6 +90,6 @@ control MyDeparser(packet_out packet, in headers hdr) {
 
         packet.emit(hdr.SFH);
 
-        packet.emit(hdr.CPU);
+        
     }
 }

@@ -29,7 +29,7 @@ class packetReceicer(object):
 
     def init(self):
         self.add_mirror()
-        self.counter=0
+        self.counter=1
 
     def add_mirror(self):
         if self.cpu_port:
@@ -40,16 +40,18 @@ class packetReceicer(object):
         print
         print("received packet number:"+str(self.counter))
         self.counter+=1
-        packet = Ether(str(pkt))
-        ls(packet)
-        print("Ether payload :")
-        print(packet.payload)
-        #need further modification
+        #ether = Ether(str(pkt))
+
+        #ls(ether)
+        cpu=CPU(str(pkt))
+        ls(cpu)
+        #ipv4=IP(str(cpu.payload))
+        #ls(ipv4)
         
-        if packet.type == 0x1234:
-            cpu = CPU(packet.payload)
-            print("cpu info:")
-            ls(cpu)
+        #if packet.type == 0x1234:
+        #    cpu = CPU(packet.payload)
+        #    print("cpu info:")
+        #    ls(cpu)
             
 
 

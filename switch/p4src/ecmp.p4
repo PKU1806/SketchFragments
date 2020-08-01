@@ -613,8 +613,9 @@ control MyEgress(inout headers hdr,
 
         
         if (standard_metadata.instance_type == 1){
-            hdr.ethernet.etherType = L2_LEARN_ETHER_TYPE;//send to cpu
+            //hdr.ethernet.etherType = L2_LEARN_ETHER_TYPE;//send to cpu
             //ether: 16   Ipv4:20  tcp:20  udp:8  mih:11  sfh:47
+            hdr.CPU.setValid();
             
             hdr.CPU.srcAddr=hdr.ipv4.srcAddr;
             hdr.CPU.dstAddr=hdr.ipv4.dstAddr;
@@ -622,19 +623,14 @@ control MyEgress(inout headers hdr,
             hdr.CPU.srcPort=meta.ipv4_srcPort;
             hdr.CPU.dstPort=meta.ipv4_dstPort;
             hdr.CPU.delay=standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
-            if(hdr.ipv4.srcAddr==0){
-            hdr.CPU.srcAddr=126548412;
-                
-            }
-            
-            hdr.CPU.setValid();
 
+            hdr.ethernet.setInvalid();
             hdr.ipv4.setInvalid();
             hdr.tcp.setInvalid();
             hdr.udp.setInvalid();
             hdr.MIH.setInvalid();
             hdr.SFH.setInvalid();
-            truncate((bit<32>)35);
+            //truncate((bit<32>)35);
             
             
         }
