@@ -26,14 +26,14 @@ visor.py:list the sketch's value of switches
 
 # the testing method
 ## basic step 
-1. get into the ../switch folder
+1. get into the `../switch` folder
 2. activate tmux and create duplicate windows
 3. window A as the mininet console ,type " sudo p4run " to evoke the mininet
 4. when the mininet_env is established, type "python routing-controller.py"  to set the tables in window B
 
-## send file & receive file & listening switch
-5. in window C,type "mx h1" and type "python simple_sender.py -h" to send packet from h1 and get help
-6. in window D,type "mx h4" and type "python simple_receiver.py" to listen from a eth port
-7. in window B (after mini-step4),type "mx s7" ,and "python test.py -h" to minitor control plane of s7 (only s7's cpu-monitor is activated,so avoid using other switches)
+## send packet & receive packet & listen to switch
+5. in window C,type `mx h1` and type `python simple_sender.py -h` to send packet from h1 and get help
+6. in window D,type `mx h4` and type `python simple_receiver.py` to listen from a eth port
+7. in window B (after mini-step4),type `mx s7` ,and `python test.py -h` to minitor control plane of s7 (only s7's cpu-monitor is activated,so avoid using other switches)
 
 
