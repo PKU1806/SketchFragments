@@ -2,7 +2,7 @@
  * @Author: Leo Appleby 
  * @Date: 2020-08-01 16:36:28 
  * @Last Modified by: Leo Appleby
- * @Last Modified time: 2020-08-05 15:39:53
+ * @Last Modified time: 2020-08-05 15:41:30
  */
 
 # file/folder introduction
@@ -28,8 +28,8 @@ visor.py:list the sketch's value of switches
 ## basic step 
 1. get into the `../switch` folder
 2. activate tmux and create duplicate windows
-3. window A as the mininet console ,type " sudo p4run " to evoke the mininet
-4. when the mininet_env is established, type "python routing-controller.py"  to set the tables in window B
+3. window A as the mininet console ,type ` sudo p4run ` to evoke the mininet
+4. when the mininet_env is established, type `python routing-controller.py`  to set the tables in window B
 
 ## send packet & receive packet & listen to switch
 5. in window C,type `mx h1` and type `python simple_sender.py -h` to send packet from h1 and get help
