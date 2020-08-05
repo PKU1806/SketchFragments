@@ -530,6 +530,7 @@ control MyEgress(inout headers hdr,
         array0.write((meta.array_index0 * BIN_NUM + meta.delay_lev), meta.array_value0);
         array1.write((meta.array_index1 * BIN_NUM + meta.delay_lev), meta.array_value1);
         array2.write((meta.array_index2 * BIN_NUM + meta.delay_lev), meta.array_value2);
+        
     }
 
     //update sketch 1 : array3\4\5
