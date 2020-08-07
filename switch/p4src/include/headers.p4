@@ -97,6 +97,7 @@ header cpu_t{
 	bit<16> dstPort;
 	//bit<16> length;
     bit<48> delay;
+    bit<48> interval;
 	//bit<16> checksum;
 }
 

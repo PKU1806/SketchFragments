@@ -8,8 +8,9 @@ from subprocess import Popen, PIPE
 import re
 from threading import Thread, Event
 from scapy.all import *
+from p4utils.utils.topology import Topology
 
-
+topo = Topology(db="topology.db")
 
 #always via eth0
 def get_if():
@@ -41,7 +42,9 @@ def get_dst_mac(ip):
 #and how to set?
 def send_packet(interface,args):
     
-    dstAddr = socket.gethostbyname(args.d)
+    dstAddr=topo.get_host_ip(args.d)
+    #dstAddr = socket.gethostbyname(args.d)
+    
     #print(socket.getaddrinfo(sys.argv[1], None, 0, socket.SOCK_STREAM))
     #ether_dst = get_dst_mac(dstAddr)
     #if not ether_dst:
@@ -58,7 +61,7 @@ def send_packet(interface,args):
         pkt=pkt/TCP()
     else:
         pkt=pkt/UDP()
-    
+    pkt=pkt/"loadloadloadloadloadloadload"
     while True:
         raw_input("Testing! Press the return key to send a packet using "+args.type.lower())
         print "Sending on interface %s \n"%(interface)
@@ -71,7 +74,8 @@ def send_packet(interface,args):
 def main():
     parser=argparse.ArgumentParser()
     
-    parser.add_argument("d",help="the dst IP addr of host")
+    #parser.add_argument("d",help="the dst IP addr of host")
+    parser.add_argument("d",help="the dst host name")
     parser.add_argument("-t","--type",help="the packet type to be sent",default="udp")
     parser.add_argument("-n","--number",help="the packet number to be sent",type=int,default=1)
     args=parser.parse_args()

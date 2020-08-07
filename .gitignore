@@ -10,3 +10,4 @@
 /switch/topology.db
 /switch/pcap/*
 /client
+/switch/switch_log/*

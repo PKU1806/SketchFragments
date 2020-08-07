@@ -127,21 +127,6 @@ control MyIngress(inout headers hdr,
 		}
 		counter2.write(meta.counter_index2, meta.counter_value2);
 
-        // meta.tmp00=(bit<32>)meta.counter_value0;
-        // meta.tmp01=(bit<32>)meta.counter_value1;
-        // meta.tmp02=(bit<32>)meta.counter_value2;
-
-        // meta.SFH_index=meta.counter_index0*(1-meta.tmp00);
-        // meta.SFH_index=meta.SFH_index+meta.counter_index1*(1-meta.tmp01)*meta.tmp00;
-        // meta.SFH_index=meta.SFH_index+meta.counter_index2*(1-meta.tmp02)*meta.tmp01*meta.tmp00;
-        // 
-        // meta.counter_value2=meta.counter_value2|meta.counter_value1;
-        // meta.counter_value1=meta.counter_value1|meta.counter_value0;
-        // meta.counter_value0=meta.counter_value0|1;
-
-        // counter0.write(meta.counter_index0,meta.counter_value0);
-        // counter1.write(meta.counter_index1,meta.counter_value1);
-        // counter2.write(meta.counter_index2,meta.counter_value2);
     }
 
     action _choose_fragment(bit<8> SFH_target_array){
@@ -164,7 +149,6 @@ control MyIngress(inout headers hdr,
 
     action update_using_sketch0(){
         
-
        array0.read(meta.tmp00,meta.SFH_target_bucket*BIN_NUM+0);
        array0.read(meta.tmp01,meta.SFH_target_bucket*BIN_NUM+1);
        array0.read(meta.tmp02,meta.SFH_target_bucket*BIN_NUM+2);
@@ -412,58 +396,60 @@ control MyIngress(inout headers hdr,
         }
     }
 
+    /******** log code starts here*******/
+
     action send_to_control_plane(){
          
         clone3(CloneType.I2E,100,meta);//mirror id = 100
     }
 
+    /******** log code ends here*******/
+
     apply
     {   
-
-        
         if (hdr.ipv4.isValid()) {
             
-            switch_id.read(meta.switch_id, 0);
-
-            if(!hdr.MIH.isValid()){// if we send a blank packet ,we shall add the MIH
+            
+            /*if(!hdr.MIH.isValid()){// if we send a blank packet ,we shall add the MIH
                 hdr.MIH.mih_timestamp=standard_metadata.ingress_global_timestamp;
                 hdr.MIH.mih_switch_id=meta.switch_id;
                 hdr.MIH.sfh_exists_fg=0;
                 hdr.MIH.setValid();
-            }
-            else{
-   				update_MIH_timestamp();
+            }*/
+            if (hdr.MIH.isValid()) {
+                switch_id.read(meta.switch_id, 0);
+                update_MIH_timestamp();
 
-            }
-
-            //if (hdr.MIH.isValid()) {
+                /******** log code starts here*******/
                 send_to_control_plane();
-				hdr.udp.checksum = 0;
+                /******** log code ends here*******/
 
-				swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
+                hdr.udp.checksum = 0;
 
-				if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {//this packet is vacant 
-					random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
-					if (meta.random_number <= 0) {//the probility allows
-						predispose();//compute the index of bucket
-						
-						if (meta.SFH_index < 3 * BUCKET_NUM) {
-							hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
-							hdr.udp.length = hdr.udp.length + (58 - 11);
+                swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
 
-							hdr.MIH.sfh_exists_fg = 1;
-							hdr.SFH.setValid();
-							hdr.SFH.sfh_switch_id = meta.switch_id;
-							hdr.SFH.sfh_fgment_id = meta.SFH_index;
-							sketch_fg.read(meta.sketch_fg,0);
-							hdr.SFH.sfh_sketch_fg = 1 - meta.sketch_fg;
+                if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {//this packet is vacant 
+                    random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
+                    if (meta.random_number <= 0) {//the probility allows
+                        predispose();//compute the index of bucket
+                        
+                        if (meta.SFH_index < 3 * BUCKET_NUM) {
+                            hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
+                            hdr.udp.length = hdr.udp.length + (58 - 11);
 
-							choose_fragment.apply();
-							update_SFH.apply();
-						}
-					}
-				}
-            //}
+                            hdr.MIH.sfh_exists_fg = 1;
+                            hdr.SFH.setValid();
+                            hdr.SFH.sfh_switch_id = meta.switch_id;
+                            hdr.SFH.sfh_fgment_id = meta.SFH_index;
+                            sketch_fg.read(meta.sketch_fg,0);
+                            hdr.SFH.sfh_sketch_fg = 1 - meta.sketch_fg;
+
+                            choose_fragment.apply();
+                            update_SFH.apply();
+                        }
+                    }
+                }
+            }
             
 
             switch (ipv4_lpm.apply().action_run)
@@ -612,7 +598,7 @@ control MyEgress(inout headers hdr,
             update_sketch.apply();
         }
 
-        
+        /******** log code starts here*******/
         if (standard_metadata.instance_type == 1){
             //hdr.ethernet.etherType = L2_LEARN_ETHER_TYPE;//send to cpu
             //ether: 16   Ipv4:20  tcp:20  udp:8  mih:11  sfh:47
@@ -624,7 +610,7 @@ control MyEgress(inout headers hdr,
             hdr.CPU.srcPort=meta.ipv4_srcPort;
             hdr.CPU.dstPort=meta.ipv4_dstPort;
             hdr.CPU.delay=standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
-
+            hdr.CPU.interval=standard_metadata.ingress_global_timestamp-meta.previous_ingress_global_timestamp;
             hdr.ethernet.setInvalid();
             hdr.ipv4.setInvalid();
             hdr.tcp.setInvalid();
@@ -632,9 +618,10 @@ control MyEgress(inout headers hdr,
             hdr.MIH.setInvalid();
             hdr.SFH.setInvalid();
             //truncate((bit<32>)35);
-            
-            
+                    
         }
+        /******** log code ends here*******/
+
         
     }
 }
