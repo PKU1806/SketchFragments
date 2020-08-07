@@ -17,6 +17,7 @@ from p4utils.utils.topology import Topology
 from p4utils.utils.sswitch_API import SimpleSwitchAPI
 import sys
 import argparse
+import random
 
 
 
@@ -37,9 +38,21 @@ class GenFault(object):
 
     def loop(self,number):
         pass
+        #todo 
 
-    def blackhole(self,number):
-        pass
+    def blackhole(self,args):
+        if args.sw_name== None:
+            pass
+            print "Not implemented yet"
+        else:
+            for sw_name,controller in self.controllers.items():
+                if sw_name==args.sw_name:
+                    controller.table_clear("ecmp_group_to_nhop")
+                    controller.table_clear("ipv4_lpm")
+                    print sw_name,"has been shut down"
+                    break
+                    
+        
         #delete all items of mac and l2map
 
 
@@ -115,12 +128,15 @@ class GenFault(object):
 if __name__ == "__main__":
     parser=argparse.ArgumentParser()
     parser.add_argument("type",help="the type wanted for the net",choices=["loop","blackhole","reset"],default="reset")
-    parser.add_argument("-n","--number",help="the loop's length or the number for blackhole",type=int)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-n","--number",help="the loop's length or the number for blackhole",type=int,default=1)
+    group.add_argument("-s","--sw_name",help="specify the blackhole host")
+
     args=parser.parse_args()
     fault=GenFault()
     if args.type=="loop":
         fault.loop(args.number)
     elif args.type=="blackhole":
-        fault.blackhole(args.number)
+        fault.blackhole(args)
     else:
         fault.route()
