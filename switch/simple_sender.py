@@ -76,7 +76,7 @@ def main():
     
     #parser.add_argument("d",help="the dst IP addr of host")
     parser.add_argument("d",help="the dst host name")
-    parser.add_argument("-t","--type",help="the packet type to be sent",default="udp")
+    parser.add_argument("-t","--type",help="the packet type to be sent",default="udp",choices=["udp","tcp"])
     parser.add_argument("-n","--number",help="the packet number to be sent",type=int,default=1)
     args=parser.parse_args()
     

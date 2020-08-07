@@ -97,6 +97,7 @@ header cpu_t{
 	bit<16> dstPort;
 	//bit<16> length;
     bit<48> delay;
+
     bit<48> interval;
 	//bit<16> checksum;
 }
@@ -151,13 +152,11 @@ struct metadata {
 
     bit<32> delay_lev;
     bit<48> previous_ingress_global_timestamp;
-    bit<48> max_bucket_interval;
+    bit<48> interval;
 
     bit<8> SFH_target_array;                        //the sketch selected
     bit<32> SFH_target_bucket;                      //the bucket selected
     bit<32> random_number;
-    
-
     bit<14> ecmp_hash;
     bit<14> ecmp_group_id;
 

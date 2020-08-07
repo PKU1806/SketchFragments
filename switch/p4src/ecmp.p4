@@ -78,7 +78,7 @@ register<bit<8>>(1) sketch_fg;
 register<bit<8>>(1) swap_control;
 
 register<bit<16>>(1) switch_id;
-const bit<16> L2_LEARN_ETHER_TYPE = 0x1234;
+register<bit<48>>(1) previous_ingress_timestamp;
 
 
 /*************************************************************************
@@ -399,8 +399,8 @@ control MyIngress(inout headers hdr,
     /******** log code starts here*******/
 
     action send_to_control_plane(){
-         
-        clone3(CloneType.I2E,100,meta);//mirror id = 100
+        meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
+        clone3(CloneType.E2E,100,meta);//mirror id = 100
     }
 
     /******** log code ends here*******/
@@ -421,7 +421,7 @@ control MyIngress(inout headers hdr,
                 update_MIH_timestamp();
 
                 /******** log code starts here*******/
-                send_to_control_plane();
+                //send_to_control_plane();
                 /******** log code ends here*******/
 
                 hdr.udp.checksum = 0;
@@ -586,20 +586,39 @@ control MyEgress(inout headers hdr,
         default_action=NoAction;
     }
 
+    
+    /******** log code starts here*******/
+
+    action send_to_control_plane(){
+        //meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
+
+        clone3(CloneType.E2E,100,meta);//mirror id = 100
+    }
+
+    /******** log code ends here*******/
+
     apply
     {
-        if(hdr.ipv4.isValid()&&standard_metadata.instance_type != 1){
+        if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0){
             update_timestamp();
 
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
-            get_delay_lev.apply();
+            previous_ingress_timestamp.read(meta.previous_ingress_global_timestamp,(bit<32>)0);
+            meta.interval=standard_metadata.ingress_global_timestamp-meta.previous_ingress_global_timestamp;
+            previous_ingress_timestamp.write((bit<32>)0,standard_metadata.ingress_global_timestamp);
 
+            /****************** */
+            send_to_control_plane();
+            /****************** */
+
+            get_delay_lev.apply();
             sketch_fg.read(meta.sketch_fg,0);
             update_sketch.apply();
+            
         }
 
         /******** log code starts here*******/
-        if (standard_metadata.instance_type == 1){
+        if (standard_metadata.instance_type == 2){
             //hdr.ethernet.etherType = L2_LEARN_ETHER_TYPE;//send to cpu
             //ether: 16   Ipv4:20  tcp:20  udp:8  mih:11  sfh:47
             hdr.CPU.setValid();
@@ -609,8 +628,8 @@ control MyEgress(inout headers hdr,
             hdr.CPU.protocol=hdr.ipv4.protocol;
             hdr.CPU.srcPort=meta.ipv4_srcPort;
             hdr.CPU.dstPort=meta.ipv4_dstPort;
-            hdr.CPU.delay=standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
-            hdr.CPU.interval=standard_metadata.ingress_global_timestamp-meta.previous_ingress_global_timestamp;
+            hdr.CPU.delay=meta.switch_delay;
+            hdr.CPU.interval=meta.interval;
             hdr.ethernet.setInvalid();
             hdr.ipv4.setInvalid();
             hdr.tcp.setInvalid();

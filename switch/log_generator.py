@@ -17,6 +17,7 @@ class CPU(Packet):
             BitField('srcPort',0,16),\
             BitField('dstPort',0,16),\
             BitField('delay',0,48),\
+            #BitField('delay2',0,48),\
             BitField('interval',0,48)]
 
 
@@ -30,14 +31,16 @@ class packetReceicer(object):
         self.controller = SimpleSwitchAPI(self.thrift_port)
         self.flow={}
         self.init()
+        
 
     def init(self):
         self.add_mirror()
         self.counter=1
         self.logs=open("./switch_log/"+self.sw_name+".log","w")
-        self.logs_info=open("./switch_log/"+self.sw_name+"info.log","w")
-        logs.close()
-        logs_info.close()
+        self.logs_info=open("./switch_log/"+self.sw_name+"_info.log","w")
+        self.logs_info.write("SWITCH["+self.sw_name+"]\n")
+        self.logs.close()
+        self.logs_info.close()
 
     def add_mirror(self):
         if self.cpu_port:
@@ -45,21 +48,74 @@ class packetReceicer(object):
             #is there any probability to increase the mirro port to add cpu port?
 
     def recv_msg_cpu(self, pkt):
+        ## console output starts
         print
         print("received packet number:"+str(self.counter))
         self.counter+=1
         cpu=CPU(str(pkt))
         ls(cpu)
-        self.gen_per_packet_log(cpu)
 
+        ## console output ends
+
+        self.gen_per_packet_log(cpu)
+        self.collect_log(cpu)
+        if(self.counter%10==0):
+            self.gen_log()
+
+    def gen_log(self):
+        logs_info=open("./switch_log/"+self.sw_name+"_info.log","a")
+        logs_info.write("[flow number: "+str(len(self.flow))+"]\n")
+        change=lambda x: '.'.join([str(x/(256**i)%256) for i in range(3,-1,-1)])
+
+        cnt=0
+        for i in self.flow:
+            cnt+=self.flow[i]["packnum"]
+            tmp=i.split(":")
+            tmp[0]=change(int(tmp[0]))
+            tmp[1]=change(int(tmp[1]))
+            tmp=" : ".join(tmp)
+            logs_info.write("flow "+tmp+" ")
+
+            logs_info.write(str(sorted(self.flow[i].items())))
+            logs_info.write("\n")
+        logs_info.write("[packet number:"+str(cnt)+"]\n\n")
+
+        logs_info.close()   
     
-    def gen_log(self,cpu):
-        logs_info=open("./switch_log/"+self.sw_name+"info.log","a")
-        flow_key=str(cpu.srcAddr)+str(cpu.dstAddr)+str(cpu.protocol)+str(cpu.srcPort)+str(spu.dstPort)
+    def collect_log(self,cpu):
+        flow_key=str(cpu.srcAddr)+":"+str(cpu.dstAddr)+":"+str(cpu.protocol)+":"+str(cpu.srcPort)+":"+str(cpu.dstPort)
         if self.flow.has_key(flow_key):
-            self.flow[flow_key]+=1
+            self.flow[flow_key]["packnum"]+=1
+            self.flow[flow_key][self.get_lev(cpu.delay)]+=1
         else:
-            self.flow[flow_key]=1
+            self.flow[flow_key]={"packnum":1,"0->1":0,"1->2":0,\
+                "2->3":0,"3->4":0,"4->5":0,"5->6":0,"6->7":0\
+                ,"7->8":0,"8->9":0,"9+":0}
+            self.flow[flow_key][self.get_lev(cpu.delay)]+=1
+            
+    def get_lev(self,delay):
+        time_interval=1000
+        if delay<time_interval*1:
+            return "0->1"
+        elif delay<time_interval*2:
+            return "1->2"
+        elif delay<time_interval*3:
+            return "2->3"
+        elif delay<time_interval*4:
+            return "3->4"
+        elif delay<time_interval*5:
+            return "4->5"
+        elif delay<time_interval*6:
+            return "5->6"
+        elif delay<time_interval*7:
+            return "6->7"
+        elif delay<time_interval*8:
+            return "7->8"
+        elif delay<time_interval*9:
+            return "8->9"
+        else:
+            return "9+"
+
 
     def gen_per_packet_log(self,cpu):
         logs=open("./switch_log/"+self.sw_name+".log","a")
@@ -68,8 +124,10 @@ class packetReceicer(object):
         srcAddr=change(cpu.srcAddr)
         dstAddr=change(cpu.dstAddr)
         tmp_delay=str(cpu.delay)
-        delay=tmp_delay[-12:-9]+"s "+tmp_delay[-9:-6]+"ms "+tmp_delay[-6:-3]+"us "+tmp_delay[-3:]+"ns"
-        
+        delay=tmp_delay[-9:-6]+"s "+tmp_delay[-6:-3]+"ms "+tmp_delay[-3:]+"us"
+        tmp_interval=str(cpu.interval)
+        interval=tmp_interval[-9:-6]+"s "+tmp_interval[-6:-3]+"ms "+tmp_interval[-3:]+"us"
+
         logs.write("SWITCH["+self.sw_name+"] " )
         logs.write("[Packet No."+str(self.counter-1)+"] {")
         logs.write(" [srcAddr : "+str(srcAddr)+"]")
@@ -78,6 +136,7 @@ class packetReceicer(object):
         logs.write(" [srcPort :"+str(cpu.srcPort)+"]")
         logs.write(" [dstPort :"+str(cpu.dstPort)+"]")
         logs.write(" [delay :"+delay+"]")
+        logs.write(" [interval :"+interval+"]")
         logs.write(" }\n")
         logs.close()
 
@@ -85,7 +144,6 @@ class packetReceicer(object):
     
 
     def run_cpu_port_loop(self):
-        
         cpu_port_intf = str(self.topo.get_cpu_port_intf(self.sw_name).replace("eth0", "eth1"))
         # the cpu has two ports   could use two thread to sniff
         print(sniff(iface=cpu_port_intf, prn=self.recv_msg_cpu))

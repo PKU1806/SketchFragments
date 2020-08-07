@@ -178,6 +178,7 @@ class RoutingController(object):
             controller.register_write("switch_id", 0, switch_id + 8001)
             controller.register_write("swap_control", 0, 0)
             controller.register_write("sketch_fg", 0, 0)
+            controller.register_write("previous_ingress_timestamp", 0, 0)
 
         for switch_id, switch_name in enumerate(self.controllers.keys()):
             print "{} {}".format(switch_id + 1, switch_name)
