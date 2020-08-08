@@ -606,13 +606,14 @@ control MyEgress(inout headers hdr,
             previous_ingress_timestamp.read(meta.previous_ingress_global_timestamp,(bit<32>)0);
             meta.interval=standard_metadata.ingress_global_timestamp-meta.previous_ingress_global_timestamp;
             previous_ingress_timestamp.write((bit<32>)0,standard_metadata.ingress_global_timestamp);
-
+            sketch_fg.read(meta.sketch_fg,0);
+            meta.swap_control = hdr.MIH.sfh_exists_fg;
             /****************** */
             send_to_control_plane();
             /****************** */
 
             get_delay_lev.apply();
-            sketch_fg.read(meta.sketch_fg,0);
+            
             update_sketch.apply();
             
         }
@@ -630,6 +631,7 @@ control MyEgress(inout headers hdr,
             hdr.CPU.dstPort=meta.ipv4_dstPort;
             hdr.CPU.delay=meta.switch_delay;
             hdr.CPU.interval=meta.interval;
+            hdr.CPU.flags=(meta.sketch_fg<<1) |(meta.swap_control);
             hdr.ethernet.setInvalid();
             hdr.ipv4.setInvalid();
             hdr.tcp.setInvalid();

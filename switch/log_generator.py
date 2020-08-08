@@ -18,7 +18,8 @@ class CPU(Packet):
             BitField('dstPort',0,16),\
             BitField('delay',0,48),\
             #BitField('delay2',0,48),\
-            BitField('interval',0,48)]
+            BitField('interval',0,48),\
+            BitField('flags',0,8)]
 
 
 class packetReceicer(object):
@@ -78,7 +79,7 @@ class packetReceicer(object):
 
             logs_info.write(str(sorted(self.flow[i].items())))
             logs_info.write("\n")
-        logs_info.write("[packet number:"+str(cnt)+"]\n\n")
+        logs_info.write("[packet number sum:"+str(cnt)+"]\n\n")
 
         logs_info.close()   
     
@@ -127,6 +128,9 @@ class packetReceicer(object):
         delay=tmp_delay[-9:-6]+"s "+tmp_delay[-6:-3]+"ms "+tmp_delay[-3:]+"us"
         tmp_interval=str(cpu.interval)
         interval=tmp_interval[-9:-6]+"s "+tmp_interval[-6:-3]+"ms "+tmp_interval[-3:]+"us"
+        sketch_fg=(cpu.flags>>1)&0x1;
+        has_SFH=cpu.flags&0x1;
+
 
         logs.write("SWITCH["+self.sw_name+"] " )
         logs.write("[Packet No."+str(self.counter-1)+"] {")
@@ -137,6 +141,8 @@ class packetReceicer(object):
         logs.write(" [dstPort :"+str(cpu.dstPort)+"]")
         logs.write(" [delay :"+delay+"]")
         logs.write(" [interval :"+interval+"]")
+        logs.write(" [using sketch "+str(sketch_fg)+"]")
+        logs.write(" [has SFH :"+str(bool(has_SFH))+"]")
         logs.write(" }\n")
         logs.close()
 

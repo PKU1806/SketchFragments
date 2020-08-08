@@ -12,6 +12,15 @@ from p4utils.utils.topology import Topology
 
 topo = Topology(db="topology.db")
 
+class MIH(Packet):
+    name="MIH"
+    #bitfiled(<name>,<default>,<length>)
+    fields_desc=[\
+            BitField("mih_switch_id",0,16),\
+            BitField("mih_timestamp",0,48),\
+            BitField("mih_padding",0,16),\
+            BitField("sfh_exists_fg",0,8)]
+
 #always via eth0
 def get_if():
     ifs=get_if_list()
@@ -61,7 +70,7 @@ def send_packet(interface,args):
         pkt=pkt/TCP()
     else:
         pkt=pkt/UDP()
-    pkt=pkt/"loadloadloadloadloadloadload"
+    pkt=pkt/MIH()/"load0load1load2load3"
     while True:
         raw_input("Testing! Press the return key to send a packet using "+args.type.lower())
         print "Sending on interface %s \n"%(interface)

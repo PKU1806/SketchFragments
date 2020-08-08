@@ -99,6 +99,7 @@ header cpu_t{
     bit<48> delay;
 
     bit<48> interval;
+    bit<8> flags;
 	//bit<16> checksum;
 }
 
