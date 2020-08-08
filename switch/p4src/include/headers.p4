@@ -5,6 +5,7 @@
 const bit<16> TYPE_IPV4 = 0x0800;
 const bit<8> TYPE_TCP = 6;
 const bit<8> TYPE_UDP = 17;
+const bit<8> TYPE_ICMP = 1;
 
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
@@ -95,12 +96,9 @@ header cpu_t{
     bit<8>    protocol;
     bit<16> srcPort;
 	bit<16> dstPort;
-	//bit<16> length;
     bit<48> delay;
-
     bit<48> interval;
     bit<8> flags;
-	//bit<16> checksum;
 }
 
 struct metadata {
@@ -204,6 +202,5 @@ struct headers {
 	udp_t        udp;
     MIH_t        MIH;
     SFH_t	     SFH;
-    
 }
 

@@ -11,3 +11,4 @@
 /switch/pcap/*
 /client
 /switch/switch_log/*
+/switch/router.log

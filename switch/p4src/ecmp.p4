@@ -313,8 +313,8 @@ control MyIngress(inout headers hdr,
 
     action ecmp_group(bit<14> ecmp_group_id, bit<16> num_nhops)
     {
-        //bit<32> tmp;
-        //random(tmp, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
+        bit<32> tmp;
+        random(tmp, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
         hash(meta.ecmp_hash,
             HashAlgorithm.crc16,
             (bit<1>)0,
@@ -322,8 +322,8 @@ control MyIngress(inout headers hdr,
             hdr.ipv4.dstAddr,
             meta.ipv4_srcPort,
             meta.ipv4_dstPort,
-            hdr.ipv4.protocol
-            //tmp 
+            hdr.ipv4.protocol,
+            tmp 
             },
             num_nhops);
 
@@ -412,8 +412,6 @@ control MyIngress(inout headers hdr,
     apply
     {   
         if (hdr.ipv4.isValid()&&hdr.ipv4.ttl > 1) {
-            
-            
             /*if(!hdr.MIH.isValid()){// if we send a blank packet ,we shall add the MIH
                 hdr.MIH.mih_timestamp=standard_metadata.ingress_global_timestamp;
                 hdr.MIH.mih_switch_id=meta.switch_id;
@@ -456,10 +454,8 @@ control MyIngress(inout headers hdr,
             }
             
 
-            switch (ipv4_lpm.apply().action_run)
-            {
-                ecmp_group:
-                {
+            switch (ipv4_lpm.apply().action_run){
+                ecmp_group:{
                     ecmp_group_to_nhop.apply();
                 }
             }
@@ -487,17 +483,13 @@ control MyEgress(inout headers hdr,
     //the insertion of timestamp can be moved to previous part
 
     //this action get the corresponding lev of bucket
-    action _get_delay_lev(bit<32> delay_lev)
-    {
+    action _get_delay_lev(bit<32> delay_lev){
         meta.delay_lev = delay_lev;
-        
-        
     }
 
     //semi-CU-sketch    
     //update sketch 0 : array0\1\2
-    action update_sketch0()
-    {
+    action update_sketch0(){
         COMPUTE_ARRAY_HASH(0)
         COMPUTE_ARRAY_HASH(1)
         COMPUTE_ARRAY_HASH(2)
@@ -529,8 +521,7 @@ control MyEgress(inout headers hdr,
     }
 
     //update sketch 1 : array3\4\5
-    action update_sketch1()
-    {
+    action update_sketch1(){
         COMPUTE_ARRAY_HASH(3)
         COMPUTE_ARRAY_HASH(4)
         COMPUTE_ARRAY_HASH(5)
@@ -569,8 +560,7 @@ control MyEgress(inout headers hdr,
         timestamp_array2.write(meta.timestamp_index2,standard_metadata.ingress_global_timestamp);
     }
 
-    table update_sketch
-    {
+    table update_sketch{
         key = {
             meta.sketch_fg : exact;
         }
@@ -600,7 +590,6 @@ control MyEgress(inout headers hdr,
 
     action send_to_control_plane(){
         //meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
-
         clone3(CloneType.E2E,100,meta);//mirror id = 100
     }
 
@@ -612,14 +601,17 @@ control MyEgress(inout headers hdr,
             update_timestamp();
 
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
+            
             previous_ingress_timestamp.read(meta.previous_ingress_global_timestamp,(bit<32>)0);
             meta.interval=standard_metadata.ingress_global_timestamp-meta.previous_ingress_global_timestamp;
             previous_ingress_timestamp.write((bit<32>)0,standard_metadata.ingress_global_timestamp);
+            
             sketch_fg.read(meta.sketch_fg,0);
             meta.swap_control = hdr.MIH.sfh_exists_fg;
-            /****************** */
+            
+            /*********  log code starts here  ********* */
             send_to_control_plane();
-            /****************** */
+            /********  log code ends here ********** */
 
             get_delay_lev.apply();
             
@@ -627,9 +619,8 @@ control MyEgress(inout headers hdr,
             
         }
 
-        /******** log code starts here*******/
+        /************************ log code starts here**********************/
         if (standard_metadata.instance_type == 2){
-            //hdr.ethernet.etherType = L2_LEARN_ETHER_TYPE;//send to cpu
             //ether: 16   Ipv4:20  tcp:20  udp:8  mih:11  sfh:47
             hdr.CPU.setValid();
             
@@ -641,17 +632,15 @@ control MyEgress(inout headers hdr,
             hdr.CPU.delay=meta.switch_delay;
             hdr.CPU.interval=meta.interval;
             hdr.CPU.flags=(meta.sketch_fg<<1) |(meta.swap_control);
+
             hdr.ethernet.setInvalid();
             hdr.ipv4.setInvalid();
             hdr.tcp.setInvalid();
             hdr.udp.setInvalid();
             hdr.MIH.setInvalid();
             hdr.SFH.setInvalid();
-            //truncate((bit<32>)35);
-                    
         }
-        /******** log code ends here*******/
-
+        /************************ log code ends here***************************/
         
     }
 }

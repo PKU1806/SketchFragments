@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import sys
 import os
-
 from scapy.all import *
 
 counter=1;
@@ -22,7 +21,6 @@ class SFH(Packet):
             BitField('sfh_delay7',0,32),\
             BitField('sfh_delay8',0,32),\
             BitField('sfh_delay9',0,32)]
-
 
 class MIH(Packet):
     name="MIH"
@@ -59,47 +57,48 @@ def handle_pkt(pkt):
     ip = pkt.getlayer(IP)
     tcp=pkt.getlayer(TCP)
     udp=pkt.getlayer(UDP)
-
-    mih=MIH(str(udp.payload))
+    icmp=pkt.getlayer(ICMP)
+    if udp:
+        mih=MIH(str(udp.payload))
     
-    
-
     print "###[ Ethernet ]###"
     print "  src: {}".format(ether.src)
     print "  dst: {}".format(ether.dst)
     print "###[ IP ]###"
     print "  src: {}".format(ip.src)
     print "  dst: {}".format(ip.dst)
-    print "###[ TCP/UDP ]###"
-    print "  sport: {}".format(udp.sport)
-    print "  dport: {}".format(udp.dport)
-    print "###[ MIH ]###"
-    print "  mih_switch_id: {}".format(mih.mih_switch_id)
-    print "  mih_timestamp: {}".format(mih.mih_timestamp)
-    print "  sfh_exists_fg: {}".format(mih.sfh_exists_fg)
-    
-    if mih.sfh_exists_fg== 1 :
-        sfh=SFH(str(mih.payload))
-        print "###[ SFH ]###"
-        print "  sfh_switch_id: {}".format(sfh.sfh_switch_id)
-        print "  sfh_sketch_fg: {}".format(sfh.sfh_sketch_fg)
-        print "  sfh_fgment_id: {}".format(sfh.sfh_fgment_id)
-        print "  sfh_delay0: {}".format(sfh.sfh_delay0)
-        print "  sfh_delay1: {}".format(sfh.sfh_delay1)
-        print "  sfh_delay2: {}".format(sfh.sfh_delay2)
-        print "  sfh_delay3: {}".format(sfh.sfh_delay3)
-        print "  sfh_delay4: {}".format(sfh.sfh_delay4)
-        print "  sfh_delay5: {}".format(sfh.sfh_delay5)
-        print "  sfh_delay6: {}".format(sfh.sfh_delay6)
-        print "  sfh_delay7: {}".format(sfh.sfh_delay7)
-        print "  sfh_delay8: {}".format(sfh.sfh_delay8)
-        print "  sfh_delay9: {}".format(sfh.sfh_delay9)
-        msg = sfh.payload
-    else:
-        msg = mih.payload
-        
-    print "###[ MESSAGE ]###"
-    print "  msg: {}".format(str(msg))
+    if icmp:
+        ls(icmp)
+    if udp:
+        print "###[ TCP/UDP ]###"
+        print "  sport: {}".format(udp.sport)
+        print "  dport: {}".format(udp.dport)
+    if udp:
+        print "###[ MIH ]###"
+        print "  mih_switch_id: {}".format(mih.mih_switch_id)
+        print "  mih_timestamp: {}".format(mih.mih_timestamp)
+        print "  sfh_exists_fg: {}".format(mih.sfh_exists_fg)
+        if mih.sfh_exists_fg== 1 :
+            sfh=SFH(str(mih.payload))
+            print "###[ SFH ]###"
+            print "  sfh_switch_id: {}".format(sfh.sfh_switch_id)
+            print "  sfh_sketch_fg: {}".format(sfh.sfh_sketch_fg)
+            print "  sfh_fgment_id: {}".format(sfh.sfh_fgment_id)
+            print "  sfh_delay0: {}".format(sfh.sfh_delay0)
+            print "  sfh_delay1: {}".format(sfh.sfh_delay1)
+            print "  sfh_delay2: {}".format(sfh.sfh_delay2)
+            print "  sfh_delay3: {}".format(sfh.sfh_delay3)
+            print "  sfh_delay4: {}".format(sfh.sfh_delay4)
+            print "  sfh_delay5: {}".format(sfh.sfh_delay5)
+            print "  sfh_delay6: {}".format(sfh.sfh_delay6)
+            print "  sfh_delay7: {}".format(sfh.sfh_delay7)
+            print "  sfh_delay8: {}".format(sfh.sfh_delay8)
+            print "  sfh_delay9: {}".format(sfh.sfh_delay9)
+            msg = sfh.payload
+        else:
+            msg = mih.payload
+        print "###[ MESSAGE ]###"
+        print "  msg: {}".format(str(msg))
     print
 
 def main():
@@ -107,9 +106,7 @@ def main():
     iface = ifaces[0]
     print "sniffing on %s" % iface
     sys.stdout.flush()
-
     my_filter = isNotOutgoing(get_if_hwaddr(get_if()))
-
     sniff(filter="ip", iface = iface,
           prn = lambda x: handle_pkt(x), lfilter=my_filter)
 

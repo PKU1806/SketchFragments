@@ -35,10 +35,7 @@ def get_if():
     return iface
 
 
-
-
 def get_dst_mac(ip):
-
     try:
         pid = Popen(["arp", "-n", ip], stdout=PIPE)
         s = pid.communicate()[0]
@@ -47,13 +44,11 @@ def get_dst_mac(ip):
     except:
         return None
 
-#whether l3 send can be use?
-#and how to set?
+
 def send_packet(interface,args):
     
-    dstAddr=topo.get_host_ip(args.d)
+    # a l2 implementation
     #dstAddr = socket.gethostbyname(args.d)
-    
     #print(socket.getaddrinfo(sys.argv[1], None, 0, socket.SOCK_STREAM))
     #ether_dst = get_dst_mac(dstAddr)
     #if not ether_dst:
@@ -63,14 +58,17 @@ def send_packet(interface,args):
     #pkt=pkt/IP(dst=dstAddr)
     
 
+    #warning!
     #if want to send TCP ,must change the parser of p4
+    dstAddr=topo.get_host_ip(args.d)
     pkt=IP(dst=dstAddr)
-    
-    if args.type=="tcp" or args.type=="TCP":
+    if args.type=="tcp" :
         pkt=pkt/TCP()
-    else:
+    elif args.type=="udp":
         pkt=pkt/UDP()
-    pkt=pkt/MIH()/"load0load1load2load3"
+        pkt=pkt/MIH()/"load0load1load2load3"
+    else:
+        pkt=pkt/ICMP()
     while True:
         raw_input("Testing! Press the return key to send a packet using "+args.type.lower())
         print "Sending on interface %s \n"%(interface)
@@ -82,17 +80,13 @@ def send_packet(interface,args):
 
 def main():
     parser=argparse.ArgumentParser()
-    
-    #parser.add_argument("d",help="the dst IP addr of host")
     parser.add_argument("d",help="the dst host name")
-    parser.add_argument("-t","--type",help="the packet type to be sent",default="udp",choices=["udp","tcp"])
+    parser.add_argument("-t","--type",help="the packet type to be sent",default="udp",choices=["udp","tcp","icmp"])
     parser.add_argument("-n","--number",help="the packet number to be sent",type=int,default=1)
     args=parser.parse_args()
-    
 
     interface=get_if()
     send_packet(interface,args)
-
 
 if __name__ == "__main__":
     main()

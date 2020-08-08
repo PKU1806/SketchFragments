@@ -27,6 +27,7 @@ parser MyParser(packet_in packet,
 		transition select(hdr.ipv4.protocol) {
 			TYPE_TCP : parse_tcp;
 			TYPE_UDP : parse_udp;
+            TYPE_ICMP: accept;
 			default : accept;
 		}
     }
@@ -75,21 +76,11 @@ control MyDeparser(packet_out packet, in headers hdr) {
 
         //parsed headers have to be added again into the packet.
         packet.emit(hdr.ethernet);
-        
         packet.emit(hdr.CPU);
-        
         packet.emit(hdr.ipv4);
-
-        //Only emited if valid
-	
         packet.emit(hdr.tcp);
-
         packet.emit(hdr.udp);
-
         packet.emit(hdr.MIH);
-
         packet.emit(hdr.SFH);
-
-        
     }
 }

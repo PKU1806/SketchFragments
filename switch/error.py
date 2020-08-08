@@ -6,10 +6,7 @@ import sys
 import argparse
 import random
 
-
-
 class GenFault(object):
-
     def __init__(self):
         self.topo = Topology(db="topology.db")  #set the topology
         self.controllers = {}                   #the switches
@@ -19,13 +16,12 @@ class GenFault(object):
         self.connect_to_switches()              
 
     def connect_to_switches(self):
-        for p4switch in self.topo.get_p4switches():# topology line 632
+        for p4switch in self.topo.get_p4switches():
             thrift_port = self.topo.get_thrift_port(p4switch) 
             self.controllers[p4switch] = SimpleSwitchAPI(thrift_port)
 
     def loop(self):
         switches=raw_input("type the switch's name to gen loop,seperated by ','\nmust be physically loop-able:\n").split(',')
-        print switches
         
         IPs=[]
         for sw_name in self.controllers.keys():
@@ -35,7 +31,7 @@ class GenFault(object):
         
         for i in range(len(switches)):
             sw_name=switches[i]
-            #self.controllers[sw_name].table_clear("ecmp_group_to_nhop")
+            self.controllers[sw_name].table_clear("ecmp_group_to_nhop")
             self.controllers[sw_name].table_clear("ipv4_lpm")
             
             #next_hop=NULL
@@ -46,7 +42,7 @@ class GenFault(object):
 
             sw_port = self.topo.node_to_node_port_num(sw_name, next_hop)
             dst_sw_mac = self.topo.node_to_node_mac(next_hop, sw_name)
-            print "table_add at {}:".format(sw_name)
+            #print "table_add at {}:".format(sw_name)
             for host_ip in IPs:
                 self.controllers[sw_name].table_add("ipv4_lpm", "set_nhop", [str(host_ip)],\
                                 [str(dst_sw_mac), str(sw_port)])
@@ -55,16 +51,14 @@ class GenFault(object):
     def blackhole(self,args):
         if args.sw_name== None:
             pass
-            print "Not implemented yet"
+            print "Not implemented yet,please specify the switch name"
         else:
-            #self.controllers[args.sw_name].table_clear("ecmp_group_to_nhop")
+            self.controllers[args.sw_name].table_clear("ecmp_group_to_nhop")
             self.controllers[args.sw_name].table_clear("ipv4_lpm")
             print args.sw_name,"has been shut down"
 
-
-
-    def route(self):
-        #log=open("./router.log","a")
+    def reroute(self):
+        #log=open("./router.log","w")
         switch_ecmp_groups = {sw_name:{} for sw_name in self.topo.get_p4switches().keys()}
         for sw_name, controllers in self.controllers.items():
             controllers.table_clear("ecmp_group_to_nhop")
@@ -79,7 +73,7 @@ class GenFault(object):
 
                         #add rule
                         print "table_add at {}:".format(sw_name)
-                        #log.write("table_add ipv4_lpm set_nhop at {} to host {} using port {}:".format(sw_name,host,sw_port))
+                        #log.write("[1] table_add ipv4_lpm set_nhop at {} to host {} using port {}\n".format(sw_name,host,sw_port))
                         self.controllers[sw_name].table_add("ipv4_lpm", "set_nhop", [str(host_ip)], [str(host_mac), str(sw_port)])
 
                 #check if there are directly connected hosts
@@ -97,7 +91,7 @@ class GenFault(object):
 
                                 #add rule
                                 print "table_add at {}:".format(sw_name)
-                                #log.write("table_add ipv4_lpm set_nhop at {} to host {} using port {}:".format(sw_name,host,sw_port))
+                                #log.write("[2] table_add ipv4_lpm set_nhop at {} to host {} using port {} to nexthop {}\n".format(sw_name,host,sw_port,next_hop))
                                 self.controllers[sw_name].table_add("ipv4_lpm", "set_nhop", [str(host_ip)],
                                                                     [str(dst_sw_mac), str(sw_port)])
 
@@ -113,7 +107,7 @@ class GenFault(object):
                                 if switch_ecmp_groups[sw_name].get(tuple(dst_macs_ports), None):
                                     ecmp_group_id = switch_ecmp_groups[sw_name].get(tuple(dst_macs_ports), None)
                                     print "table_add at {}:".format(sw_name)
-                                    #log.write("table_add ipv4_lpm ecmp_group at {} to host {} using port {}:".format(sw_name,host,dst_macs_ports))
+                                    #log.write("[3] table_add ipv4_lpm ecmp_group at {} to switch {} to paths{}\n".format(sw_name,sw_dst,paths))
                                     self.controllers[sw_name].table_add("ipv4_lpm", "ecmp_group", [str(host_ip)],
                                                                         [str(ecmp_group_id), str(len(dst_macs_ports))])
 
@@ -125,13 +119,15 @@ class GenFault(object):
                                     #add group
                                     for i, (mac, port) in enumerate(dst_macs_ports):
                                         print "table_add at {}:".format(sw_name)
-                                        #log.write("table_add ecmp set_nhop at {} to host {} using port {}:".format(sw_name,host,port))
+                                        #log.write("[4] table_add ipv4_lpm ecmp_group at {} to switch {} to paths{}\n".format(sw_name,sw_dst,paths))
                                         self.controllers[sw_name].table_add("ecmp_group_to_nhop", "set_nhop",
                                                                             [str(new_ecmp_group_id), str(i)],
                                                                             [str(mac), str(port)])
 
                                     #add forwarding rule
                                     print "table_add at {}:".format(sw_name)
+                                    #log.write("[5] table_add ipv4_lpm ecmp_group at {} to switch {} to paths{}\n".format(sw_name,sw_dst,paths))
+
                                     self.controllers[sw_name].table_add("ipv4_lpm", "ecmp_group", [str(host_ip)],
                                                                         [str(new_ecmp_group_id), str(len(dst_macs_ports))])
 		
@@ -147,12 +143,10 @@ if __name__ == "__main__":
     
     args=parser.parse_args()
     fault=GenFault()
-    #for i in sys.argv:
-    #    print i
 
     if args.type=="loop":
         fault.loop()
     elif args.type=="blackhole":
         fault.blackhole(args)
     else:
-        fault.route()
+        fault.reroute()
