@@ -37,3 +37,6 @@ visor.py:list the sketch's value of switches
 7. in window B (after mini-step4),type `mx s7` ,and `python test.py -h` to minitor control plane of s7 (only s7's cpu-monitor is activated,so avoid using other switches)
 
 
+## question & problems 
+1. why icmp will fail when s1 shutdown while udp will be ok
+

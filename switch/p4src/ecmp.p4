@@ -306,13 +306,15 @@ control MyIngress(inout headers hdr,
         default_action=NoAction;
     }
 
-    /******************* inherited code start here       ************************/
+    /******************* inherited code starts here       ************************/
     action drop(){
         mark_to_drop();
     }
 
     action ecmp_group(bit<14> ecmp_group_id, bit<16> num_nhops)
     {
+        //bit<32> tmp;
+        //random(tmp, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
         hash(meta.ecmp_hash,
             HashAlgorithm.crc16,
             (bit<1>)0,
@@ -320,7 +322,9 @@ control MyIngress(inout headers hdr,
             hdr.ipv4.dstAddr,
             meta.ipv4_srcPort,
             meta.ipv4_dstPort,
-            hdr.ipv4.protocol},
+            hdr.ipv4.protocol
+            //tmp 
+            },
             num_nhops);
 
         meta.ecmp_group_id = ecmp_group_id;
@@ -365,7 +369,7 @@ control MyIngress(inout headers hdr,
         default_action = drop;
     }
 
-    /******************* inherited code end here       ************************/
+    /******************* inherited code ends here       ************************/
 
 
     action update_MIH_timestamp()
@@ -407,7 +411,7 @@ control MyIngress(inout headers hdr,
 
     apply
     {   
-        if (hdr.ipv4.isValid()) {
+        if (hdr.ipv4.isValid()&&hdr.ipv4.ttl > 1) {
             
             
             /*if(!hdr.MIH.isValid()){// if we send a blank packet ,we shall add the MIH
@@ -460,7 +464,12 @@ control MyIngress(inout headers hdr,
                 }
             }
         }
+        else{
+            drop();
+        }
+        
     }
+    
 }
 
 /*************************************************************************
