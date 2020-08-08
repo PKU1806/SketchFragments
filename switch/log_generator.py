@@ -132,18 +132,18 @@ class packetReceicer(object):
         has_SFH=cpu.flags&0x1;
 
 
-        logs.write("SWITCH["+self.sw_name+"] " )
-        logs.write("[Packet No."+str(self.counter-1)+"] {")
-        logs.write(" [srcAddr : "+str(srcAddr)+"]")
-        logs.write(" [dsrAddr : "+str(dstAddr)+"]")
-        logs.write(" [protocol : "+str(cpu.protocol)+"]")
-        logs.write(" [srcPort :"+str(cpu.srcPort)+"]")
-        logs.write(" [dstPort :"+str(cpu.dstPort)+"]")
-        logs.write(" [delay :"+delay+"]")
-        logs.write(" [interval :"+interval+"]")
-        logs.write(" [using sketch "+str(sketch_fg)+"]")
-        logs.write(" [has SFH :"+str(bool(has_SFH))+"]")
-        logs.write(" }\n")
+        logs.write('{"switch name":"'+self.sw_name+'",')
+        logs.write('"packet number":"'+str(self.counter-1)+'","packet_info:{')
+        logs.write('"srcAddr":"'+str(srcAddr)+'",')
+        logs.write('"dsrAddr":"'+str(dstAddr)+'",')
+        logs.write('"protocol":"'+str(cpu.protocol)+'",')
+        logs.write('"srcPort":"'+str(cpu.srcPort)+'",')
+        logs.write('"dstPort":"'+str(cpu.dstPort)+'",')
+        logs.write('"delay ":"'+delay+'",')
+        logs.write('"interval":"'+interval+'",')
+        logs.write('"using sketch":"'+str(sketch_fg)+'",')
+        logs.write('"has SFH":"'+str(bool(has_SFH))+'",')
+        logs.write(" }}\n")
         logs.close()
 
 

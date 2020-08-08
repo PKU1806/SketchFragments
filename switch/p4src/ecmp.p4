@@ -104,7 +104,7 @@ control MyIngress(inout headers hdr,
 		meta.SFH_index = 3 * BUCKET_NUM;
 
 		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
-        counter0.read(meta.counter_value0,meta.counter_index1);
+        counter0.read(meta.counter_value0,meta.counter_index0);
 		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value0 == 0) {
 			meta.SFH_index = meta.counter_index0;
 			meta.counter_value0 = 1;
