@@ -64,7 +64,7 @@ class packetReceicer(object):
             self.gen_log()
 
     def gen_log(self):
-        logs_info=open("./switch_log/"+self.sw_name+"_info.log","a")
+        logs_info=open("../switch_log/"+self.sw_name+"_info.log","a")
         logs_info.write("[flow number: "+str(len(self.flow))+"]\n")
         change=lambda x: '.'.join([str(x/(256**i)%256) for i in range(3,-1,-1)])
 
@@ -119,7 +119,7 @@ class packetReceicer(object):
 
 
     def gen_per_packet_log(self,cpu):
-        logs=open("./switch_log/"+self.sw_name+".log","a")
+        logs=open("../switch_log/"+self.sw_name+".log","a")
         change=lambda x: '.'.join([str(x/(256**i)%256) for i in range(3,-1,-1)])
         
         srcAddr=change(cpu.srcAddr)
