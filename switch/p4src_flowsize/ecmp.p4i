@@ -1,7 +1,7 @@
-# 1 "p4src/ecmp.p4"
+# 1 "./ecmp.p4"
 # 1 "<built-in>"
 # 1 "<command-line>"
-# 1 "p4src/ecmp.p4"
+# 1 "./ecmp.p4"
 
 /* -*- P4_16 -*- */
 # 1 "/usr/local/share/p4c/p4include/core.p4" 1
@@ -84,7 +84,7 @@ match_kind {
     /// Longest-prefix match.
     lpm
 }
-# 4 "p4src/ecmp.p4" 2
+# 4 "./ecmp.p4" 2
 # 1 "/usr/local/share/p4c/p4include/v1model.p4" 1
 /*
 Copyright 2013-present Barefoot Networks, Inc.
@@ -363,16 +363,16 @@ package V1Switch<H, M>(Parser<H, M> p,
                        ComputeChecksum<H, M> ck,
                        Deparser<H> dep
                        );
-# 5 "p4src/ecmp.p4" 2
+# 5 "./ecmp.p4" 2
 
 //My includes
-# 1 "p4src/include/headers.p4" 1
+# 1 "./include/headers.p4" 1
 /*************************************************************************
 
 *********************** H E A D E R S  ***********************************
 
 *************************************************************************/
-# 5 "p4src/include/headers.p4"
+# 5 "./include/headers.p4"
 const bit<16> TYPE_IPV4 = 0x0800;
 const bit<8> TYPE_TCP = 6;
 const bit<8> TYPE_UDP = 17;
@@ -410,7 +410,10 @@ header tcp_t{
     bit<32> seqNo;
     bit<32> ackNo;
     bit<4> dataOffset;
-    bit<4> res;
+    bit<1> MIH_fg;
+    bit<1> SFH_fg;
+    bit<1> SFH_sketch_number;
+    bit<1> res;
     bit<1> cwr;
     bit<1> ece;
     bit<1> urg;
@@ -431,21 +434,21 @@ header udp_t {
  bit<16> checksum;
 }
 
+// if using udp protocol ,we will use this one to judge whether exists MIH and SFH
+header FLAG_t{
+    bit<8> flag; //0x100 for MIH; 0x010 for SFH; 0x001 for sfh_sketch_number
+}
+
 //part one of the bringing data
 header MIH_t{
     //max interval header
     bit<16> mih_switch_id;
     bit<48> mih_timestamp;
- bit<16> mih_padding; //？？why？ padding so big ,8 bit align?
-    bit<8> sfh_exists_fg; //if SFH_fg==0 no SFH,
 }
 
 //sketch fragment header
 header SFH_t{
-
-    //part 0:
     bit<16> sfh_switch_id;
-    bit<8> sfh_sketch_fg; //0 stands for group0,vice versa
     bit<32> sfh_fgment_id;
 
     //sketch fragments: a bucket which contains 10 bins
@@ -467,12 +470,9 @@ header cpu_t{
     bit<8> protocol;
     bit<16> srcPort;
  bit<16> dstPort;
- //bit<16> length;
     bit<48> delay;
-
     bit<48> interval;
     bit<8> flags;
- //bit<16> checksum;
 }
 
 struct metadata {
@@ -513,10 +513,6 @@ struct metadata {
     bit<1> counter_value0;
     bit<1> counter_value1;
     bit<1> counter_value2;
-
-
-    //the above can be refined into at most 4 indexes and 4 values  I suppose
-    // but for convenience , we used a lot of them
 
  bit<16> switch_id;
     bit<48> switch_delay;
@@ -574,31 +570,28 @@ struct headers {
     ipv4_t ipv4;
     tcp_t tcp;
  udp_t udp;
+    FLAG_t flag;
     MIH_t MIH;
     SFH_t SFH;
-
 }
-# 8 "p4src/ecmp.p4" 2
-# 1 "p4src/include/parsers.p4" 1
+# 8 "./ecmp.p4" 2
+# 1 "./include/parsers.p4" 1
 /*************************************************************************
 
 *********************** P A R S E R  *******************************
 
 *************************************************************************/
-# 5 "p4src/include/parsers.p4"
+# 5 "./include/parsers.p4"
 parser MyParser(packet_in packet,
                 out headers hdr,
                 inout metadata meta,
                 inout standard_metadata_t standard_metadata) {
 
     state start {
-
         transition parse_ethernet;
-
     }
 
     state parse_ethernet {
-
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType){
             TYPE_IPV4: parse_ipv4;
@@ -622,7 +615,11 @@ parser MyParser(packet_in packet,
   meta.ipv4_srcPort = hdr.tcp.srcPort;
   meta.ipv4_dstPort = hdr.tcp.dstPort;
 
-        transition accept;
+        transition select(hdr.tcp.MIH_fg){
+            0 : accept;
+            1 : parse_MIH_of_TCP;
+            default : accept;
+        }
     }
 
     state parse_udp {
@@ -631,19 +628,42 @@ parser MyParser(packet_in packet,
   meta.ipv4_srcPort = hdr.udp.srcPort;
   meta.ipv4_dstPort = hdr.udp.dstPort;
 
-        transition parse_MIH;
+        transition parse_flag;
     }
 
-    state parse_MIH {
+    //udp only
+    state parse_flag{
+        packet.extract(hdr.flag);
+        transition select(hdr.flag.flag){
+           4: parse_MIH_of_UDP;
+           6: parse_MIH_of_UDP;
+           7: parse_MIH_of_UDP;
+           3: parse_SFH;
+           2: parse_SFH;
+           default : accept;
+        }
+    }
+
+    state parse_MIH_of_TCP{
   packet.extract(hdr.MIH);
 
-        transition select(hdr.MIH.sfh_exists_fg) {
+        transition select(hdr.tcp.SFH_fg) {
    0 : accept;
    1 : parse_SFH;
    default : accept;
   }
 
  }
+
+    state parse_MIH_of_UDP{
+        packet.extract(hdr.MIH);
+
+        transition select(hdr.flag.flag) {
+   6: parse_SFH;
+            7: parse_SFH;
+   default : accept;
+  }
+    }
 
  state parse_SFH {
   packet.extract(hdr.SFH);
@@ -656,31 +676,21 @@ parser MyParser(packet_in packet,
 ***********************  D E P A R S E R  *******************************
 
 *************************************************************************/
-# 74 "p4src/include/parsers.p4"
+# 98 "./include/parsers.p4"
 control MyDeparser(packet_out packet, in headers hdr) {
     apply {
 
         //parsed headers have to be added again into the packet.
         packet.emit(hdr.ethernet);
-
         packet.emit(hdr.CPU);
-
         packet.emit(hdr.ipv4);
-
-        //Only emited if valid
-
         packet.emit(hdr.tcp);
-
         packet.emit(hdr.udp);
-
         packet.emit(hdr.MIH);
-
         packet.emit(hdr.SFH);
-
-
     }
 }
-# 9 "p4src/ecmp.p4" 2
+# 9 "./ecmp.p4" 2
 
 //test factors , volatile
 
@@ -695,12 +705,12 @@ control MyDeparser(packet_out packet, in headers hdr) {
 
 //6crc
 //this is for sketch
-# 33 "p4src/ecmp.p4"
+# 33 "./ecmp.p4"
 //this is for timestamps
-# 44 "p4src/ecmp.p4"
+# 44 "./ecmp.p4"
 //1 crc32 custom
 //this is for bring sketch fragments
-# 56 "p4src/ecmp.p4"
+# 56 "./ecmp.p4"
 //group0
 register<bit<32>>(64 * 10) array0;
 register<bit<32>>(64 * 10) array1;
@@ -734,7 +744,7 @@ register<bit<48>>(1) previous_ingress_timestamp;
 ************   C H E C K S U M    V E R I F I C A T I O N   *************
 
 *************************************************************************/
-# 88 "p4src/ecmp.p4"
+# 88 "./ecmp.p4"
 control MyVerifyChecksum(inout headers hdr, inout metadata meta)
 {
     apply {}
@@ -745,7 +755,7 @@ control MyVerifyChecksum(inout headers hdr, inout metadata meta)
 **************  I N G R E S S   P R O C E S S I N G   *******************
 
 *************************************************************************/
-# 97 "p4src/ecmp.p4"
+# 97 "./ecmp.p4"
 control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata)
@@ -756,7 +766,7 @@ control MyIngress(inout headers hdr,
   meta.SFH_index = 3 * 64;
 
   random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * 64 - 1));
-        counter0.read(meta.counter_value0,meta.counter_index1);
+        counter0.read(meta.counter_value0,meta.counter_index0);
   if (meta.SFH_index >= 3 * 64 && meta.counter_value0 == 0) {
    meta.SFH_index = meta.counter_index0;
    meta.counter_value0 = 1;
@@ -1064,7 +1074,6 @@ control MyIngress(inout headers hdr,
     apply
     {
         if (hdr.ipv4.isValid()&&hdr.ipv4.ttl > 1) {
-
             /*if(!hdr.MIH.isValid()){// if we send a blank packet ,we shall add the MIH
 
                 hdr.MIH.mih_timestamp=standard_metadata.ingress_global_timestamp;
@@ -1076,7 +1085,7 @@ control MyIngress(inout headers hdr,
                 hdr.MIH.setValid();
 
             }*/
-# 422 "p4src/ecmp.p4"
+# 421 "./ecmp.p4"
             if (hdr.MIH.isValid()) {
                 switch_id.read(meta.switch_id, 0);
                 update_MIH_timestamp();
@@ -1098,12 +1107,20 @@ control MyIngress(inout headers hdr,
                             hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
                             hdr.udp.length = hdr.udp.length + (58 - 11);
 
-                            hdr.MIH.sfh_exists_fg = 1;
+                            if(hdr.tcp.isValid()){
+                                hdr.tcp.SFH_fg = 1;
+                                hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
+                            }
+                            else{
+                                hdr.flag.flag=hdr.flag.flag| 0b010;
+                                hdr.flag.flag= hdr.flag.flag & 0b1111_1110;
+                                hdr.flag.flag =hdr.flag.flag |(1 - meta.sketch_fg);
+                            }
                             hdr.SFH.setValid();
                             hdr.SFH.sfh_switch_id = meta.switch_id;
                             hdr.SFH.sfh_fgment_id = meta.SFH_index;
                             sketch_fg.read(meta.sketch_fg,0);
-                            hdr.SFH.sfh_sketch_fg = 1 - meta.sketch_fg;
+
 
                             choose_fragment.apply();
                             update_SFH.apply();
@@ -1132,7 +1149,7 @@ control MyIngress(inout headers hdr,
 ****************  E G R E S S   P R O C E S S I N G   *******************
 
 *************************************************************************/
-# 476 "p4src/ecmp.p4"
+# 483 "./ecmp.p4"
 control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata)
@@ -1150,8 +1167,7 @@ control MyEgress(inout headers hdr,
 
     //semi-CU-sketch    
     //update sketch 0 : array0\1\2
-    action update_sketch0()
-    {
+    action update_sketch0(){
         hash(meta.array_index0, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64);
         hash(meta.array_index1, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64);
         hash(meta.array_index2, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64);
@@ -1183,8 +1199,7 @@ control MyEgress(inout headers hdr,
     }
 
     //update sketch 1 : array3\4\5
-    action update_sketch1()
-    {
+    action update_sketch1(){
         hash(meta.array_index3, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64);
         hash(meta.array_index4, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64);
         hash(meta.array_index5, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64);
@@ -1223,8 +1238,7 @@ control MyEgress(inout headers hdr,
         timestamp_array2.write(meta.timestamp_index2,standard_metadata.ingress_global_timestamp);
     }
 
-    table update_sketch
-    {
+    table update_sketch{
         key = {
             meta.sketch_fg : exact;
         }
@@ -1254,7 +1268,6 @@ control MyEgress(inout headers hdr,
 
     action send_to_control_plane(){
         //meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
-
         clone3(CloneType.E2E,100,meta);//mirror id = 100
     }
 
@@ -1272,10 +1285,18 @@ control MyEgress(inout headers hdr,
             previous_ingress_timestamp.write((bit<32>)0,standard_metadata.ingress_global_timestamp);
 
             sketch_fg.read(meta.sketch_fg,0);
-            meta.swap_control = hdr.MIH.sfh_exists_fg;
-            /****************** */
+
+            //temporarily store whether the sfh exists
+            if(hdr.tcp.isValid()){
+                meta.swap_control = (bit<8>)hdr.tcp.SFH_fg;
+            }
+            else{
+                meta.swap_control = (hdr.flag.flag&0b010)>>1;
+            }
+
+            /*********  log code starts here  ********* */
             send_to_control_plane();
-            /****************** */
+            /********  log code ends here ********** */
 
             get_delay_lev.apply();
 
@@ -1283,7 +1304,7 @@ control MyEgress(inout headers hdr,
 
         }
 
-        /******** log code starts here*******/
+        /************************ log code starts here**********************/
         if (standard_metadata.instance_type == 2){
             //ether: 16   Ipv4:20  tcp:20  udp:8  mih:11  sfh:47
             hdr.CPU.setValid();
@@ -1296,17 +1317,15 @@ control MyEgress(inout headers hdr,
             hdr.CPU.delay=meta.switch_delay;
             hdr.CPU.interval=meta.interval;
             hdr.CPU.flags=(meta.sketch_fg<<1) |(meta.swap_control);
+
             hdr.ethernet.setInvalid();
             hdr.ipv4.setInvalid();
             hdr.tcp.setInvalid();
             hdr.udp.setInvalid();
             hdr.MIH.setInvalid();
             hdr.SFH.setInvalid();
-            //truncate((bit<32>)35);
-
         }
-        /******** log code ends here*******/
-
+        /************************ log code ends here***************************/
 
     }
 }
@@ -1316,7 +1335,7 @@ control MyEgress(inout headers hdr,
 *************   C H E C K S U M    C O M P U T A T I O N   **************
 
 *************************************************************************/
-# 658 "p4src/ecmp.p4"
+# 667 "./ecmp.p4"
 control MyComputeChecksum(inout headers hdr, inout metadata meta)
 {
     apply
@@ -1374,7 +1393,7 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta)
 ***********************  S W I T C H  *******************************
 
 *************************************************************************/
-# 714 "p4src/ecmp.p4"
+# 723 "./ecmp.p4"
 //switch architecture
 V1Switch(
     MyParser(),

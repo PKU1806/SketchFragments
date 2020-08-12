@@ -439,12 +439,20 @@ control MyIngress(inout headers hdr,
                             hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
                             hdr.udp.length = hdr.udp.length + (58 - 11);
 
-                            hdr.MIH.sfh_exists_fg = 1;
+                            if(hdr.tcp.isValid()){
+                                hdr.tcp.SFH_fg = 1;
+                                hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
+                            }
+                            else{
+                                hdr.flag.flag=hdr.flag.flag| 0b010;
+                                hdr.flag.flag= hdr.flag.flag & 0b1111_1110;
+                                hdr.flag.flag =hdr.flag.flag |(1 - meta.sketch_fg);
+                            }
                             hdr.SFH.setValid();
                             hdr.SFH.sfh_switch_id = meta.switch_id;
                             hdr.SFH.sfh_fgment_id = meta.SFH_index;
                             sketch_fg.read(meta.sketch_fg,0);
-                            hdr.SFH.sfh_sketch_fg = 1 - meta.sketch_fg;
+                            
 
                             choose_fragment.apply();
                             update_SFH.apply();
@@ -607,7 +615,14 @@ control MyEgress(inout headers hdr,
             previous_ingress_timestamp.write((bit<32>)0,standard_metadata.ingress_global_timestamp);
             
             sketch_fg.read(meta.sketch_fg,0);
-            meta.swap_control = hdr.MIH.sfh_exists_fg;
+            
+            //temporarily store whether the sfh exists
+            if(hdr.tcp.isValid()){
+                meta.swap_control = (bit<8>)hdr.tcp.SFH_fg;
+            }
+            else{
+                meta.swap_control = (hdr.flag.flag&0b010)>>1;
+            }
             
             /*********  log code starts here  ********* */
             send_to_control_plane();

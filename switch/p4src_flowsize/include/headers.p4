@@ -39,7 +39,10 @@ header tcp_t{
     bit<32> seqNo;
     bit<32> ackNo;
     bit<4>  dataOffset;
-    bit<4>  res;
+    bit<1>  MIH_fg;
+    bit<1>  SFH_fg;
+    bit<1>  SFH_sketch_number;
+    bit<1>  res;
     bit<1>  cwr;
     bit<1>  ece;
     bit<1>  urg;
@@ -60,21 +63,21 @@ header udp_t {
 	bit<16> checksum;
 }
 
+// if using udp protocol ,we will use this one to judge whether exists MIH and SFH
+header FLAG_t{
+    bit<8> flag; //0x100 for MIH; 0x010 for SFH; 0x001 for sfh_sketch_number
+}
+
 //part one of the bringing data
 header MIH_t{
     //max interval header
     bit<16>  mih_switch_id;
     bit<48>  mih_timestamp;
-	bit<16>  mih_padding;                   //？？why？ padding so big ,8 bit align?
-    bit<8>   sfh_exists_fg;                 //if SFH_fg==0 no SFH,
 }
 
 //sketch fragment header
 header SFH_t{
-
-    //part 0:
     bit<16> sfh_switch_id;
-    bit<8>  sfh_sketch_fg;          //0 stands for group0,vice versa
     bit<32> sfh_fgment_id;
 
     //sketch fragments: a bucket which contains 10 bins
@@ -140,10 +143,6 @@ struct metadata {
     bit<1> counter_value1;
     bit<1> counter_value2;
 
-
-    //the above can be refined into at most 4 indexes and 4 values  I suppose
-    // but for convenience , we used a lot of them
-
 	bit<16> switch_id;
     bit<48> switch_delay;
     bit<8>  sketch_fg;
@@ -200,6 +199,7 @@ struct headers {
     ipv4_t       ipv4;
     tcp_t        tcp;
 	udp_t        udp;
+    FLAG_t       flag;
     MIH_t        MIH;
     SFH_t	     SFH;
 }
