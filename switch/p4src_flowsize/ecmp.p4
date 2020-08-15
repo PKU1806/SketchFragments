@@ -320,7 +320,7 @@ control MyIngress(inout headers hdr,
             meta.ipv4_srcPort,
             meta.ipv4_dstPort,
             hdr.ipv4.protocol,
-            tmp 
+             tmp
             },
             num_nhops);
 
@@ -383,10 +383,11 @@ control MyIngress(inout headers hdr,
     {   
         if (hdr.ipv4.isValid()&&hdr.ipv4.ttl > 1) {
             
+
             /******** log code starts here*******/
             //send_to_control_plane();
             /******** log code ends here*******/
-
+            
             hdr.udp.checksum = 0;
             switch_id.read(meta.switch_id, 0);
             sketch_fg.read(meta.sketch_fg,0);
@@ -425,7 +426,6 @@ control MyIngress(inout headers hdr,
                     }
                 }
             }
-            
             switch (ipv4_lpm.apply().action_run){
                 ecmp_group:{
                     ecmp_group_to_nhop.apply();
@@ -558,7 +558,7 @@ control MyEgress(inout headers hdr,
 
     apply
     {
-        if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0){
+        if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0&&hdr.ipv4.ttl > 1){
 
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
             
@@ -576,9 +576,9 @@ control MyEgress(inout headers hdr,
                 meta.swap_control = (hdr.flag.flag&0b010)>>1;
             }
             
-            /*********  log code starts here  ********* */
+            /*********  log code starts here  **********/
             send_to_control_plane();
-            /********  log code ends here ********** */
+            /********  log code ends here ***********/
 
             get_delay_lev.apply();
             update_sketch.apply();
@@ -597,6 +597,8 @@ control MyEgress(inout headers hdr,
             hdr.CPU.delay=meta.switch_delay;
             hdr.CPU.interval=meta.interval;
             hdr.CPU.flags=(meta.sketch_fg<<1) |(meta.swap_control);
+            hdr.CPU.flags=hdr.CPU.flags&0b0000_0011;
+
 
             hdr.ethernet.setInvalid();
             hdr.ipv4.setInvalid();

@@ -7,8 +7,11 @@ import argparse
 import random
 
 class GenFault(object):
-    def __init__(self):
-        self.topo = Topology(db="topology.db")  #set the topology
+    def __init__(self,program):
+        if program=="f":
+            self.topo = Topology(db="../p4src_flowsize/topology.db")  #set the topology
+        elif prgram=="i":
+            self.topo = Topology(db="../p4src_interval/topology.db")  #set the topology
         self.controllers = {}                   #the switches
         self.init()
 
@@ -137,12 +140,14 @@ class GenFault(object):
 if __name__ == "__main__":
     parser=argparse.ArgumentParser()
     parser.add_argument("type",help="the type wanted for the net",choices=["loop","blackhole","reset"],default="reset")
+    parser.add_argument("p",help="the program to be run",choices=["f","i"])
+
     #group = parser.add_mutually_exclusive_group()
     #group.add_argument("-n","--number",help="the loop's length or the number for blackhole",type=int,default=1)
     parser.add_argument("-s","--sw_name",help="specify the blackhole switch")
     
     args=parser.parse_args()
-    fault=GenFault()
+    fault=GenFault(args.p)
 
     if args.type=="loop":
         fault.loop()

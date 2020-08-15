@@ -10,7 +10,7 @@ from threading import Thread, Event
 from scapy.all import *
 from p4utils.utils.topology import Topology
 
-topo = Topology(db="topology.db")
+
 
 class MIH(Packet):
     name="MIH"
@@ -20,6 +20,12 @@ class MIH(Packet):
             BitField("mih_timestamp",0,48),\
             BitField("mih_padding",0,16),\
             BitField("sfh_exists_fg",0,8)]
+
+class flag(Packet):
+    name="flag"
+    fields_desc=[\
+            BitField("mih_switch_id",0,8)]
+    
 
 #always via eth0
 def get_if():
@@ -45,7 +51,7 @@ def get_dst_mac(ip):
         return None
 
 
-def send_packet(interface,args):
+def send_packet(interface,args,program):
     
     # a l2 implementation
     #dstAddr = socket.gethostbyname(args.d)
@@ -60,6 +66,10 @@ def send_packet(interface,args):
 
     #warning!
     #if want to send TCP ,must change the parser of p4
+    if program=="f":
+        topo = Topology(db="../p4src_flowsize/topology.db")  #set the topology
+    elif prgram=="i":
+        topo = Topology(db="../p4src_interval/topology.db")  #set the topology
     dstAddr=topo.get_host_ip(args.d)
     pkt=IP(dst=dstAddr)
     if args.type=="tcp" :
@@ -81,12 +91,14 @@ def send_packet(interface,args):
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("d",help="the dst host name")
+    parser.add_argument("p",help="the program to be run",choices=["f","i"])
+
     parser.add_argument("-t","--type",help="the packet type to be sent",default="udp",choices=["udp","tcp","icmp"])
     parser.add_argument("-n","--number",help="the packet number to be sent",type=int,default=1)
     args=parser.parse_args()
 
     interface=get_if()
-    send_packet(interface,args)
+    send_packet(interface,args,args.p)
 
 if __name__ == "__main__":
     main()

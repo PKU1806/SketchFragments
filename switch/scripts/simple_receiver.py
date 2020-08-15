@@ -68,7 +68,7 @@ def handle_pkt(pkt):
     print "  src: {}".format(ip.src)
     print "  dst: {}".format(ip.dst)
     if icmp:
-        ls(icmp)
+        print "ICMP packet"
     if udp:
         print "###[ TCP/UDP ]###"
         print "  sport: {}".format(udp.sport)
@@ -111,4 +111,5 @@ def main():
           prn = lambda x: handle_pkt(x), lfilter=my_filter)
 
 if __name__ == '__main__':
+    
     main()

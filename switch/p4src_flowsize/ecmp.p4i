@@ -678,6 +678,7 @@ control MyDeparser(packet_out packet, in headers hdr) {
         packet.emit(hdr.ipv4);
         packet.emit(hdr.tcp);
         packet.emit(hdr.udp);
+        packet.emit(hdr.flag);
         packet.emit(hdr.MIH);
         packet.emit(hdr.SFH);
     }
@@ -983,7 +984,7 @@ control MyIngress(inout headers hdr,
             meta.ipv4_srcPort,
             meta.ipv4_dstPort,
             hdr.ipv4.protocol,
-            tmp
+             tmp
             },
             num_nhops);
 
@@ -1045,27 +1046,16 @@ control MyIngress(inout headers hdr,
     apply
     {
         if (hdr.ipv4.isValid()&&hdr.ipv4.ttl > 1) {
-            /*if(!hdr.MIH.isValid()){// if we send a blank packet ,we shall add the MIH
 
-                hdr.MIH.mih_timestamp=standard_metadata.ingress_global_timestamp;
 
-                hdr.MIH.mih_switch_id=meta.switch_id;
-
-                hdr.MIH.sfh_exists_fg=0;
-
-                hdr.MIH.setValid();
-
-            }*/
-# 391 "./ecmp.p4"
             /******** log code starts here*******/
             //send_to_control_plane();
             /******** log code ends here*******/
 
-            switch_id.read(meta.switch_id, 0);
             hdr.udp.checksum = 0;
-
-            swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
+            switch_id.read(meta.switch_id, 0);
             sketch_fg.read(meta.sketch_fg,0);
+            swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
 
             if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {//this packet is vacant 
                 random(meta.random_number, (bit<32>)0, (bit<32>)10 - 1);
@@ -1073,8 +1063,8 @@ control MyIngress(inout headers hdr,
                     predispose();//compute the index of bucket
 
                     if (meta.SFH_index < 3 * 64) {
-                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (47);
                         if(hdr.udp.isValid()){
+                            hdr.ipv4.totalLen = hdr.ipv4.totalLen + (47);
                             hdr.udp.length = hdr.udp.length + (47);
                             hdr.flag.flag=hdr.flag.flag| 0b010;
                             hdr.flag.flag= hdr.flag.flag & 0b1111_1110;
@@ -1082,7 +1072,11 @@ control MyIngress(inout headers hdr,
 
                         }
                         else if(hdr.tcp.isValid()) {
-                            hdr.tcp.dataOffset=hdr.tcp.dataOffset+(47);
+                            hdr.ipv4.totalLen = hdr.ipv4.totalLen + (48);
+                            hdr.tcp.dataOffset=hdr.tcp.dataOffset+(bit<4>)(12);
+                            //dataOffset: increase 1 then length increase 4bytes,we only increased 47 bytes
+                            //1 byte wasted
+
                             hdr.tcp.SFH_fg = 1;
                             hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
                         }
@@ -1096,7 +1090,6 @@ control MyIngress(inout headers hdr,
                     }
                 }
             }
-
             switch (ipv4_lpm.apply().action_run){
                 ecmp_group:{
                     ecmp_group_to_nhop.apply();
@@ -1116,7 +1109,7 @@ control MyIngress(inout headers hdr,
 ****************  E G R E S S   P R O C E S S I N G   *******************
 
 *************************************************************************/
-# 449 "./ecmp.p4"
+# 447 "./ecmp.p4"
 control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata)
@@ -1231,7 +1224,7 @@ control MyEgress(inout headers hdr,
 
     apply
     {
-        if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0){
+        if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0&&hdr.ipv4.ttl > 1){
 
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
 
@@ -1249,9 +1242,9 @@ control MyEgress(inout headers hdr,
                 meta.swap_control = (hdr.flag.flag&0b010)>>1;
             }
 
-            /*********  log code starts here  ********* */
+            /*********  log code starts here  **********/
             send_to_control_plane();
-            /********  log code ends here ********** */
+            /********  log code ends here ***********/
 
             get_delay_lev.apply();
             update_sketch.apply();
@@ -1270,6 +1263,8 @@ control MyEgress(inout headers hdr,
             hdr.CPU.delay=meta.switch_delay;
             hdr.CPU.interval=meta.interval;
             hdr.CPU.flags=(meta.sketch_fg<<1) |(meta.swap_control);
+            hdr.CPU.flags=hdr.CPU.flags&0b0000_0011;
+
 
             hdr.ethernet.setInvalid();
             hdr.ipv4.setInvalid();

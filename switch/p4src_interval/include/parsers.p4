@@ -96,6 +96,7 @@ control MyDeparser(packet_out packet, in headers hdr) {
         packet.emit(hdr.ipv4);
         packet.emit(hdr.tcp);
         packet.emit(hdr.udp);
+        packet.emit(hdr.flag);
         packet.emit(hdr.MIH);
         packet.emit(hdr.SFH);
     }

@@ -24,8 +24,11 @@ class CPU(Packet):
 
 class packetReceicer(object):
 
-    def __init__(self, sw_name):
-        self.topo = Topology(db="topology.db")
+    def __init__(self, sw_name,program):
+        if program=="f":
+            self.topo = Topology(db="../p4src_flowsize/topology.db")  #set the topology
+        elif prgram=="i":
+            self.topo = Topology(db="../p4src_interval/topology.db")  #set the topology
         self.sw_name = sw_name
         self.thrift_port = self.topo.get_thrift_port(sw_name)
         self.cpu_port =  self.topo.get_cpu_port_index(self.sw_name)
@@ -37,8 +40,8 @@ class packetReceicer(object):
     def init(self):
         self.add_mirror()
         self.counter=1
-        self.logs=open("./switch_log/"+self.sw_name+".log","w")
-        self.logs_info=open("./switch_log/"+self.sw_name+"_info.log","w")
+        self.logs=open("../switch_log/"+self.sw_name+".log","w")
+        self.logs_info=open("../switch_log/"+self.sw_name+"_info.log","w")
         self.logs_info.write("SWITCH["+self.sw_name+"]\n")
         self.logs.close()
         self.logs_info.close()
@@ -57,6 +60,15 @@ class packetReceicer(object):
         ls(cpu)
 
         ## console output ends
+        type=(cpu.flags>>2);
+        logs=open("../switch_log/"+self.sw_name+".log","w")
+            
+        if type==0:
+            logs.write("flowsize information collecting\n")
+        else:
+            logs.write("interval information collecting\n")
+        logs.write(str(cpu.flags))
+        logs.close()
 
         self.gen_per_packet_log(cpu)
         self.collect_log(cpu)
@@ -130,8 +142,9 @@ class packetReceicer(object):
         interval=tmp_interval[-9:-6]+"s "+tmp_interval[-6:-3]+"ms "+tmp_interval[-3:]+"us"
         sketch_fg=(cpu.flags>>1)&0x1;
         has_SFH=cpu.flags&0x1;
+        type=(cpu.flags>>2);
 
-
+        
         logs.write('{"switch name":"'+self.sw_name+'",')
         logs.write('"packet number":"'+str(self.counter-1)+'","packet_info:{')
         logs.write('"srcAddr":"'+str(srcAddr)+'",')
@@ -140,9 +153,10 @@ class packetReceicer(object):
         logs.write('"srcPort":"'+str(cpu.srcPort)+'",')
         logs.write('"dstPort":"'+str(cpu.dstPort)+'",')
         logs.write('"delay ":"'+delay+'",')
-        logs.write('"interval":"'+interval+'",')
-        logs.write('"using sketch":"'+str(sketch_fg)+'",')
-        logs.write('"has SFH":"'+str(bool(has_SFH))+'",')
+        logs.write('"interval":"'+interval)
+        if type==0:
+            logs.write('",'+'"using sketch":"'+str(sketch_fg)+'",')
+            logs.write('"bring SFH":"'+str(bool(has_SFH)))
         logs.write(" }}\n")
         logs.close()
 
@@ -163,6 +177,7 @@ if __name__ == "__main__":
     parser=argparse.ArgumentParser()
     
     parser.add_argument("switch",help="this switch's name")
+    parser.add_argument("p",help="the program to be run",choices=["f","i"])
     args=parser.parse_args()
     sw_name = args.switch
-    controller = packetReceicer(sw_name).run_cpu_port_loop()
+    controller = packetReceicer(sw_name,args.p).run_cpu_port_loop()

@@ -82,7 +82,7 @@ control MyIngress(inout headers hdr,
             meta.ipv4_srcPort,
             meta.ipv4_dstPort,
             hdr.ipv4.protocol,
-            tmp 
+            tmp
             },
             num_nhops);
 
@@ -305,6 +305,7 @@ control MyEgress(inout headers hdr,
             hdr.CPU.delay=meta.switch_delay;
             hdr.CPU.interval=meta.interval;
             hdr.CPU.flags=(meta.sketch_fg<<1) |(meta.swap_control);
+            hdr.CPU.flags=hdr.CPU.flags&0b0000_0111;
 
             hdr.ethernet.setInvalid();
             hdr.ipv4.setInvalid();
