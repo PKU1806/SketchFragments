@@ -36,8 +36,16 @@ parser MyParser(packet_in packet,
 		meta.ipv4_dstPort = hdr.tcp.dstPort;
 
         transition select(hdr.tcp.MIH_fg){
+            0 : parse_SFH_of_TCP;
+            1 : parse_MIH;
+            default : accept;
+        }
+    }
+
+    state parse_SFH_of_TCP{
+        transition select(hdr.tcp.SFH_fg){
             0 : accept;
-            1 : parse_MIH_of_TCP;
+            1 : parse_SFH;
             default : accept;
         }
     }
@@ -55,34 +63,18 @@ parser MyParser(packet_in packet,
     state parse_flag{
         packet.extract(hdr.flag);
         transition select(hdr.flag.flag){
-           4: parse_MIH_of_UDP;
-           6: parse_MIH_of_UDP;
-           7: parse_MIH_of_UDP;
+           4: parse_MIH;
            3: parse_SFH;
            2: parse_SFH;
            default : accept;
         }
     }
 
-    state parse_MIH_of_TCP{
-		packet.extract(hdr.MIH);
-        
-        transition select(hdr.tcp.SFH_fg) {
-			0 : accept;
-			1 : parse_SFH;
-			default : accept;
-		}
-		
-	}
-
-    state parse_MIH_of_UDP{
+    state parse_MIH{
         packet.extract(hdr.MIH);
         
-        transition select(hdr.flag.flag) {
-			6: parse_SFH;
-            7: parse_SFH;
-			default : accept;
-		}
+        transition  accept;
+		
     }
 
 	state parse_SFH {

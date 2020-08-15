@@ -43,6 +43,7 @@
 
 //1 crc32 custom
 //this is for bring sketch fragments
+/*
 #define COMPUTE_SFH_HASH hash(meta.SFH_index0,\
              HashAlgorithm.crc32,\
              (bit<16>)0,\
@@ -52,7 +53,7 @@
               meta.ipv4_dstPort,\
               hdr.ipv4.protocol},\
              (bit<32>)(BUCKET_NUM*3));
-
+*/
 //group0
 ARRAY_REGISTER(0);
 ARRAY_REGISTER(1);
@@ -68,10 +69,6 @@ ARRAY_COUNTER(0);
 ARRAY_COUNTER(1);
 ARRAY_COUNTER(2);
 
-//timestamps
-register<bit<48>>(BUCKET_NUM) timestamp_array0;
-register<bit<48>>(BUCKET_NUM) timestamp_array1;
-register<bit<48>>(BUCKET_NUM) timestamp_array2;
 
 //control plane used
 register<bit<8>>(1) sketch_fg;
@@ -372,33 +369,6 @@ control MyIngress(inout headers hdr,
     /******************* inherited code ends here       ************************/
 
 
-    action update_MIH_timestamp()
-    {
-        COMPUTE_TIMESTAMP_HASH(0)
-        COMPUTE_TIMESTAMP_HASH(1)
-        COMPUTE_TIMESTAMP_HASH(2)
-        
-        timestamp_array0.read(meta.timestamp_value0,meta.timestamp_index0);
-        timestamp_array1.read(meta.timestamp_value1,meta.timestamp_index1);
-        timestamp_array2.read(meta.timestamp_value2,meta.timestamp_index2);
-
-        meta.timestamp_value0=standard_metadata.ingress_global_timestamp-meta.timestamp_value0;
-        meta.timestamp_value1=standard_metadata.ingress_global_timestamp-meta.timestamp_value1;
-        meta.timestamp_value2=standard_metadata.ingress_global_timestamp-meta.timestamp_value2;
-
-        if(meta.timestamp_value0>hdr.MIH.mih_timestamp){
-            hdr.MIH.mih_switch_id=meta.switch_id;
-            hdr.MIH.mih_timestamp=meta.timestamp_value0;
-        }
-        if(meta.timestamp_value1>hdr.MIH.mih_timestamp){
-            hdr.MIH.mih_switch_id=meta.switch_id;
-            hdr.MIH.mih_timestamp=meta.timestamp_value1;
-        }
-        if(meta.timestamp_value2>hdr.MIH.mih_timestamp){
-            hdr.MIH.mih_switch_id=meta.switch_id;
-            hdr.MIH.mih_timestamp=meta.timestamp_value2;
-        }
-    }
 
     /******** log code starts here*******/
 
@@ -412,56 +382,50 @@ control MyIngress(inout headers hdr,
     apply
     {   
         if (hdr.ipv4.isValid()&&hdr.ipv4.ttl > 1) {
-            /*if(!hdr.MIH.isValid()){// if we send a blank packet ,we shall add the MIH
-                hdr.MIH.mih_timestamp=standard_metadata.ingress_global_timestamp;
-                hdr.MIH.mih_switch_id=meta.switch_id;
-                hdr.MIH.sfh_exists_fg=0;
-                hdr.MIH.setValid();
-            }*/
-            if (hdr.MIH.isValid()) {
-                switch_id.read(meta.switch_id, 0);
-                update_MIH_timestamp();
+            
+            /******** log code starts here*******/
+            //send_to_control_plane();
+            /******** log code ends here*******/
 
-                /******** log code starts here*******/
-                //send_to_control_plane();
-                /******** log code ends here*******/
+            hdr.udp.checksum = 0;
+            switch_id.read(meta.switch_id, 0);
+            sketch_fg.read(meta.sketch_fg,0);
+            swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
 
-                hdr.udp.checksum = 0;
-
-                swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
-
-                if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {//this packet is vacant 
-                    random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
-                    if (meta.random_number <= 0) {//the probility allows
-                        predispose();//compute the index of bucket
+            if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {//this packet is vacant 
+                random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
+                if (meta.random_number <= 0) {//the probility allows
+                    predispose();//compute the index of bucket
+                    
+                    if (meta.SFH_index < 3 * BUCKET_NUM) {
+                        if(hdr.udp.isValid()){
+                            hdr.ipv4.totalLen = hdr.ipv4.totalLen + (47);
+                            hdr.udp.length = hdr.udp.length + (47);
+                            hdr.flag.flag=hdr.flag.flag| 0b010;
+                            hdr.flag.flag= hdr.flag.flag & 0b1111_1110;
+                            hdr.flag.flag =hdr.flag.flag |(1 - meta.sketch_fg);
                         
-                        if (meta.SFH_index < 3 * BUCKET_NUM) {
-                            hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
-                            hdr.udp.length = hdr.udp.length + (58 - 11);
-
-                            if(hdr.tcp.isValid()){
-                                hdr.tcp.SFH_fg = 1;
-                                hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
-                            }
-                            else{
-                                hdr.flag.flag=hdr.flag.flag| 0b010;
-                                hdr.flag.flag= hdr.flag.flag & 0b1111_1110;
-                                hdr.flag.flag =hdr.flag.flag |(1 - meta.sketch_fg);
-                            }
-                            hdr.SFH.setValid();
-                            hdr.SFH.sfh_switch_id = meta.switch_id;
-                            hdr.SFH.sfh_fgment_id = meta.SFH_index;
-                            sketch_fg.read(meta.sketch_fg,0);
-                            
-
-                            choose_fragment.apply();
-                            update_SFH.apply();
                         }
+                        else if(hdr.tcp.isValid()) {
+                            hdr.ipv4.totalLen = hdr.ipv4.totalLen + (48);
+                            hdr.tcp.dataOffset=hdr.tcp.dataOffset+(bit<4>)(12);
+                            //dataOffset: increase 1 then length increase 4bytes,we only increased 47 bytes
+                            //1 byte wasted
+
+                            hdr.tcp.SFH_fg = 1;
+                            hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
+                        }
+
+                        hdr.SFH.setValid();
+                        hdr.SFH.sfh_switch_id = meta.switch_id;
+                        hdr.SFH.sfh_fgment_id = meta.SFH_index;
+                        
+                        choose_fragment.apply();
+                        update_SFH.apply();
                     }
                 }
             }
             
-
             switch (ipv4_lpm.apply().action_run){
                 ecmp_group:{
                     ecmp_group_to_nhop.apply();
@@ -485,10 +449,7 @@ control MyEgress(inout headers hdr,
                  inout standard_metadata_t standard_metadata)
 {
     //function:we can only get the egress time in this part ,so we implement the insert of delay here
-    //first get the level of bin
-    //then insert
-    //sketch flag will be init and modified by controller
-    //the insertion of timestamp can be moved to previous part
+
 
     //this action get the corresponding lev of bucket
     action _get_delay_lev(bit<32> delay_lev){
@@ -559,14 +520,6 @@ control MyEgress(inout headers hdr,
         array5.write((meta.array_index5 * BIN_NUM + meta.delay_lev), meta.array_value5);
     }
 
-    action update_timestamp(){
-        
-        //this has been computed in ingress part
-        
-        timestamp_array0.write(meta.timestamp_index0,standard_metadata.ingress_global_timestamp);
-        timestamp_array1.write(meta.timestamp_index1,standard_metadata.ingress_global_timestamp);
-        timestamp_array2.write(meta.timestamp_index2,standard_metadata.ingress_global_timestamp);
-    }
 
     table update_sketch{
         key = {
@@ -606,7 +559,6 @@ control MyEgress(inout headers hdr,
     apply
     {
         if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0){
-            update_timestamp();
 
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
             
@@ -614,13 +566,13 @@ control MyEgress(inout headers hdr,
             meta.interval=standard_metadata.ingress_global_timestamp-meta.previous_ingress_global_timestamp;
             previous_ingress_timestamp.write((bit<32>)0,standard_metadata.ingress_global_timestamp);
             
-            sketch_fg.read(meta.sketch_fg,0);
+            //sketch_fgsketch_fg.read(meta.sketch_fg,0);  this has been read in ingress
             
             //temporarily store whether the sfh exists
             if(hdr.tcp.isValid()){
                 meta.swap_control = (bit<8>)hdr.tcp.SFH_fg;
             }
-            else{
+            else if(hdr.udp.isValid()){
                 meta.swap_control = (hdr.flag.flag&0b010)>>1;
             }
             
@@ -629,9 +581,7 @@ control MyEgress(inout headers hdr,
             /********  log code ends here ********** */
 
             get_delay_lev.apply();
-            
             update_sketch.apply();
-            
         }
 
         /************************ log code starts here**********************/
@@ -652,6 +602,7 @@ control MyEgress(inout headers hdr,
             hdr.ipv4.setInvalid();
             hdr.tcp.setInvalid();
             hdr.udp.setInvalid();
+            hdr.flag.setInvalid();
             hdr.MIH.setInvalid();
             hdr.SFH.setInvalid();
         }

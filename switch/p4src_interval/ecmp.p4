@@ -14,22 +14,6 @@
 #define RANDOM_BOUND 10
 
 
-//data structure
-#define ARRAY_REGISTER(num) register<bit<BIN_CELL_BIT_WIDTH>>(BUCKET_NUM * BIN_NUM) array##num
-#define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM*3) counter##num
-
-//6crc
-//this is for sketch
-#define COMPUTE_ARRAY_HASH(num) hash(meta.array_index##num,\
-             HashAlgorithm.crc32_custom,\
-             (bit<16>)0,\
-             {hdr.ipv4.srcAddr,\
-              hdr.ipv4.dstAddr,\
-              meta.ipv4_srcPort,\
-              meta.ipv4_dstPort,\
-              hdr.ipv4.protocol},\
-             (bit<32>)BUCKET_NUM);
-
 //this is for timestamps
 #define COMPUTE_TIMESTAMP_HASH(num)  hash(meta.timestamp_index##num,\
             HashAlgorithm.crc32_custom, \
@@ -41,39 +25,20 @@
             hdr.ipv4.protocol},   \
             (bit<32>)BUCKET_NUM);       \
 
-//1 crc32 custom
-//this is for bring sketch fragments
-#define COMPUTE_SFH_HASH hash(meta.SFH_index0,\
-             HashAlgorithm.crc32,\
-             (bit<16>)0,\
-             {hdr.ipv4.srcAddr,\
-              hdr.ipv4.dstAddr,\
-              meta.ipv4_srcPort,\
-              meta.ipv4_dstPort,\
-              hdr.ipv4.protocol},\
-             (bit<32>)(BUCKET_NUM*3));
 
-//group0
-ARRAY_REGISTER(0);
-ARRAY_REGISTER(1);
-ARRAY_REGISTER(2);
 
-//group1
-ARRAY_REGISTER(3);
-ARRAY_REGISTER(4);
-ARRAY_REGISTER(5);
 
-//counter
-ARRAY_COUNTER(0);
-ARRAY_COUNTER(1);
-ARRAY_COUNTER(2);
+//timestamps for the maximum
+register<bit<48>>(BUCKET_NUM) max_interval_array0;
+register<bit<48>>(BUCKET_NUM) max_interval_array1;
+register<bit<48>>(BUCKET_NUM) max_interval_array2;
 
-//timestamps
+//timestamps of the last incoming packet
 register<bit<48>>(BUCKET_NUM) timestamp_array0;
 register<bit<48>>(BUCKET_NUM) timestamp_array1;
 register<bit<48>>(BUCKET_NUM) timestamp_array2;
 
-//control plane used
+//control plane 
 register<bit<8>>(1) sketch_fg;
 register<bit<8>>(1) swap_control;
 
@@ -99,212 +64,6 @@ control MyIngress(inout headers hdr,
                   inout standard_metadata_t standard_metadata)
 {
 
-    //get the bringable bucket index 
-    action predispose(){
-		meta.SFH_index = 3 * BUCKET_NUM;
-
-		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
-        counter0.read(meta.counter_value0,meta.counter_index0);
-		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value0 == 0) {
-			meta.SFH_index = meta.counter_index0;
-			meta.counter_value0 = 1;
-		}
-		counter0.write(meta.counter_index0, meta.counter_value0);
-		
-        random(meta.counter_index1, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
-        counter1.read(meta.counter_value1, meta.counter_index1);
-		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value1 == 0) {
-			meta.SFH_index = meta.counter_index1;
-			meta.counter_value1 = 1;
-		}
-		counter1.write(meta.counter_index1, meta.counter_value1);
-		
-        random(meta.counter_index2, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
-        counter2.read(meta.counter_value2, meta.counter_index2);
-		if (meta.SFH_index >= 3 * BUCKET_NUM && meta.counter_value2 == 0) {
-			meta.SFH_index = meta.counter_index2;
-			meta.counter_value2 = 1;
-		}
-		counter2.write(meta.counter_index2, meta.counter_value2);
-
-    }
-
-    action _choose_fragment(bit<8> SFH_target_array){
-		meta.SFH_target_bucket = meta.SFH_index - 
-			(bit<32>)meta.SFH_target_array * BUCKET_NUM;
-        meta.SFH_target_array = SFH_target_array + (1 - meta.sketch_fg) * 3;
-    }
-
-    table choose_fragment{
-        key={
-            meta.SFH_index:range;
-        }
-        actions={
-            NoAction;
-            _choose_fragment;
-        }
-        size=256;
-        default_action=NoAction;
-    }
-
-    action update_using_sketch0(){
-        
-       array0.read(meta.tmp00,meta.SFH_target_bucket*BIN_NUM+0);
-       array0.read(meta.tmp01,meta.SFH_target_bucket*BIN_NUM+1);
-       array0.read(meta.tmp02,meta.SFH_target_bucket*BIN_NUM+2);
-       array0.read(meta.tmp03,meta.SFH_target_bucket*BIN_NUM+3);
-       array0.read(meta.tmp04,meta.SFH_target_bucket*BIN_NUM+4);
-       array0.read(meta.tmp05,meta.SFH_target_bucket*BIN_NUM+5);
-       array0.read(meta.tmp06,meta.SFH_target_bucket*BIN_NUM+6);
-       array0.read(meta.tmp07,meta.SFH_target_bucket*BIN_NUM+7);
-       array0.read(meta.tmp08,meta.SFH_target_bucket*BIN_NUM+8);
-       array0.read(meta.tmp09,meta.SFH_target_bucket*BIN_NUM+9);
-
-       array1.read(meta.tmp10,meta.SFH_target_bucket*BIN_NUM+0);
-       array1.read(meta.tmp11,meta.SFH_target_bucket*BIN_NUM+1);
-       array1.read(meta.tmp12,meta.SFH_target_bucket*BIN_NUM+2);
-       array1.read(meta.tmp13,meta.SFH_target_bucket*BIN_NUM+3);
-       array1.read(meta.tmp14,meta.SFH_target_bucket*BIN_NUM+4);
-       array1.read(meta.tmp15,meta.SFH_target_bucket*BIN_NUM+5);
-       array1.read(meta.tmp16,meta.SFH_target_bucket*BIN_NUM+6);
-       array1.read(meta.tmp17,meta.SFH_target_bucket*BIN_NUM+7);
-       array1.read(meta.tmp18,meta.SFH_target_bucket*BIN_NUM+8);
-       array1.read(meta.tmp19,meta.SFH_target_bucket*BIN_NUM+9);
-
-       array2.read(meta.tmp20,meta.SFH_target_bucket*BIN_NUM+0);
-       array2.read(meta.tmp21,meta.SFH_target_bucket*BIN_NUM+1);
-       array2.read(meta.tmp22,meta.SFH_target_bucket*BIN_NUM+2);
-       array2.read(meta.tmp23,meta.SFH_target_bucket*BIN_NUM+3);
-       array2.read(meta.tmp24,meta.SFH_target_bucket*BIN_NUM+4);
-       array2.read(meta.tmp25,meta.SFH_target_bucket*BIN_NUM+5);
-       array2.read(meta.tmp26,meta.SFH_target_bucket*BIN_NUM+6);
-       array2.read(meta.tmp27,meta.SFH_target_bucket*BIN_NUM+7);
-       array2.read(meta.tmp28,meta.SFH_target_bucket*BIN_NUM+8);
-       array2.read(meta.tmp29,meta.SFH_target_bucket*BIN_NUM+9);
-
-       if(meta.SFH_target_array==0){
-           hdr.SFH.sfh_delay0=meta.tmp00;
-           hdr.SFH.sfh_delay1=meta.tmp01;
-           hdr.SFH.sfh_delay2=meta.tmp02;
-           hdr.SFH.sfh_delay3=meta.tmp03;
-           hdr.SFH.sfh_delay4=meta.tmp04;
-           hdr.SFH.sfh_delay5=meta.tmp05;
-           hdr.SFH.sfh_delay6=meta.tmp06;
-           hdr.SFH.sfh_delay7=meta.tmp07;
-           hdr.SFH.sfh_delay8=meta.tmp08;
-           hdr.SFH.sfh_delay9=meta.tmp09;
-       }
-       else if(meta.SFH_target_array==1){
-           hdr.SFH.sfh_delay0=meta.tmp10;
-           hdr.SFH.sfh_delay1=meta.tmp11;
-           hdr.SFH.sfh_delay2=meta.tmp12;
-           hdr.SFH.sfh_delay3=meta.tmp13;
-           hdr.SFH.sfh_delay4=meta.tmp14;
-           hdr.SFH.sfh_delay5=meta.tmp15;
-           hdr.SFH.sfh_delay6=meta.tmp16;
-           hdr.SFH.sfh_delay7=meta.tmp17;
-           hdr.SFH.sfh_delay8=meta.tmp18;
-           hdr.SFH.sfh_delay9=meta.tmp19;
-       }
-       else{
-           hdr.SFH.sfh_delay0=meta.tmp20;
-           hdr.SFH.sfh_delay1=meta.tmp21;
-           hdr.SFH.sfh_delay2=meta.tmp22;
-           hdr.SFH.sfh_delay3=meta.tmp23;
-           hdr.SFH.sfh_delay4=meta.tmp24;
-           hdr.SFH.sfh_delay5=meta.tmp25;
-           hdr.SFH.sfh_delay6=meta.tmp26;
-           hdr.SFH.sfh_delay7=meta.tmp27;
-           hdr.SFH.sfh_delay8=meta.tmp28;
-           hdr.SFH.sfh_delay9=meta.tmp29;
-       }
-    }
-
-    action update_using_sketch1(){
-    
-       array3.read(meta.tmp00,meta.SFH_target_bucket*BIN_NUM+0);
-       array3.read(meta.tmp01,meta.SFH_target_bucket*BIN_NUM+1);
-       array3.read(meta.tmp02,meta.SFH_target_bucket*BIN_NUM+2);
-       array3.read(meta.tmp03,meta.SFH_target_bucket*BIN_NUM+3);
-       array3.read(meta.tmp04,meta.SFH_target_bucket*BIN_NUM+4);
-       array3.read(meta.tmp05,meta.SFH_target_bucket*BIN_NUM+5);
-       array3.read(meta.tmp06,meta.SFH_target_bucket*BIN_NUM+6);
-       array3.read(meta.tmp07,meta.SFH_target_bucket*BIN_NUM+7);
-       array3.read(meta.tmp08,meta.SFH_target_bucket*BIN_NUM+8);
-       array3.read(meta.tmp09,meta.SFH_target_bucket*BIN_NUM+9);
-
-       array4.read(meta.tmp10,meta.SFH_target_bucket*BIN_NUM+0);
-       array4.read(meta.tmp11,meta.SFH_target_bucket*BIN_NUM+1);
-       array4.read(meta.tmp12,meta.SFH_target_bucket*BIN_NUM+2);
-       array4.read(meta.tmp13,meta.SFH_target_bucket*BIN_NUM+3);
-       array4.read(meta.tmp14,meta.SFH_target_bucket*BIN_NUM+4);
-       array4.read(meta.tmp15,meta.SFH_target_bucket*BIN_NUM+5);
-       array4.read(meta.tmp16,meta.SFH_target_bucket*BIN_NUM+6);
-       array4.read(meta.tmp17,meta.SFH_target_bucket*BIN_NUM+7);
-       array4.read(meta.tmp18,meta.SFH_target_bucket*BIN_NUM+8);
-       array4.read(meta.tmp19,meta.SFH_target_bucket*BIN_NUM+9);
-
-       array5.read(meta.tmp20,meta.SFH_target_bucket*BIN_NUM+0);
-       array5.read(meta.tmp21,meta.SFH_target_bucket*BIN_NUM+1);
-       array5.read(meta.tmp22,meta.SFH_target_bucket*BIN_NUM+2);
-       array5.read(meta.tmp23,meta.SFH_target_bucket*BIN_NUM+3);
-       array5.read(meta.tmp24,meta.SFH_target_bucket*BIN_NUM+4);
-       array5.read(meta.tmp25,meta.SFH_target_bucket*BIN_NUM+5);
-       array5.read(meta.tmp26,meta.SFH_target_bucket*BIN_NUM+6);
-       array5.read(meta.tmp27,meta.SFH_target_bucket*BIN_NUM+7);
-       array5.read(meta.tmp28,meta.SFH_target_bucket*BIN_NUM+8);
-       array5.read(meta.tmp29,meta.SFH_target_bucket*BIN_NUM+9);
-
-       if(meta.SFH_target_array==3){
-           hdr.SFH.sfh_delay0=meta.tmp00;
-           hdr.SFH.sfh_delay1=meta.tmp01;
-           hdr.SFH.sfh_delay2=meta.tmp02;
-           hdr.SFH.sfh_delay3=meta.tmp03;
-           hdr.SFH.sfh_delay4=meta.tmp04;
-           hdr.SFH.sfh_delay5=meta.tmp05;
-           hdr.SFH.sfh_delay6=meta.tmp06;
-           hdr.SFH.sfh_delay7=meta.tmp07;
-           hdr.SFH.sfh_delay8=meta.tmp08;
-           hdr.SFH.sfh_delay9=meta.tmp09;
-       }
-       else if(meta.SFH_target_array==4){
-           hdr.SFH.sfh_delay0=meta.tmp10;
-           hdr.SFH.sfh_delay1=meta.tmp11;
-           hdr.SFH.sfh_delay2=meta.tmp12;
-           hdr.SFH.sfh_delay3=meta.tmp13;
-           hdr.SFH.sfh_delay4=meta.tmp14;
-           hdr.SFH.sfh_delay5=meta.tmp15;
-           hdr.SFH.sfh_delay6=meta.tmp16;
-           hdr.SFH.sfh_delay7=meta.tmp17;
-           hdr.SFH.sfh_delay8=meta.tmp18;
-           hdr.SFH.sfh_delay9=meta.tmp19;
-       }
-       else{
-           hdr.SFH.sfh_delay0=meta.tmp20;
-           hdr.SFH.sfh_delay1=meta.tmp21;
-           hdr.SFH.sfh_delay2=meta.tmp22;
-           hdr.SFH.sfh_delay3=meta.tmp23;
-           hdr.SFH.sfh_delay4=meta.tmp24;
-           hdr.SFH.sfh_delay5=meta.tmp25;
-           hdr.SFH.sfh_delay6=meta.tmp26;
-           hdr.SFH.sfh_delay7=meta.tmp27;
-           hdr.SFH.sfh_delay8=meta.tmp28;
-           hdr.SFH.sfh_delay9=meta.tmp29;
-       }
-    }
-
-    table update_SFH{
-        key={
-            meta.sketch_fg:exact;
-        }
-        actions={
-            NoAction;
-            update_using_sketch0;
-            update_using_sketch1;
-        }
-        size=256;
-        default_action=NoAction;
-    }
 
     /******************* inherited code starts here       ************************/
     action drop(){
@@ -372,33 +131,7 @@ control MyIngress(inout headers hdr,
     /******************* inherited code ends here       ************************/
 
 
-    action update_MIH_timestamp()
-    {
-        COMPUTE_TIMESTAMP_HASH(0)
-        COMPUTE_TIMESTAMP_HASH(1)
-        COMPUTE_TIMESTAMP_HASH(2)
-        
-        timestamp_array0.read(meta.timestamp_value0,meta.timestamp_index0);
-        timestamp_array1.read(meta.timestamp_value1,meta.timestamp_index1);
-        timestamp_array2.read(meta.timestamp_value2,meta.timestamp_index2);
 
-        meta.timestamp_value0=standard_metadata.ingress_global_timestamp-meta.timestamp_value0;
-        meta.timestamp_value1=standard_metadata.ingress_global_timestamp-meta.timestamp_value1;
-        meta.timestamp_value2=standard_metadata.ingress_global_timestamp-meta.timestamp_value2;
-
-        if(meta.timestamp_value0>hdr.MIH.mih_timestamp){
-            hdr.MIH.mih_switch_id=meta.switch_id;
-            hdr.MIH.mih_timestamp=meta.timestamp_value0;
-        }
-        if(meta.timestamp_value1>hdr.MIH.mih_timestamp){
-            hdr.MIH.mih_switch_id=meta.switch_id;
-            hdr.MIH.mih_timestamp=meta.timestamp_value1;
-        }
-        if(meta.timestamp_value2>hdr.MIH.mih_timestamp){
-            hdr.MIH.mih_switch_id=meta.switch_id;
-            hdr.MIH.mih_timestamp=meta.timestamp_value2;
-        }
-    }
 
     /******** log code starts here*******/
 
@@ -412,56 +145,30 @@ control MyIngress(inout headers hdr,
     apply
     {   
         if (hdr.ipv4.isValid()&&hdr.ipv4.ttl > 1) {
-            /*if(!hdr.MIH.isValid()){// if we send a blank packet ,we shall add the MIH
-                hdr.MIH.mih_timestamp=standard_metadata.ingress_global_timestamp;
-                hdr.MIH.mih_switch_id=meta.switch_id;
-                hdr.MIH.sfh_exists_fg=0;
-                hdr.MIH.setValid();
-            }*/
             if (hdr.MIH.isValid()) {
+                hdr.udp.checksum = 0;
                 switch_id.read(meta.switch_id, 0);
-                update_MIH_timestamp();
+                sketch_fg.read(meta.sketch_fg,0);
+                swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
+
 
                 /******** log code starts here*******/
                 //send_to_control_plane();
                 /******** log code ends here*******/
 
-                hdr.udp.checksum = 0;
-
-                swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
-
-                if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {//this packet is vacant 
-                    random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
-                    if (meta.random_number <= 0) {//the probility allows
-                        predispose();//compute the index of bucket
-                        
-                        if (meta.SFH_index < 3 * BUCKET_NUM) {
-                            hdr.ipv4.totalLen = hdr.ipv4.totalLen + (58 - 11);
-                            hdr.udp.length = hdr.udp.length + (58 - 11);
-
-                            if(hdr.tcp.isValid()){
-                                hdr.tcp.SFH_fg = 1;
-                                hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
-                            }
-                            else{
-                                hdr.flag.flag=hdr.flag.flag| 0b010;
-                                hdr.flag.flag= hdr.flag.flag & 0b1111_1110;
-                                hdr.flag.flag =hdr.flag.flag |(1 - meta.sketch_fg);
-                            }
-                            hdr.SFH.setValid();
-                            hdr.SFH.sfh_switch_id = meta.switch_id;
-                            hdr.SFH.sfh_fgment_id = meta.SFH_index;
-                            sketch_fg.read(meta.sketch_fg,0);
-                            
-
-                            choose_fragment.apply();
-                            update_SFH.apply();
-                        }
-                    }
+                if(hdr.udp.isValid()){
+                    hdr.ipv4.totalLen = hdr.ipv4.totalLen + (5);
+                    hdr.udp.length = hdr.udp.length + (5);
+                    hdr.flag.flag=hdr.flag.flag| 0b100;
+                
+                }
+                else if(hdr.tcp.isValid()) {
+                    hdr.ipv4.totalLen = hdr.ipv4.totalLen + (4);
+                    hdr.tcp.dataOffset=hdr.tcp.dataOffset+(bit<4>)(1);
+                    //dataOffset: increase 1 then length increase 4bytes,we only increased 4 byte
                 }
             }
             
-
             switch (ipv4_lpm.apply().action_run){
                 ecmp_group:{
                     ecmp_group_to_nhop.apply();
@@ -484,116 +191,69 @@ control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata)
 {
-    //function:we can only get the egress time in this part ,so we implement the insert of delay here
-    //first get the level of bin
-    //then insert
-    //sketch flag will be init and modified by controller
-    //the insertion of timestamp can be moved to previous part
-
-    //this action get the corresponding lev of bucket
-    action _get_delay_lev(bit<32> delay_lev){
-        meta.delay_lev = delay_lev;
-    }
-
-    //semi-CU-sketch    
-    //update sketch 0 : array0\1\2
-    action update_sketch0(){
-        COMPUTE_ARRAY_HASH(0)
-        COMPUTE_ARRAY_HASH(1)
-        COMPUTE_ARRAY_HASH(2)
-
-        bit<32>tmp_min=0x5fffffff;
-
-        array0.read(meta.array_value0, (meta.array_index0 * BIN_NUM + meta.delay_lev));
-        if(tmp_min>=meta.array_value0){
-            tmp_min=meta.array_value0;
-            meta.array_value0 = meta.array_value0 + 1;
-        }
-
-        array1.read(meta.array_value1, (meta.array_index1 * BIN_NUM + meta.delay_lev));
-        if(tmp_min>=meta.array_value1){
-            tmp_min=meta.array_value1;
-            meta.array_value1 = meta.array_value1 + 1;
-        }
-
-        array2.read(meta.array_value2, (meta.array_index2 * BIN_NUM + meta.delay_lev));
-        if(tmp_min>=meta.array_value2){
-            tmp_min=meta.array_value2;
-            meta.array_value2 = meta.array_value2 + 1;
-        }
-
-        array0.write((meta.array_index0 * BIN_NUM + meta.delay_lev), meta.array_value0);
-        array1.write((meta.array_index1 * BIN_NUM + meta.delay_lev), meta.array_value1);
-        array2.write((meta.array_index2 * BIN_NUM + meta.delay_lev), meta.array_value2);
-        
-    }
-
-    //update sketch 1 : array3\4\5
-    action update_sketch1(){
-        COMPUTE_ARRAY_HASH(3)
-        COMPUTE_ARRAY_HASH(4)
-        COMPUTE_ARRAY_HASH(5)
-
-        bit<32>tmp_min=0x5fffffff;
-
-        array3.read(meta.array_value3, (meta.array_index3 * BIN_NUM + meta.delay_lev));
-        if(tmp_min>=meta.array_value3){
-            tmp_min=meta.array_value3;
-            meta.array_value3 = meta.array_value3 + 1;
-        }
-
-        array4.read(meta.array_value4, (meta.array_index4 * BIN_NUM + meta.delay_lev));
-        if(tmp_min>=meta.array_value4){
-            tmp_min=meta.array_value4;
-            meta.array_value4 = meta.array_value4 + 1;
-        }
-
-        array5.read(meta.array_value5, (meta.array_index5 * BIN_NUM + meta.delay_lev));
-        if(tmp_min>=meta.array_value5){
-            tmp_min=meta.array_value5;
-            meta.array_value5 = meta.array_value5 + 1;
-        }
-
-        array3.write((meta.array_index3 * BIN_NUM + meta.delay_lev), meta.array_value3);
-        array4.write((meta.array_index4 * BIN_NUM + meta.delay_lev), meta.array_value4);
-        array5.write((meta.array_index5 * BIN_NUM + meta.delay_lev), meta.array_value5);
-    }
-
+    
+    //update timestamp and ax interval
     action update_timestamp(){
+        COMPUTE_TIMESTAMP_HASH(0)
+        COMPUTE_TIMESTAMP_HASH(1)
+        COMPUTE_TIMESTAMP_HASH(2)
         
-        //this has been computed in ingress part
-        
+        timestamp_array0.read(meta.timestamp_value0,meta.timestamp_index0);
+        timestamp_array1.read(meta.timestamp_value1,meta.timestamp_index1);
+        timestamp_array2.read(meta.timestamp_value2,meta.timestamp_index2);
+
+        max_interval_array0.read(meta.max_interval_value0,meta.timestamp_index0);
+        max_interval_array1.read(meta.max_interval_value1,meta.timestamp_index1);
+        max_interval_array2.read(meta.max_interval_value2,meta.timestamp_index2);
+
+        if(meta.timestamp_value0>meta.timestamp_value1){
+            meta.timestamp_value0=meta.timestamp_value1;
+        }
+        if(meta.timestamp_value0>meta.timestamp_value2){
+            meta.timestamp_value0=meta.timestamp_value2;
+        }
+        meta.timestamp_value0=standard_metadata.ingress_global_timestamp-meta.timestamp_value0;
+
+        if(meta.max_interval_value0<meta.timestamp_value0){
+            meta.max_interval_value0=meta.timestamp_value0;
+        }
+        if(meta.max_interval_value1<meta.timestamp_value0){
+            meta.max_interval_value1=meta.timestamp_value0;
+        }
+        if(meta.max_interval_value2<meta.timestamp_value0){
+            meta.max_interval_value2=meta.timestamp_value0;
+        }
+
+        max_interval_array0.write(meta.timestamp_index0,meta.max_interval_value0);
+        max_interval_array1.write(meta.timestamp_index1,meta.max_interval_value1);
+        max_interval_array2.write(meta.timestamp_index2,meta.max_interval_value2);
+
         timestamp_array0.write(meta.timestamp_index0,standard_metadata.ingress_global_timestamp);
         timestamp_array1.write(meta.timestamp_index1,standard_metadata.ingress_global_timestamp);
         timestamp_array2.write(meta.timestamp_index2,standard_metadata.ingress_global_timestamp);
     }
 
-    table update_sketch{
-        key = {
-            meta.sketch_fg : exact;
+    action update_MIH_timestamp()
+    {
+        // from sketch
+        max_interval_array0.read(meta.max_interval_value0,meta.timestamp_index0);
+        max_interval_array1.read(meta.max_interval_value1,meta.timestamp_index1);
+        max_interval_array2.read(meta.max_interval_value2,meta.timestamp_index2);
+        if(meta.max_interval_value0>meta.max_interval_value1){
+            meta.max_interval_value0=meta.max_interval_value1;
         }
-        actions = {
-            update_sketch0;
-            update_sketch1;
-            NoAction;
+        if(meta.max_interval_value0>meta.max_interval_value2){
+            meta.max_interval_value0=meta.max_interval_value2;
         }
-        size = 256;
-        default_action = NoAction;
-    }
 
-    table get_delay_lev{
-        key={
-            meta.switch_delay:range;
+        if(meta.max_interval_value0>hdr.MIH.mih_timestamp){
+            hdr.MIH.mih_switch_id=meta.switch_id;
+            hdr.MIH.mih_timestamp=meta.max_interval_value0;
         }
-        actions={
-            _get_delay_lev;
-            NoAction;
-        }
-        size=256;
-        default_action=NoAction;
     }
 
     
+
     /******** log code starts here*******/
 
     action send_to_control_plane(){
@@ -607,6 +267,8 @@ control MyEgress(inout headers hdr,
     {
         if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0){
             update_timestamp();
+            update_MIH_timestamp();
+
 
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
             
@@ -614,7 +276,7 @@ control MyEgress(inout headers hdr,
             meta.interval=standard_metadata.ingress_global_timestamp-meta.previous_ingress_global_timestamp;
             previous_ingress_timestamp.write((bit<32>)0,standard_metadata.ingress_global_timestamp);
             
-            sketch_fg.read(meta.sketch_fg,0);
+            //sketch_fg.read(meta.sketch_fg,0);
             
             //temporarily store whether the sfh exists
             if(hdr.tcp.isValid()){
@@ -628,10 +290,6 @@ control MyEgress(inout headers hdr,
             send_to_control_plane();
             /********  log code ends here ********** */
 
-            get_delay_lev.apply();
-            
-            update_sketch.apply();
-            
         }
 
         /************************ log code starts here**********************/
@@ -652,6 +310,7 @@ control MyEgress(inout headers hdr,
             hdr.ipv4.setInvalid();
             hdr.tcp.setInvalid();
             hdr.udp.setInvalid();
+            hdr.flag.setInvalid();
             hdr.MIH.setInvalid();
             hdr.SFH.setInvalid();
         }

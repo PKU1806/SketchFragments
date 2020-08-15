@@ -108,23 +108,6 @@ struct metadata {
 	bit<16> ipv4_srcPort;
 	bit<16> ipv4_dstPort;
 
-    //for sketch register
-    bit<32> array_index1;
-    bit<32> array_index2;
-    bit<32> array_index0;
-    bit<32> array_index3;
-    bit<32> array_index4;
-    bit<32> array_index5;
-
-    bit<32> array_value0;
-    bit<32> array_value1;
-    bit<32> array_value2;
-    bit<32> array_value3;
-    bit<32> array_value4;
-    bit<32> array_value5;
-    
-    bit<32> SFH_index;
-
     //for timestamp register
     bit<32> timestamp_index0;
     bit<32> timestamp_index1;
@@ -134,14 +117,16 @@ struct metadata {
     bit<48> timestamp_value1;
     bit<48> timestamp_value2;
 
-    //for counter registers
-    bit<32> counter_index0;
-    bit<32> counter_index1;
-    bit<32> counter_index2;
+    bit<48> MIH_value0;
+    bit<48> MIH_value1;
+    bit<48> MIH_value2;
 
-    bit<1> counter_value0;
-    bit<1> counter_value1;
-    bit<1> counter_value2;
+    //for max interval register
+
+    bit<48> max_interval_value0;
+    bit<48> max_interval_value1;
+    bit<48> max_interval_value2;
+
 
 	bit<16> switch_id;
     bit<48> switch_delay;
@@ -152,45 +137,9 @@ struct metadata {
     bit<48> previous_ingress_global_timestamp;
     bit<48> interval;
 
-    bit<8> SFH_target_array;                        //the sketch selected
-    bit<32> SFH_target_bucket;                      //the bucket selected
     bit<32> random_number;
     bit<14> ecmp_hash;
     bit<14> ecmp_group_id;
-
-    //tmp use
-    bit<32> tmp00;
-    bit<32> tmp01;
-    bit<32> tmp02;
-    bit<32> tmp03;
-    bit<32> tmp04;
-    bit<32> tmp05;
-    bit<32> tmp06;
-    bit<32> tmp07;
-    bit<32> tmp08;
-    bit<32> tmp09;
-
-    bit<32> tmp10;
-    bit<32> tmp11;
-    bit<32> tmp12;
-    bit<32> tmp13;
-    bit<32> tmp14;
-    bit<32> tmp15;
-    bit<32> tmp16;
-    bit<32> tmp17;
-    bit<32> tmp18;
-    bit<32> tmp19;
-
-    bit<32> tmp20;
-    bit<32> tmp21;
-    bit<32> tmp22;
-    bit<32> tmp23;
-    bit<32> tmp24;
-    bit<32> tmp25;
-    bit<32> tmp26;
-    bit<32> tmp27;
-    bit<32> tmp28;
-    bit<32> tmp29;
 }
 
 struct headers {
