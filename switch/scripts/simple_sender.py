@@ -66,9 +66,10 @@ def send_packet(interface,args,program):
 
     #warning!
     #if want to send TCP ,must change the parser of p4
+    
     if program=="f":
         topo = Topology(db="../p4src_flowsize/topology.db")  #set the topology
-    elif prgram=="i":
+    elif program=="i":
         topo = Topology(db="../p4src_interval/topology.db")  #set the topology
     dstAddr=topo.get_host_ip(args.d)
     pkt=IP(dst=dstAddr)
@@ -76,7 +77,7 @@ def send_packet(interface,args,program):
         pkt=pkt/TCP()
     elif args.type=="udp":
         pkt=pkt/UDP()
-        pkt=pkt/MIH()/"load0load1load2load3"
+        pkt=pkt/flag()/MIH()/"load0load1load2load3"
     else:
         pkt=pkt/ICMP()
     while True:

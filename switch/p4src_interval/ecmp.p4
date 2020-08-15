@@ -4,8 +4,8 @@
 #include <v1model.p4>
 
 //My includes
-#include "include/headers.p4"
-#include "include/parsers.p4"
+#include "../include/headers.p4"
+#include "../include/parsers.p4"
 
 //test factors , volatile
 #define BUCKET_NUM 64
@@ -151,7 +151,6 @@ control MyIngress(inout headers hdr,
                 sketch_fg.read(meta.sketch_fg,0);
                 swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
 
-
                 /******** log code starts here*******/
                 //send_to_control_plane();
                 /******** log code ends here*******/
@@ -266,9 +265,11 @@ control MyEgress(inout headers hdr,
     apply
     {
         if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0){
+            
             update_timestamp();
-            update_MIH_timestamp();
-
+            if(hdr.MIH.isValid()){
+                update_MIH_timestamp();
+            }
 
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
             
@@ -305,7 +306,7 @@ control MyEgress(inout headers hdr,
             hdr.CPU.delay=meta.switch_delay;
             hdr.CPU.interval=meta.interval;
             hdr.CPU.flags=(meta.sketch_fg<<1) |(meta.swap_control);
-            hdr.CPU.flags=hdr.CPU.flags&0b0000_0111;
+            hdr.CPU.flags=hdr.CPU.flags|0b0000_0100;
 
             hdr.ethernet.setInvalid();
             hdr.ipv4.setInvalid();
@@ -344,6 +345,36 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta)
              hdr.ipv4.dstAddr},
             hdr.ipv4.hdrChecksum,
             HashAlgorithm.csum16);
+
+        update_checksum_with_payload(
+			!hdr.MIH.isValid() && hdr.SFH.isValid(),
+			{hdr.ipv4.srcAddr,
+			 hdr.ipv4.dstAddr,
+			 8w0,
+			 hdr.ipv4.protocol,
+			 hdr.udp.length,
+			 hdr.udp.srcPort,
+			 hdr.udp.dstPort,
+			 hdr.udp.length,
+			 hdr.MIH,
+			 hdr.SFH},
+			hdr.udp.checksum,
+			HashAlgorithm.csum16);
+
+        update_checksum_with_payload(
+			!hdr.MIH.isValid() && !hdr.SFH.isValid(),
+			{hdr.ipv4.srcAddr,
+			 hdr.ipv4.dstAddr,
+			 8w0,
+			 hdr.ipv4.protocol,
+			 hdr.udp.length,
+			 hdr.udp.srcPort,
+			 hdr.udp.dstPort,
+			 hdr.udp.length,
+			 hdr.MIH,
+			 hdr.SFH},
+			hdr.udp.checksum,
+			HashAlgorithm.csum16);
 
 		update_checksum_with_payload(
 			hdr.MIH.isValid() && !hdr.SFH.isValid(),

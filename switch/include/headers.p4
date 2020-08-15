@@ -143,6 +143,15 @@ struct metadata {
     bit<1> counter_value1;
     bit<1> counter_value2;
 
+    bit<48> MIH_value0;
+    bit<48> MIH_value1;
+    bit<48> MIH_value2;
+    
+    //for max interval register
+
+    bit<48> max_interval_value0;
+    bit<48> max_interval_value1;
+    bit<48> max_interval_value2;
 	bit<16> switch_id;
     bit<48> switch_delay;
     bit<8>  sketch_fg;

@@ -69,25 +69,25 @@
       }
     },
     "switches": {
-      "s1": {"cpu_port" : true
+      "s1": {
       },
-      "s2": {"cpu_port" : true
+      "s2": {
       },
-      "s3": {"cpu_port" : true
+      "s3": {
       },
       "s4": {"cpu_port" : true
       },
-      "s5": {"cpu_port" : true
+      "s5": {
       },
-      "s6": {"cpu_port" : true
+      "s6":{
       },
-      "s7": {"cpu_port" : true
+      "s7": {
       },
-      "s8": {"cpu_port" : true
+      "s8": {
       },
-      "s9": {"cpu_port" : true
+      "s9": {
       },
-      "s10": {"cpu_port" : true
+      "s10": {
       }
     }
   }

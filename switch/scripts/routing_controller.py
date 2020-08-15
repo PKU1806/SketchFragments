@@ -1,73 +1,116 @@
-import nnpy
-import struct
+#from crc import Crc
 from p4utils.utils.topology import Topology
-from p4utils.utils.sswitch_API import SimpleSwitchAPI
+from p4utils.utils.sswitch_API import *
+import socket, struct, pickle, os
+from scapy.all import Ether, sniff, Packet, BitField
+import time
 import sys
 import argparse
-import random
 
-class GenFault(object):
+crc32_polinomials = [0x04C11DB7, 0xEDB88320, 0xDB710641, 0x82608EDB, 0x741B8CD7, 0xEB31D82E,
+                     0xD663B05, 0xBA0DC66B, 0x32583499, 0x992C1A4C, 0x32583499, 0x992C1A4C]
+
+BUCKET_NUM = 64
+BIN_NUM  = 10
+TIME_INTERVAL = 1000
+
+class RoutingController(object):
+
     def __init__(self,program):
         if program=="f":
             self.topo = Topology(db="../p4src_flowsize/topology.db")  #set the topology
         elif program=="i":
             self.topo = Topology(db="../p4src_interval/topology.db")  #set the topology
         self.controllers = {}                   #the switches
-        self.init()
+        self.custom_calcs={}
+        self.register_num={}
+        self.registers={}
+        self.init(program)
 
-    def init(self):
+        
+
+    def init(self,program):
         self.connect_to_switches()              
+        self.reset_states()
+        self.set_table_defaults()
+
+        
+        self.set_custom_calcs()
+        self.reset_all_registers()
+
+        if program == 'f':
+            self.set_table_init()
+        self.set_crc_custom_hashes()
+        #self.create_hashes()
+    
+    
 
     def connect_to_switches(self):
-        for p4switch in self.topo.get_p4switches():
+        for p4switch in self.topo.get_p4switches():# topology line 632
             thrift_port = self.topo.get_thrift_port(p4switch) 
             self.controllers[p4switch] = SimpleSwitchAPI(thrift_port)
 
-    def loop(self):
-        switches=raw_input("type the switch's name to gen loop,seperated by ','\nmust be physically loop-able:\n").split(',')
-        
-        IPs=[]
-        for sw_name in self.controllers.keys():
-            for host in self.topo.get_hosts_connected_to(sw_name):
-                host_ip = self.topo.get_host_ip(host) + "/24"
-                IPs.append(host_ip)
-        
-        for i in range(len(switches)):
-            sw_name=switches[i]
-            self.controllers[sw_name].table_clear("ecmp_group_to_nhop")
-            self.controllers[sw_name].table_clear("ipv4_lpm")
+    def reset_states(self):
+            [controllers.reset_state() for controllers in self.controllers.values()]
+
+    def set_table_defaults(self):
+        for controllers in self.controllers.values():
+            controllers.table_set_default("ipv4_lpm", "drop", [])
+            controllers.table_set_default("ecmp_group_to_nhop", "drop", [])
+    
+    def set_custom_calcs(self):
+        for p4switch in self.topo.get_p4switches():
+            self.custom_calcs[p4switch]=self.controllers[p4switch].get_custom_crc_calcs()
+            self.register_num[p4switch] =len(self.custom_calcs[p4switch])     
+
+    def reset_all_registers(self):
+        for sw, controller in self.controllers.items():
+            for register in controller.get_register_arrays():
+                controller.register_reset(register)
+
+    def set_table_init(self):
+        for controller in self.controllers.values():
+            controller.table_add("update_sketch","update_sketch0",[str(0)],[])
+            controller.table_add("update_sketch","update_sketch1",[str(1)],[])
+            controller.table_add("update_SFH","update_using_sketch0",[str(1)],[])
+            controller.table_add("update_SFH","update_using_sketch1",[str(0)],[])
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*0)+"->"+str(TIME_INTERVAL*1)],[str(0)],0)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*1)+"->"+str(TIME_INTERVAL*2)],[str(1)],1)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*2)+"->"+str(TIME_INTERVAL*3)],[str(2)],2)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*3)+"->"+str(TIME_INTERVAL*4)],[str(3)],3)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*4)+"->"+str(TIME_INTERVAL*5)],[str(4)],4)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*5)+"->"+str(TIME_INTERVAL*6)],[str(5)],5)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*6)+"->"+str(TIME_INTERVAL*7)],[str(6)],6)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*7)+"->"+str(TIME_INTERVAL*8)],[str(7)],7)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*8)+"->"+str(TIME_INTERVAL*9)],[str(8)],8)
+            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*9)+"->"+str(TIME_INTERVAL*1000)],[str(9)],9)
+            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*0)+"->"+str(BUCKET_NUM*1)],[str(0)],0)
+            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*1)+"->"+str(BUCKET_NUM*2)],[str(1)],1)
+            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*2)+"->"+str(BUCKET_NUM*3)],[str(2)],2)
             
-            #next_hop=NULL
-            if i==len(switches)-1:
-                next_hop=switches[0]
-            else:
-                next_hop=switches[i+1]
 
-            sw_port = self.topo.node_to_node_port_num(sw_name, next_hop)
-            dst_sw_mac = self.topo.node_to_node_mac(next_hop, sw_name)
-            #print "table_add at {}:".format(sw_name)
-            for host_ip in IPs:
-                self.controllers[sw_name].table_add("ipv4_lpm", "set_nhop", [str(host_ip)],\
-                                [str(dst_sw_mac), str(sw_port)])
+    def set_crc_custom_hashes(self):
+        for sw_name in self.controllers.keys():
+            i = 0
+            for custom_crc32, width in sorted(self.custom_calcs[sw_name].items()):
+                self.controllers[sw_name].set_crc32_parameters(custom_crc32, crc32_polinomials[i], 0xffffffff, 0xffffffff, True, True)
+                i+=1
+
+    def create_hashes(self):
+        self.hashes = []
+        for i in range(self.register_num):
+            self.hashes.append(Crc(32, crc32_polinomials[i], True, 0xffffffff, True, 0xffffffff))
+
+    
 
 
-    def blackhole(self,args):
-        if args.sw_name== None:
-            pass
-            print "Not implemented yet,please specify the switch name"
-        else:
-            self.controllers[args.sw_name].table_clear("ecmp_group_to_nhop")
-            self.controllers[args.sw_name].table_clear("ipv4_lpm")
-            print args.sw_name,"has been shut down"
+    def route(self):
 
-    def reroute(self):
-        #log=open("./router.log","w")
-        #log.write(str(self.topo))
         switch_ecmp_groups = {sw_name:{} for sw_name in self.topo.get_p4switches().keys()}
+
         for sw_name, controllers in self.controllers.items():
-            controllers.table_clear("ecmp_group_to_nhop")
-            controllers.table_clear("ipv4_lpm")
             for sw_dst in self.topo.get_p4switches():
+
                 #if its ourselves we create direct connections
                 if sw_name == sw_dst:
                     for host in self.topo.get_hosts_connected_to(sw_name):
@@ -77,7 +120,6 @@ class GenFault(object):
 
                         #add rule
                         print "table_add at {}:".format(sw_name)
-                        #log.write("[1] table_add ipv4_lpm set_nhop at {} to host {} using port {}\n".format(sw_name,host,sw_port))
                         self.controllers[sw_name].table_add("ipv4_lpm", "set_nhop", [str(host_ip)], [str(host_mac), str(sw_port)])
 
                 #check if there are directly connected hosts
@@ -95,7 +137,6 @@ class GenFault(object):
 
                                 #add rule
                                 print "table_add at {}:".format(sw_name)
-                                #log.write("[2] table_add ipv4_lpm set_nhop at {} to host {} using port {} to nexthop {}\n".format(sw_name,host,sw_port,next_hop))
                                 self.controllers[sw_name].table_add("ipv4_lpm", "set_nhop", [str(host_ip)],
                                                                     [str(dst_sw_mac), str(sw_port)])
 
@@ -111,7 +152,6 @@ class GenFault(object):
                                 if switch_ecmp_groups[sw_name].get(tuple(dst_macs_ports), None):
                                     ecmp_group_id = switch_ecmp_groups[sw_name].get(tuple(dst_macs_ports), None)
                                     print "table_add at {}:".format(sw_name)
-                                    #log.write("[3] table_add ipv4_lpm ecmp_group at {} to switch {} to paths{}\n".format(sw_name,sw_dst,paths))
                                     self.controllers[sw_name].table_add("ipv4_lpm", "ecmp_group", [str(host_ip)],
                                                                         [str(ecmp_group_id), str(len(dst_macs_ports))])
 
@@ -123,37 +163,35 @@ class GenFault(object):
                                     #add group
                                     for i, (mac, port) in enumerate(dst_macs_ports):
                                         print "table_add at {}:".format(sw_name)
-                                        #log.write("[4] table_add ipv4_lpm ecmp_group at {} to switch {} to paths{}\n".format(sw_name,sw_dst,paths))
-                                        #log.write("[4] table_add ipv4_lpm ecmp_group at {} to switch {} using port {}\n".format(sw_name,sw_dst,port))
                                         self.controllers[sw_name].table_add("ecmp_group_to_nhop", "set_nhop",
                                                                             [str(new_ecmp_group_id), str(i)],
                                                                             [str(mac), str(port)])
 
                                     #add forwarding rule
                                     print "table_add at {}:".format(sw_name)
-                                    #log.write("[5] table_add ipv4_lpm ecmp_group at {} to switch {} to paths{}\n".format(sw_name,sw_dst,paths))
-
                                     self.controllers[sw_name].table_add("ipv4_lpm", "ecmp_group", [str(host_ip)],
                                                                         [str(new_ecmp_group_id), str(len(dst_macs_ports))])
 		
 
-    
+
+
+
+    def main(self):
+        self.route()
+
+        for switch_id, controller in enumerate(self.controllers.values()):
+            controller.register_write("switch_id", 0, switch_id + 8001)
+            controller.register_write("swap_control", 0, 0)
+            controller.register_write("sketch_fg", 0, 0)
+            controller.register_write("previous_ingress_timestamp", 0, 0)
+
+        for switch_id, switch_name in enumerate(self.controllers.keys()):
+            print "{} {}".format(switch_id + 1, switch_name)
+
+
 
 if __name__ == "__main__":
     parser=argparse.ArgumentParser()
-    parser.add_argument("type",help="the type wanted for the net",choices=["loop","blackhole","reset"],default="reset")
     parser.add_argument("p",help="the program to be run",choices=["f","i"])
-
-    #group = parser.add_mutually_exclusive_group()
-    #group.add_argument("-n","--number",help="the loop's length or the number for blackhole",type=int,default=1)
-    parser.add_argument("-s","--sw_name",help="specify the blackhole switch")
-    
     args=parser.parse_args()
-    fault=GenFault(args.p)
-
-    if args.type=="loop":
-        fault.loop()
-    elif args.type=="blackhole":
-        fault.blackhole(args)
-    else:
-        fault.reroute()
+    controllers = RoutingController(args.p).main()

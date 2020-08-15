@@ -4,8 +4,8 @@
 #include <v1model.p4>
 
 //My includes
-#include "include/headers.p4"
-#include "include/parsers.p4"
+#include "../include/headers.p4"
+#include "../include/parsers.p4"
 
 //test factors , volatile
 #define BUCKET_NUM 64
@@ -597,7 +597,7 @@ control MyEgress(inout headers hdr,
             hdr.CPU.delay=meta.switch_delay;
             hdr.CPU.interval=meta.interval;
             hdr.CPU.flags=(meta.sketch_fg<<1) |(meta.swap_control);
-            hdr.CPU.flags=hdr.CPU.flags&0b0000_0011;
+            hdr.CPU.flags=hdr.CPU.flags&0b1111_1011;
 
 
             hdr.ethernet.setInvalid();
