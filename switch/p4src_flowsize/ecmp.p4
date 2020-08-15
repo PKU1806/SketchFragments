@@ -401,7 +401,6 @@ control MyIngress(inout headers hdr,
                         if (meta.SFH_index < 3 * BUCKET_NUM) {
                             if(hdr.udp.isValid()){
                                 hdr.udp.checksum = 0;
-
                                 hdr.ipv4.totalLen = hdr.ipv4.totalLen + (47);
                                 hdr.udp.length = hdr.udp.length + (47);
                                 hdr.flag.flag=hdr.flag.flag| 0b010;
@@ -410,11 +409,7 @@ control MyIngress(inout headers hdr,
                             
                             }
                             else if(hdr.tcp.isValid()) {
-                                hdr.ipv4.totalLen = hdr.ipv4.totalLen + (48);
-                                hdr.tcp.dataOffset=hdr.tcp.dataOffset+(bit<4>)(12);
-                                //dataOffset: increase 1 then length increase 4bytes,we only increased 47 bytes
-                                //1 byte wasted
-
+                                hdr.ipv4.totalLen = hdr.ipv4.totalLen + (46);
                                 hdr.tcp.SFH_fg = 1;
                                 hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
                             }

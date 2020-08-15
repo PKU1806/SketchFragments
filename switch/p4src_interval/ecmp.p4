@@ -63,8 +63,6 @@ control MyIngress(inout headers hdr,
                   inout metadata meta,
                   inout standard_metadata_t standard_metadata)
 {
-
-
     /******************* inherited code starts here       ************************/
     action drop(){
         mark_to_drop();
@@ -131,8 +129,6 @@ control MyIngress(inout headers hdr,
     /******************* inherited code ends here       ************************/
 
 
-
-
     /******** log code starts here*******/
 
     action send_to_control_plane(){
@@ -156,7 +152,6 @@ control MyIngress(inout headers hdr,
 
                 if(hdr.udp.isValid()){
                     hdr.udp.checksum = 0;
-
                     hdr.ipv4.totalLen = hdr.ipv4.totalLen + (5);
                     hdr.udp.length = hdr.udp.length + (5);
                     hdr.flag.flag=hdr.flag.flag| 0b100;
@@ -164,8 +159,7 @@ control MyIngress(inout headers hdr,
                 }
                 else if(hdr.tcp.isValid()) {
                     hdr.ipv4.totalLen = hdr.ipv4.totalLen + (4);
-                    hdr.tcp.dataOffset=hdr.tcp.dataOffset+(bit<4>)(1);
-                    //dataOffset: increase 1 then length increase 4bytes,we only increased 4 byte
+                    hdr.tcp.MIH_fg=1;
                 }
             }
             
