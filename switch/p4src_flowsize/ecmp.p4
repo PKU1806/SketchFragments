@@ -388,41 +388,44 @@ control MyIngress(inout headers hdr,
             //send_to_control_plane();
             /******** log code ends here*******/
             
-            hdr.udp.checksum = 0;
-            switch_id.read(meta.switch_id, 0);
-            sketch_fg.read(meta.sketch_fg,0);
-            swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
+            if(hdr.udp.isValid()||hdr.tcp.isValid()){
+                switch_id.read(meta.switch_id, 0);
+                sketch_fg.read(meta.sketch_fg,0);
+                swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
 
-            if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {//this packet is vacant 
-                random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
-                if (meta.random_number <= 0) {//the probility allows
-                    predispose();//compute the index of bucket
-                    
-                    if (meta.SFH_index < 3 * BUCKET_NUM) {
-                        if(hdr.udp.isValid()){
-                            hdr.ipv4.totalLen = hdr.ipv4.totalLen + (47);
-                            hdr.udp.length = hdr.udp.length + (47);
-                            hdr.flag.flag=hdr.flag.flag| 0b010;
-                            hdr.flag.flag= hdr.flag.flag & 0b1111_1110;
-                            hdr.flag.flag =hdr.flag.flag |(1 - meta.sketch_fg);
+                if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {//this packet is vacant 
+                    random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
+                    if (meta.random_number <= 0) {//the probility allows
+                        predispose();//compute the index of bucket
                         
-                        }
-                        else if(hdr.tcp.isValid()) {
-                            hdr.ipv4.totalLen = hdr.ipv4.totalLen + (48);
-                            hdr.tcp.dataOffset=hdr.tcp.dataOffset+(bit<4>)(12);
-                            //dataOffset: increase 1 then length increase 4bytes,we only increased 47 bytes
-                            //1 byte wasted
+                        if (meta.SFH_index < 3 * BUCKET_NUM) {
+                            if(hdr.udp.isValid()){
+                                hdr.udp.checksum = 0;
 
-                            hdr.tcp.SFH_fg = 1;
-                            hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
-                        }
+                                hdr.ipv4.totalLen = hdr.ipv4.totalLen + (47);
+                                hdr.udp.length = hdr.udp.length + (47);
+                                hdr.flag.flag=hdr.flag.flag| 0b010;
+                                hdr.flag.flag= hdr.flag.flag & 0b1111_1110;
+                                hdr.flag.flag =hdr.flag.flag |(1 - meta.sketch_fg);
+                            
+                            }
+                            else if(hdr.tcp.isValid()) {
+                                hdr.ipv4.totalLen = hdr.ipv4.totalLen + (48);
+                                hdr.tcp.dataOffset=hdr.tcp.dataOffset+(bit<4>)(12);
+                                //dataOffset: increase 1 then length increase 4bytes,we only increased 47 bytes
+                                //1 byte wasted
 
-                        hdr.SFH.setValid();
-                        hdr.SFH.sfh_switch_id = meta.switch_id;
-                        hdr.SFH.sfh_fgment_id = meta.SFH_index;
-                        
-                        choose_fragment.apply();
-                        update_SFH.apply();
+                                hdr.tcp.SFH_fg = 1;
+                                hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
+                            }
+
+                            hdr.SFH.setValid();
+                            hdr.SFH.sfh_switch_id = meta.switch_id;
+                            hdr.SFH.sfh_fgment_id = meta.SFH_index;
+                            
+                            choose_fragment.apply();
+                            update_SFH.apply();
+                        }
                     }
                 }
             }
@@ -637,6 +640,36 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta)
              hdr.ipv4.dstAddr},
             hdr.ipv4.hdrChecksum,
             HashAlgorithm.csum16);
+
+        update_checksum_with_payload(
+			!hdr.MIH.isValid() && hdr.SFH.isValid(),
+			{hdr.ipv4.srcAddr,
+			 hdr.ipv4.dstAddr,
+			 8w0,
+			 hdr.ipv4.protocol,
+			 hdr.udp.length,
+			 hdr.udp.srcPort,
+			 hdr.udp.dstPort,
+			 hdr.udp.length,
+			 hdr.MIH,
+			 hdr.SFH},
+			hdr.udp.checksum,
+			HashAlgorithm.csum16);
+
+        update_checksum_with_payload(
+			!hdr.MIH.isValid() && !hdr.SFH.isValid(),
+			{hdr.ipv4.srcAddr,
+			 hdr.ipv4.dstAddr,
+			 8w0,
+			 hdr.ipv4.protocol,
+			 hdr.udp.length,
+			 hdr.udp.srcPort,
+			 hdr.udp.dstPort,
+			 hdr.udp.length,
+			 hdr.MIH,
+			 hdr.SFH},
+			hdr.udp.checksum,
+			HashAlgorithm.csum16);
 
 		update_checksum_with_payload(
 			hdr.MIH.isValid() && !hdr.SFH.isValid(),

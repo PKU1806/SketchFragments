@@ -146,7 +146,6 @@ control MyIngress(inout headers hdr,
     {   
         if (hdr.ipv4.isValid()&&hdr.ipv4.ttl > 1) {
             if (hdr.MIH.isValid()) {
-                hdr.udp.checksum = 0;
                 switch_id.read(meta.switch_id, 0);
                 sketch_fg.read(meta.sketch_fg,0);
                 swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
@@ -156,6 +155,8 @@ control MyIngress(inout headers hdr,
                 /******** log code ends here*******/
 
                 if(hdr.udp.isValid()){
+                    hdr.udp.checksum = 0;
+
                     hdr.ipv4.totalLen = hdr.ipv4.totalLen + (5);
                     hdr.udp.length = hdr.udp.length + (5);
                     hdr.flag.flag=hdr.flag.flag| 0b100;
@@ -264,7 +265,7 @@ control MyEgress(inout headers hdr,
 
     apply
     {
-        if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0){
+        if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0&&hdr.ipv4.ttl > 1){
             
             update_timestamp();
             if(hdr.MIH.isValid()){
@@ -283,7 +284,7 @@ control MyEgress(inout headers hdr,
             if(hdr.tcp.isValid()){
                 meta.swap_control = (bit<8>)hdr.tcp.SFH_fg;
             }
-            else{
+            else  if(hdr.udp.isValid()){
                 meta.swap_control = (hdr.flag.flag&0b010)>>1;
             }
             

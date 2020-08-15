@@ -110,6 +110,12 @@
         ["metadata.counter_value0", 1, false],
         ["metadata.counter_value1", 1, false],
         ["metadata.counter_value2", 1, false],
+        ["metadata.MIH_value0", 48, false],
+        ["metadata.MIH_value1", 48, false],
+        ["metadata.MIH_value2", 48, false],
+        ["metadata.max_interval_value0", 48, false],
+        ["metadata.max_interval_value1", 48, false],
+        ["metadata.max_interval_value2", 48, false],
         ["metadata.switch_id", 16, false],
         ["metadata.switch_delay", 48, false],
         ["metadata.sketch_fg", 8, false],
@@ -377,7 +383,7 @@
       "name" : "fl",
       "source_info" : {
         "filename" : "./ecmp.p4",
-        "line" : 554,
+        "line" : 557,
         "column" : 33,
         "source_fragment" : "meta"
       },
@@ -489,6 +495,30 @@
         {
           "type" : "field",
           "value" : ["scalars", "metadata.counter_value2"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.MIH_value0"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.MIH_value1"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.MIH_value2"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.max_interval_value0"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.max_interval_value1"]
+        },
+        {
+          "type" : "field",
+          "value" : ["scalars", "metadata.max_interval_value2"]
         },
         {
           "type" : "field",
@@ -988,7 +1018,7 @@
       "name" : "deparser",
       "id" : 0,
       "source_info" : {
-        "filename" : "./include/parsers.p4",
+        "filename" : "./../include/parsers.p4",
         "line" : 90,
         "column" : 8,
         "source_fragment" : "MyDeparser"
@@ -1355,7 +1385,7 @@
       "id" : 7,
       "source_info" : {
         "filename" : "./ecmp.p4",
-        "line" : 624,
+        "line" : 627,
         "column" : 8,
         "source_fragment" : "update_checksum( ..."
       },
@@ -1416,7 +1446,123 @@
       "id" : 8,
       "source_info" : {
         "filename" : "./ecmp.p4",
-        "line" : 641,
+        "line" : 644,
+        "column" : 8,
+        "source_fragment" : "update_checksum_with_payload( ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["ipv4", "srcAddr"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "dstAddr"]
+        },
+        {
+          "type" : "hexstr",
+          "value" : "0x00",
+          "bitwidth" : 8
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "protocol"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp", "length"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp", "srcPort"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp", "dstPort"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp", "length"]
+        },
+        {
+          "type" : "header",
+          "value" : "MIH"
+        },
+        {
+          "type" : "header",
+          "value" : "SFH"
+        },
+        {
+          "type" : "payload",
+          "value" : null
+        }
+      ]
+    },
+    {
+      "name" : "calc_8",
+      "id" : 9,
+      "source_info" : {
+        "filename" : "./ecmp.p4",
+        "line" : 659,
+        "column" : 8,
+        "source_fragment" : "update_checksum_with_payload( ..."
+      },
+      "algo" : "csum16",
+      "input" : [
+        {
+          "type" : "field",
+          "value" : ["ipv4", "srcAddr"]
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "dstAddr"]
+        },
+        {
+          "type" : "hexstr",
+          "value" : "0x00",
+          "bitwidth" : 8
+        },
+        {
+          "type" : "field",
+          "value" : ["ipv4", "protocol"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp", "length"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp", "srcPort"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp", "dstPort"]
+        },
+        {
+          "type" : "field",
+          "value" : ["udp", "length"]
+        },
+        {
+          "type" : "header",
+          "value" : "MIH"
+        },
+        {
+          "type" : "header",
+          "value" : "SFH"
+        },
+        {
+          "type" : "payload",
+          "value" : null
+        }
+      ]
+    },
+    {
+      "name" : "calc_9",
+      "id" : 10,
+      "source_info" : {
+        "filename" : "./ecmp.p4",
+        "line" : 674,
         "column" : 2,
         "source_fragment" : "update_checksum_with_payload( ..."
       },
@@ -1466,11 +1612,11 @@
       ]
     },
     {
-      "name" : "calc_8",
-      "id" : 9,
+      "name" : "calc_10",
+      "id" : 11,
       "source_info" : {
         "filename" : "./ecmp.p4",
-        "line" : 655,
+        "line" : 688,
         "column" : 2,
         "source_fragment" : "update_checksum_with_payload( ..."
       },
@@ -11709,6 +11855,25 @@
           "parameters" : [
             {
               "type" : "field",
+              "value" : ["udp", "checksum"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x0000"
+            }
+          ],
+          "source_info" : {
+            "filename" : "./ecmp.p4",
+            "line" : 403,
+            "column" : 32,
+            "source_fragment" : "hdr.udp.checksum = 0"
+          }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
               "value" : ["ipv4", "totalLen"]
             },
             {
@@ -11741,8 +11906,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 403,
-            "column" : 28,
+            "line" : 405,
+            "column" : 32,
             "source_fragment" : "hdr.ipv4.totalLen = hdr.ipv4.totalLen + (47)"
           }
         },
@@ -11783,8 +11948,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 404,
-            "column" : 28,
+            "line" : 406,
+            "column" : 32,
             "source_fragment" : "hdr.udp.length = hdr.udp.length + (47)"
           }
         },
@@ -11815,8 +11980,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 405,
-            "column" : 28,
+            "line" : 407,
+            "column" : 32,
             "source_fragment" : "hdr.flag.flag=hdr.flag.flag| 0b010"
           }
         },
@@ -11847,8 +12012,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 406,
-            "column" : 28,
+            "line" : 408,
+            "column" : 32,
             "source_fragment" : "hdr.flag.flag= hdr.flag.flag & 0b1111_1110"
           }
         },
@@ -11899,8 +12064,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 407,
-            "column" : 28,
+            "line" : 409,
+            "column" : 32,
             "source_fragment" : "hdr.flag.flag =hdr.flag.flag |(1 - meta.sketch_fg)"
           }
         }
@@ -11948,8 +12113,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 411,
-            "column" : 28,
+            "line" : 413,
+            "column" : 32,
             "source_fragment" : "hdr.ipv4.totalLen = hdr.ipv4.totalLen + (48)"
           }
         },
@@ -11990,8 +12155,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 412,
-            "column" : 28,
+            "line" : 414,
+            "column" : 32,
             "source_fragment" : "hdr.tcp.dataOffset=hdr.tcp.dataOffset+(bit<4>)(12)"
           }
         },
@@ -12009,8 +12174,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 416,
-            "column" : 28,
+            "line" : 418,
+            "column" : 32,
             "source_fragment" : "hdr.tcp.SFH_fg = 1"
           }
         },
@@ -12061,8 +12226,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 417,
-            "column" : 28,
+            "line" : 419,
+            "column" : 32,
             "source_fragment" : "hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg)"
           }
         }
@@ -12083,8 +12248,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 420,
-            "column" : 24,
+            "line" : 422,
+            "column" : 28,
             "source_fragment" : "hdr.SFH.setValid()"
           }
         },
@@ -12102,8 +12267,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 421,
-            "column" : 24,
+            "line" : 423,
+            "column" : 28,
             "source_fragment" : "hdr.SFH.sfh_switch_id = meta.switch_id"
           }
         },
@@ -12121,8 +12286,8 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 422,
-            "column" : 24,
+            "line" : 424,
+            "column" : 28,
             "source_fragment" : "hdr.SFH.sfh_fgment_id = meta.SFH_index"
           }
         }
@@ -12152,7 +12317,7 @@
           "source_info" : {
             "filename" : "./ecmp.p4",
             "line" : 397,
-            "column" : 16,
+            "column" : 20,
             "source_fragment" : "random(meta.random_number, (bit<32>)0, (bit<32>)10 - 1)"
           }
         }
@@ -12163,25 +12328,6 @@
       "id" : 17,
       "runtime_data" : [],
       "primitives" : [
-        {
-          "op" : "assign",
-          "parameters" : [
-            {
-              "type" : "field",
-              "value" : ["udp", "checksum"]
-            },
-            {
-              "type" : "hexstr",
-              "value" : "0x0000"
-            }
-          ],
-          "source_info" : {
-            "filename" : "./ecmp.p4",
-            "line" : 391,
-            "column" : 12,
-            "source_fragment" : "hdr.udp.checksum = 0"
-          }
-        },
         {
           "op" : "register_read",
           "parameters" : [
@@ -12201,7 +12347,7 @@
           "source_info" : {
             "filename" : "./ecmp.p4",
             "line" : 392,
-            "column" : 12,
+            "column" : 16,
             "source_fragment" : "switch_id.read(meta.switch_id, 0)"
           }
         },
@@ -12224,7 +12370,7 @@
           "source_info" : {
             "filename" : "./ecmp.p4",
             "line" : 393,
-            "column" : 12,
+            "column" : 16,
             "source_fragment" : "sketch_fg.read(meta.sketch_fg,0)"
           }
         },
@@ -12247,7 +12393,7 @@
           "source_info" : {
             "filename" : "./ecmp.p4",
             "line" : 394,
-            "column" : 12,
+            "column" : 16,
             "source_fragment" : "swap_control.read(meta.swap_control,0)"
           }
         }
@@ -12289,7 +12435,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 456,
+            "line" : 459,
             "column" : 8,
             "source_fragment" : "meta.delay_lev = delay_lev"
           }
@@ -12323,7 +12469,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 462,
+            "line" : 465,
             "column" : 8,
             "source_fragment" : "hash(meta.array_index0, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64)"
           }
@@ -12350,7 +12496,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 463,
+            "line" : 466,
             "column" : 8,
             "source_fragment" : "hash(meta.array_index1, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64)"
           }
@@ -12377,7 +12523,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 464,
+            "line" : 467,
             "column" : 8,
             "source_fragment" : "hash(meta.array_index2, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64)"
           }
@@ -12396,7 +12542,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 466,
+            "line" : 469,
             "column" : 8,
             "source_fragment" : "bit<32>tmp_min=0x5fffffff;"
           }
@@ -12458,7 +12604,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 468,
+            "line" : 471,
             "column" : 40,
             "source_fragment" : "meta.array_index0 * 10 + meta.delay_lev"
           }
@@ -12481,7 +12627,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 468,
+            "line" : 471,
             "column" : 8,
             "source_fragment" : "array0.read(meta.array_value0, (meta.array_index0 * 10 + meta.delay_lev))"
           }
@@ -12527,7 +12673,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 470,
+            "line" : 473,
             "column" : 12,
             "source_fragment" : "tmp_min="
           }
@@ -12593,7 +12739,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 471,
+            "line" : 474,
             "column" : 12,
             "source_fragment" : "meta.array_value0 ="
           }
@@ -12655,7 +12801,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 474,
+            "line" : 477,
             "column" : 40,
             "source_fragment" : "meta.array_index1 * 10 + meta.delay_lev"
           }
@@ -12678,7 +12824,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 474,
+            "line" : 477,
             "column" : 8,
             "source_fragment" : "array1.read(meta.array_value1, (meta.array_index1 * 10 + meta.delay_lev))"
           }
@@ -12757,7 +12903,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 476,
+            "line" : 479,
             "column" : 12,
             "source_fragment" : "tmp_min="
           }
@@ -12820,7 +12966,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 477,
+            "line" : 480,
             "column" : 12,
             "source_fragment" : "meta.array_value1 ="
           }
@@ -12882,7 +13028,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 480,
+            "line" : 483,
             "column" : 40,
             "source_fragment" : "meta.array_index2 * 10 + meta.delay_lev"
           }
@@ -12905,7 +13051,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 480,
+            "line" : 483,
             "column" : 8,
             "source_fragment" : "array2.read(meta.array_value2, (meta.array_index2 * 10 + meta.delay_lev))"
           }
@@ -12971,7 +13117,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 483,
+            "line" : 486,
             "column" : 12,
             "source_fragment" : "meta.array_value2 ="
           }
@@ -13033,7 +13179,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 486,
+            "line" : 489,
             "column" : 22,
             "source_fragment" : "meta.array_index0 * 10 + meta.delay_lev"
           }
@@ -13056,7 +13202,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 486,
+            "line" : 489,
             "column" : 8,
             "source_fragment" : "array0.write((meta.array_index0 * 10 + meta.delay_lev), meta.array_value0)"
           }
@@ -13118,7 +13264,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 487,
+            "line" : 490,
             "column" : 22,
             "source_fragment" : "meta.array_index1 * 10 + meta.delay_lev"
           }
@@ -13141,7 +13287,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 487,
+            "line" : 490,
             "column" : 8,
             "source_fragment" : "array1.write((meta.array_index1 * 10 + meta.delay_lev), meta.array_value1)"
           }
@@ -13203,7 +13349,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 488,
+            "line" : 491,
             "column" : 22,
             "source_fragment" : "meta.array_index2 * 10 + meta.delay_lev"
           }
@@ -13226,7 +13372,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 488,
+            "line" : 491,
             "column" : 8,
             "source_fragment" : "array2.write((meta.array_index2 * 10 + meta.delay_lev), meta.array_value2)"
           }
@@ -13260,7 +13406,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 494,
+            "line" : 497,
             "column" : 8,
             "source_fragment" : "hash(meta.array_index3, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64)"
           }
@@ -13287,7 +13433,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 495,
+            "line" : 498,
             "column" : 8,
             "source_fragment" : "hash(meta.array_index4, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64)"
           }
@@ -13314,7 +13460,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 496,
+            "line" : 499,
             "column" : 8,
             "source_fragment" : "hash(meta.array_index5, HashAlgorithm.crc32_custom, (bit<16>)0, {hdr.ipv4.srcAddr, hdr.ipv4.dstAddr, meta.ipv4_srcPort, meta.ipv4_dstPort, hdr.ipv4.protocol}, (bit<32>)64)"
           }
@@ -13333,7 +13479,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 498,
+            "line" : 501,
             "column" : 8,
             "source_fragment" : "bit<32>tmp_min=0x5fffffff;"
           }
@@ -13395,7 +13541,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 500,
+            "line" : 503,
             "column" : 40,
             "source_fragment" : "meta.array_index3 * 10 + meta.delay_lev"
           }
@@ -13418,7 +13564,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 500,
+            "line" : 503,
             "column" : 8,
             "source_fragment" : "array3.read(meta.array_value3, (meta.array_index3 * 10 + meta.delay_lev))"
           }
@@ -13464,7 +13610,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 502,
+            "line" : 505,
             "column" : 12,
             "source_fragment" : "tmp_min="
           }
@@ -13530,7 +13676,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 503,
+            "line" : 506,
             "column" : 12,
             "source_fragment" : "meta.array_value3 ="
           }
@@ -13592,7 +13738,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 506,
+            "line" : 509,
             "column" : 40,
             "source_fragment" : "meta.array_index4 * 10 + meta.delay_lev"
           }
@@ -13615,7 +13761,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 506,
+            "line" : 509,
             "column" : 8,
             "source_fragment" : "array4.read(meta.array_value4, (meta.array_index4 * 10 + meta.delay_lev))"
           }
@@ -13694,7 +13840,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 508,
+            "line" : 511,
             "column" : 12,
             "source_fragment" : "tmp_min="
           }
@@ -13757,7 +13903,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 509,
+            "line" : 512,
             "column" : 12,
             "source_fragment" : "meta.array_value4 ="
           }
@@ -13819,7 +13965,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 512,
+            "line" : 515,
             "column" : 40,
             "source_fragment" : "meta.array_index5 * 10 + meta.delay_lev"
           }
@@ -13842,7 +13988,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 512,
+            "line" : 515,
             "column" : 8,
             "source_fragment" : "array5.read(meta.array_value5, (meta.array_index5 * 10 + meta.delay_lev))"
           }
@@ -13908,7 +14054,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 515,
+            "line" : 518,
             "column" : 12,
             "source_fragment" : "meta.array_value5 ="
           }
@@ -13970,7 +14116,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 518,
+            "line" : 521,
             "column" : 22,
             "source_fragment" : "meta.array_index3 * 10 + meta.delay_lev"
           }
@@ -13993,7 +14139,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 518,
+            "line" : 521,
             "column" : 8,
             "source_fragment" : "array3.write((meta.array_index3 * 10 + meta.delay_lev), meta.array_value3)"
           }
@@ -14055,7 +14201,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 519,
+            "line" : 522,
             "column" : 22,
             "source_fragment" : "meta.array_index4 * 10 + meta.delay_lev"
           }
@@ -14078,7 +14224,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 519,
+            "line" : 522,
             "column" : 8,
             "source_fragment" : "array4.write((meta.array_index4 * 10 + meta.delay_lev), meta.array_value4)"
           }
@@ -14140,7 +14286,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 520,
+            "line" : 523,
             "column" : 22,
             "source_fragment" : "meta.array_index5 * 10 + meta.delay_lev"
           }
@@ -14163,7 +14309,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 520,
+            "line" : 523,
             "column" : 8,
             "source_fragment" : "array5.write((meta.array_index5 * 10 + meta.delay_lev), meta.array_value5)"
           }
@@ -14189,7 +14335,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 554,
+            "line" : 557,
             "column" : 8,
             "source_fragment" : "clone3(CloneType.E2E,100,meta)"
           }
@@ -14228,7 +14374,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 573,
+            "line" : 576,
             "column" : 16,
             "source_fragment" : "meta.swap_control = (bit<8>)hdr.tcp.SFH_fg"
           }
@@ -14287,7 +14433,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 576,
+            "line" : 579,
             "column" : 16,
             "source_fragment" : "meta.swap_control = (hdr.flag.flag&0b010)>>1"
           }
@@ -14336,7 +14482,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 563,
+            "line" : 566,
             "column" : 12,
             "source_fragment" : "meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp"
           }
@@ -14359,7 +14505,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 565,
+            "line" : 568,
             "column" : 12,
             "source_fragment" : "previous_ingress_timestamp.read(meta.previous_ingress_global_timestamp,(bit<32>)0)"
           }
@@ -14401,7 +14547,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 566,
+            "line" : 569,
             "column" : 12,
             "source_fragment" : "meta.interval=standard_metadata.ingress_global_timestamp-meta.previous_ingress_global_timestamp"
           }
@@ -14424,7 +14570,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 567,
+            "line" : 570,
             "column" : 12,
             "source_fragment" : "previous_ingress_timestamp.write((bit<32>)0,standard_metadata.ingress_global_timestamp)"
           }
@@ -14446,7 +14592,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 590,
+            "line" : 593,
             "column" : 12,
             "source_fragment" : "hdr.CPU.setValid()"
           }
@@ -14465,7 +14611,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 592,
+            "line" : 595,
             "column" : 12,
             "source_fragment" : "hdr.CPU.srcAddr=hdr.ipv4.srcAddr"
           }
@@ -14484,7 +14630,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 593,
+            "line" : 596,
             "column" : 12,
             "source_fragment" : "hdr.CPU.dstAddr=hdr.ipv4.dstAddr"
           }
@@ -14503,7 +14649,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 594,
+            "line" : 597,
             "column" : 12,
             "source_fragment" : "hdr.CPU.protocol=hdr.ipv4.protocol"
           }
@@ -14522,7 +14668,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 595,
+            "line" : 598,
             "column" : 12,
             "source_fragment" : "hdr.CPU.srcPort=meta.ipv4_srcPort"
           }
@@ -14541,7 +14687,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 596,
+            "line" : 599,
             "column" : 12,
             "source_fragment" : "hdr.CPU.dstPort=meta.ipv4_dstPort"
           }
@@ -14560,7 +14706,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 597,
+            "line" : 600,
             "column" : 12,
             "source_fragment" : "hdr.CPU.delay=meta.switch_delay"
           }
@@ -14579,7 +14725,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 598,
+            "line" : 601,
             "column" : 12,
             "source_fragment" : "hdr.CPU.interval=meta.interval"
           }
@@ -14631,7 +14777,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 599,
+            "line" : 602,
             "column" : 12,
             "source_fragment" : "hdr.CPU.flags=(meta.sketch_fg<<1) |(meta.swap_control)"
           }
@@ -14685,7 +14831,7 @@
                   },
                   "right" : {
                     "type" : "hexstr",
-                    "value" : "0x03"
+                    "value" : "0xfb"
                   }
                 }
               }
@@ -14693,9 +14839,9 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 600,
+            "line" : 603,
             "column" : 12,
-            "source_fragment" : "hdr.CPU.flags=hdr.CPU.flags&0b0000_0011"
+            "source_fragment" : "hdr.CPU.flags=hdr.CPU.flags&0b1111_1011"
           }
         },
         {
@@ -14708,7 +14854,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 603,
+            "line" : 606,
             "column" : 12,
             "source_fragment" : "hdr.ethernet.setInvalid()"
           }
@@ -14723,7 +14869,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 604,
+            "line" : 607,
             "column" : 12,
             "source_fragment" : "hdr.ipv4.setInvalid()"
           }
@@ -14738,7 +14884,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 605,
+            "line" : 608,
             "column" : 12,
             "source_fragment" : "hdr.tcp.setInvalid()"
           }
@@ -14753,7 +14899,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 606,
+            "line" : 609,
             "column" : 12,
             "source_fragment" : "hdr.udp.setInvalid()"
           }
@@ -14768,7 +14914,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 607,
+            "line" : 610,
             "column" : 12,
             "source_fragment" : "hdr.flag.setInvalid()"
           }
@@ -14783,7 +14929,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 608,
+            "line" : 611,
             "column" : 12,
             "source_fragment" : "hdr.MIH.setInvalid()"
           }
@@ -14798,7 +14944,7 @@
           ],
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 609,
+            "line" : 612,
             "column" : 12,
             "source_fragment" : "hdr.SFH.setInvalid()"
           }
@@ -14830,9 +14976,9 @@
           "direct_meters" : null,
           "action_ids" : [17],
           "actions" : ["act_3"],
-          "base_default_next" : "node_4",
+          "base_default_next" : "node_5",
           "next_tables" : {
-            "act_3" : "node_4"
+            "act_3" : "node_5"
           },
           "default_entry" : {
             "action_id" : 17,
@@ -14853,9 +14999,9 @@
           "direct_meters" : null,
           "action_ids" : [16],
           "actions" : ["act_2"],
-          "base_default_next" : "node_6",
+          "base_default_next" : "node_7",
           "next_tables" : {
-            "act_2" : "node_6"
+            "act_2" : "node_7"
           },
           "default_entry" : {
             "action_id" : 16,
@@ -14876,9 +15022,9 @@
           "direct_meters" : null,
           "action_ids" : [3],
           "actions" : ["MyIngress.predispose"],
-          "base_default_next" : "node_8",
+          "base_default_next" : "node_9",
           "next_tables" : {
-            "MyIngress.predispose" : "node_8"
+            "MyIngress.predispose" : "node_9"
           },
           "default_entry" : {
             "action_id" : 3,
@@ -15179,16 +15325,56 @@
               }
             }
           },
-          "true_next" : "tbl_act",
+          "true_next" : "node_3",
           "false_next" : "tbl_drop"
         },
         {
-          "name" : "node_4",
+          "name" : "node_3",
           "id" : 1,
           "source_info" : {
             "filename" : "./ecmp.p4",
+            "line" : 391,
+            "column" : 15,
+            "source_fragment" : "hdr.udp.isValid()||hdr.tcp.isValid()"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "or",
+              "left" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "d2b",
+                  "left" : null,
+                  "right" : {
+                    "type" : "field",
+                    "value" : ["udp", "$valid$"]
+                  }
+                }
+              },
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "d2b",
+                  "left" : null,
+                  "right" : {
+                    "type" : "field",
+                    "value" : ["tcp", "$valid$"]
+                  }
+                }
+              }
+            }
+          },
+          "true_next" : "tbl_act",
+          "false_next" : "MyIngress.ipv4_lpm"
+        },
+        {
+          "name" : "node_5",
+          "id" : 2,
+          "source_info" : {
+            "filename" : "./ecmp.p4",
             "line" : 396,
-            "column" : 16,
+            "column" : 20,
             "source_fragment" : "meta.swap_control == 0 && (!hdr.SFH.isValid())"
           },
           "expression" : {
@@ -15233,12 +15419,12 @@
           "false_next" : "MyIngress.ipv4_lpm"
         },
         {
-          "name" : "node_6",
-          "id" : 2,
+          "name" : "node_7",
+          "id" : 3,
           "source_info" : {
             "filename" : "./ecmp.p4",
             "line" : 398,
-            "column" : 20,
+            "column" : 24,
             "source_fragment" : "meta.random_number <= 0"
           },
           "expression" : {
@@ -15259,12 +15445,12 @@
           "false_next" : "MyIngress.ipv4_lpm"
         },
         {
-          "name" : "node_8",
-          "id" : 3,
+          "name" : "node_9",
+          "id" : 4,
           "source_info" : {
             "filename" : "./ecmp.p4",
             "line" : 401,
-            "column" : 24,
+            "column" : 28,
             "source_fragment" : "meta.SFH_index < 3 * 64"
           },
           "expression" : {
@@ -15281,16 +15467,16 @@
               }
             }
           },
-          "true_next" : "node_9",
+          "true_next" : "node_10",
           "false_next" : "MyIngress.ipv4_lpm"
         },
         {
-          "name" : "node_9",
-          "id" : 4,
+          "name" : "node_10",
+          "id" : 5,
           "source_info" : {
             "filename" : "./ecmp.p4",
             "line" : 402,
-            "column" : 27,
+            "column" : 31,
             "source_fragment" : "hdr.udp.isValid()"
           },
           "expression" : {
@@ -15305,15 +15491,15 @@
             }
           },
           "true_next" : "tbl_act_1",
-          "false_next" : "node_11"
+          "false_next" : "node_12"
         },
         {
-          "name" : "node_11",
-          "id" : 5,
+          "name" : "node_12",
+          "id" : 6,
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 410,
-            "column" : 32,
+            "line" : 412,
+            "column" : 36,
             "source_fragment" : "hdr.tcp.isValid()"
           },
           "expression" : {
@@ -15337,11 +15523,11 @@
       "id" : 1,
       "source_info" : {
         "filename" : "./ecmp.p4",
-        "line" : 447,
+        "line" : 450,
         "column" : 8,
         "source_fragment" : "MyEgress"
       },
-      "init_table" : "node_21",
+      "init_table" : "node_22",
       "tables" : [
         {
           "name" : "tbl_act_4",
@@ -15355,9 +15541,9 @@
           "direct_meters" : null,
           "action_ids" : [26],
           "actions" : ["act_6"],
-          "base_default_next" : "node_23",
+          "base_default_next" : "node_24",
           "next_tables" : {
-            "act_6" : "node_23"
+            "act_6" : "node_24"
           },
           "default_entry" : {
             "action_id" : 26,
@@ -15440,7 +15626,7 @@
           "id" : 15,
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 537,
+            "line" : 540,
             "column" : 10,
             "source_fragment" : "get_delay_lev"
           },
@@ -15477,7 +15663,7 @@
           "id" : 16,
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 524,
+            "line" : 527,
             "column" : 10,
             "source_fragment" : "update_sketch"
           },
@@ -15497,11 +15683,11 @@
           "direct_meters" : null,
           "action_ids" : [21, 22, 18],
           "actions" : ["MyEgress.update_sketch0", "MyEgress.update_sketch1", "NoAction"],
-          "base_default_next" : "node_30",
+          "base_default_next" : "node_31",
           "next_tables" : {
-            "MyEgress.update_sketch0" : "node_30",
-            "MyEgress.update_sketch1" : "node_30",
-            "NoAction" : "node_30"
+            "MyEgress.update_sketch0" : "node_31",
+            "MyEgress.update_sketch1" : "node_31",
+            "NoAction" : "node_31"
           },
           "default_entry" : {
             "action_id" : 18,
@@ -15537,11 +15723,11 @@
       "action_profiles" : [],
       "conditionals" : [
         {
-          "name" : "node_21",
-          "id" : 6,
+          "name" : "node_22",
+          "id" : 7,
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 561,
+            "line" : 564,
             "column" : 11,
             "source_fragment" : "hdr.ipv4.isValid()&&standard_metadata.instance_type ==0&&hdr.ipv4.ttl > 1"
           },
@@ -15597,14 +15783,14 @@
             }
           },
           "true_next" : "tbl_act_4",
-          "false_next" : "node_30"
+          "false_next" : "node_31"
         },
         {
-          "name" : "node_23",
-          "id" : 7,
+          "name" : "node_24",
+          "id" : 8,
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 572,
+            "line" : 575,
             "column" : 15,
             "source_fragment" : "hdr.tcp.isValid()"
           },
@@ -15620,14 +15806,14 @@
             }
           },
           "true_next" : "tbl_act_5",
-          "false_next" : "node_25"
+          "false_next" : "node_26"
         },
         {
-          "name" : "node_25",
-          "id" : 8,
+          "name" : "node_26",
+          "id" : 9,
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 575,
+            "line" : 578,
             "column" : 20,
             "source_fragment" : "hdr.udp.isValid()"
           },
@@ -15646,11 +15832,11 @@
           "false_next" : "tbl_send_to_control_plane"
         },
         {
-          "name" : "node_30",
-          "id" : 9,
+          "name" : "node_31",
+          "id" : 10,
           "source_info" : {
             "filename" : "./ecmp.p4",
-            "line" : 588,
+            "line" : 591,
             "column" : 12,
             "source_fragment" : "standard_metadata.instance_type == 2"
           },
@@ -15680,7 +15866,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "./ecmp.p4",
-        "line" : 624,
+        "line" : 627,
         "column" : 8,
         "source_fragment" : "update_checksum( ..."
       },
@@ -15706,13 +15892,120 @@
       "id" : 1,
       "source_info" : {
         "filename" : "./ecmp.p4",
-        "line" : 641,
-        "column" : 2,
+        "line" : 644,
+        "column" : 8,
         "source_fragment" : "update_checksum_with_payload( ..."
       },
       "target" : ["udp", "checksum"],
       "type" : "generic",
       "calculation" : "calc_7",
+      "verify" : false,
+      "update" : true,
+      "if_cond" : {
+        "type" : "expression",
+        "value" : {
+          "op" : "and",
+          "left" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "not",
+              "left" : null,
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "d2b",
+                  "left" : null,
+                  "right" : {
+                    "type" : "field",
+                    "value" : ["MIH", "$valid$"]
+                  }
+                }
+              }
+            }
+          },
+          "right" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "d2b",
+              "left" : null,
+              "right" : {
+                "type" : "field",
+                "value" : ["SFH", "$valid$"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name" : "cksum_1",
+      "id" : 2,
+      "source_info" : {
+        "filename" : "./ecmp.p4",
+        "line" : 659,
+        "column" : 8,
+        "source_fragment" : "update_checksum_with_payload( ..."
+      },
+      "target" : ["udp", "checksum"],
+      "type" : "generic",
+      "calculation" : "calc_8",
+      "verify" : false,
+      "update" : true,
+      "if_cond" : {
+        "type" : "expression",
+        "value" : {
+          "op" : "and",
+          "left" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "not",
+              "left" : null,
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "d2b",
+                  "left" : null,
+                  "right" : {
+                    "type" : "field",
+                    "value" : ["MIH", "$valid$"]
+                  }
+                }
+              }
+            }
+          },
+          "right" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "not",
+              "left" : null,
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "d2b",
+                  "left" : null,
+                  "right" : {
+                    "type" : "field",
+                    "value" : ["SFH", "$valid$"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name" : "cksum_2",
+      "id" : 3,
+      "source_info" : {
+        "filename" : "./ecmp.p4",
+        "line" : 674,
+        "column" : 2,
+        "source_fragment" : "update_checksum_with_payload( ..."
+      },
+      "target" : ["udp", "checksum"],
+      "type" : "generic",
+      "calculation" : "calc_9",
       "verify" : false,
       "update" : true,
       "if_cond" : {
@@ -15752,17 +16045,17 @@
       }
     },
     {
-      "name" : "cksum_1",
-      "id" : 2,
+      "name" : "cksum_3",
+      "id" : 4,
       "source_info" : {
         "filename" : "./ecmp.p4",
-        "line" : 655,
+        "line" : 688,
         "column" : 2,
         "source_fragment" : "update_checksum_with_payload( ..."
       },
       "target" : ["udp", "checksum"],
       "type" : "generic",
-      "calculation" : "calc_8",
+      "calculation" : "calc_10",
       "verify" : false,
       "update" : true,
       "if_cond" : {

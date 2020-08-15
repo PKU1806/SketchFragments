@@ -107,6 +107,7 @@ class RoutingController(object):
     def route(self):
 
         switch_ecmp_groups = {sw_name:{} for sw_name in self.topo.get_p4switches().keys()}
+        self.topo.network_graph.remove_node("sw-cpu")
 
         for sw_name, controllers in self.controllers.items():
             for sw_dst in self.topo.get_p4switches():

@@ -60,9 +60,37 @@ class GenFault(object):
             self.controllers[args.sw_name].table_clear("ipv4_lpm")
             print args.sw_name,"has been shut down"
 
+
+    def remove_cpu(self):
+        # log=open("./router.log","w")
+        # log.write(str(self.topo))
+        
+        print (1)
+        print (self.topo.get_shortest_paths_between_nodes("s5","h2"))
+        # print(self.topo["sw-cpu"])
+        # print(self.topo.network_graph["sw-cpu"])
+        
+        self.topo.network_graph.remove_node("sw-cpu")
+        # self.topo.save("../p4src_interval/topology.db")
+        # self.topo.load("../p4src_interval/topology.db")
+        # del self.topo
+        #self.topo=Topology(db="../p4src_interval/topology.db")
+        print ("\n\n\n\n\n")
+
+        print (2)
+        print (self.topo.get_shortest_paths_between_nodes("h1","h8"))
+
+        # print(self.topo["sw-cpu"])
+        # print(self.topo.network_graph["sw-cpu"])
+
+        # log=open("./router1.log","w")
+        # log.write(str(self.topo))
+        
+
     def reroute(self):
         #log=open("./router.log","w")
         #log.write(str(self.topo))
+        self.topo.network_graph.remove_node("sw-cpu")
         switch_ecmp_groups = {sw_name:{} for sw_name in self.topo.get_p4switches().keys()}
         for sw_name, controllers in self.controllers.items():
             controllers.table_clear("ecmp_group_to_nhop")
@@ -77,7 +105,7 @@ class GenFault(object):
 
                         #add rule
                         print "table_add at {}:".format(sw_name)
-                        #log.write("[1] table_add ipv4_lpm set_nhop at {} to host {} using port {}\n".format(sw_name,host,sw_port))
+                        # log.write("[1] table_add ipv4_lpm set_nhop at {} to host {} using port {}\n".format(sw_name,host,sw_port))
                         self.controllers[sw_name].table_add("ipv4_lpm", "set_nhop", [str(host_ip)], [str(host_mac), str(sw_port)])
 
                 #check if there are directly connected hosts
@@ -95,7 +123,7 @@ class GenFault(object):
 
                                 #add rule
                                 print "table_add at {}:".format(sw_name)
-                                #log.write("[2] table_add ipv4_lpm set_nhop at {} to host {} using port {} to nexthop {}\n".format(sw_name,host,sw_port,next_hop))
+                                # log.write("[2] table_add ipv4_lpm set_nhop at {} to host {} using port {} to nexthop {}\n".format(sw_name,host,sw_port,next_hop))
                                 self.controllers[sw_name].table_add("ipv4_lpm", "set_nhop", [str(host_ip)],
                                                                     [str(dst_sw_mac), str(sw_port)])
 
@@ -111,7 +139,7 @@ class GenFault(object):
                                 if switch_ecmp_groups[sw_name].get(tuple(dst_macs_ports), None):
                                     ecmp_group_id = switch_ecmp_groups[sw_name].get(tuple(dst_macs_ports), None)
                                     print "table_add at {}:".format(sw_name)
-                                    #log.write("[3] table_add ipv4_lpm ecmp_group at {} to switch {} to paths{}\n".format(sw_name,sw_dst,paths))
+                                    # log.write("[3] table_add ipv4_lpm ecmp_group at {} to switch {} to paths{}\n".format(sw_name,sw_dst,paths))
                                     self.controllers[sw_name].table_add("ipv4_lpm", "ecmp_group", [str(host_ip)],
                                                                         [str(ecmp_group_id), str(len(dst_macs_ports))])
 
@@ -124,14 +152,14 @@ class GenFault(object):
                                     for i, (mac, port) in enumerate(dst_macs_ports):
                                         print "table_add at {}:".format(sw_name)
                                         #log.write("[4] table_add ipv4_lpm ecmp_group at {} to switch {} to paths{}\n".format(sw_name,sw_dst,paths))
-                                        #log.write("[4] table_add ipv4_lpm ecmp_group at {} to switch {} using port {}\n".format(sw_name,sw_dst,port))
+                                        # log.write("[4] table_add ipv4_lpm ecmp_group at {} to switch {} using port {}\n".format(sw_name,sw_dst,port))
                                         self.controllers[sw_name].table_add("ecmp_group_to_nhop", "set_nhop",
                                                                             [str(new_ecmp_group_id), str(i)],
                                                                             [str(mac), str(port)])
 
                                     #add forwarding rule
                                     print "table_add at {}:".format(sw_name)
-                                    #log.write("[5] table_add ipv4_lpm ecmp_group at {} to switch {} to paths{}\n".format(sw_name,sw_dst,paths))
+                                    # log.write("[5] table_add ipv4_lpm ecmp_group at {} to switch {} to paths{}\n".format(sw_name,sw_dst,paths))
 
                                     self.controllers[sw_name].table_add("ipv4_lpm", "ecmp_group", [str(host_ip)],
                                                                         [str(new_ecmp_group_id), str(len(dst_macs_ports))])
@@ -141,7 +169,7 @@ class GenFault(object):
 
 if __name__ == "__main__":
     parser=argparse.ArgumentParser()
-    parser.add_argument("type",help="the type wanted for the net",choices=["loop","blackhole","reset"],default="reset")
+    parser.add_argument("type",help="the type wanted for the net",choices=["loop","blackhole","reset","test"],default="reset")
     parser.add_argument("p",help="the program to be run",choices=["f","i"])
 
     #group = parser.add_mutually_exclusive_group()
@@ -155,5 +183,9 @@ if __name__ == "__main__":
         fault.loop()
     elif args.type=="blackhole":
         fault.blackhole(args)
-    else:
+    elif args.type=="reset":
         fault.reroute()
+    else:
+        print "test start"
+        fault.remove_cpu()
+        print "test end"
