@@ -248,33 +248,33 @@ control MyEgress(inout headers hdr,
             swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
             
             update_timestamp();
-            
-            if (hdr.MIH.isValid()) {
-                if(hdr.udp.isValid()){
-                    hdr.udp.checksum = 0;
-                    hdr.flag.flag=hdr.flag.flag| 0b100;
+            if(hdr.udp.isValid()||hdr.tcp.isValid()){
+                if (hdr.MIH.isValid()) {
+                    if(hdr.udp.isValid()){
+                        hdr.udp.checksum = 0;
+                        hdr.flag.flag=hdr.flag.flag| 0b100;
+                    }
+                    else if(hdr.tcp.isValid()) {
+                        hdr.tcp.MIH_fg=1;
+                    }
+                    update_MIH_timestamp();
                 }
-                else if(hdr.tcp.isValid()) {
-                    hdr.tcp.MIH_fg=1;
+                else{
+                    hdr.MIH.setValid();
+                    if(hdr.udp.isValid()){
+                        hdr.udp.checksum = 0;
+                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (5);
+                        hdr.udp.length = hdr.udp.length + (5);
+                        hdr.flag.flag=hdr.flag.flag| 0b100;
+                    
+                    }
+                    else if(hdr.tcp.isValid()) {
+                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (4);
+                        hdr.tcp.MIH_fg=1;
+                    }
+                    update_MIH_timestamp();
                 }
-                update_MIH_timestamp();
-            }
-            else{
-                hdr.MIH.setValid();
-               if(hdr.udp.isValid()){
-                    hdr.udp.checksum = 0;
-                    hdr.ipv4.totalLen = hdr.ipv4.totalLen + (5);
-                    hdr.udp.length = hdr.udp.length + (5);
-                    hdr.flag.flag=hdr.flag.flag| 0b100;
-                
-                }
-                else if(hdr.tcp.isValid()) {
-                    hdr.ipv4.totalLen = hdr.ipv4.totalLen + (4);
-                    hdr.tcp.MIH_fg=1;
-                }
-                update_MIH_timestamp();
-            }
-
+            }   
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
             
             previous_ingress_timestamp.read(meta.previous_ingress_global_timestamp,(bit<32>)0);

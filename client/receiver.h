@@ -61,15 +61,14 @@ struct Receiver : Host {
 			}
 
 			betoh_header(com_header);
-			if (com_header.mih.exists_fg != 0) {
+			if (com_header.flag_header.exists_fg != 0) {
 				aggregator->receive_header(com_header);
 			}
 		}
 	}
 
 	void betoh_header(COM_Header &com_header) {
-		com_header.mih.switch_id = be16toh(com_header.mih.switch_id);
-		com_header.mih.tim_epoch = be64toh(com_header.mih.tim_epoch);
+		
 		com_header.sfh.switch_id = be16toh(com_header.sfh.switch_id);
 		com_header.sfh.fgment_id = be32toh(com_header.sfh.fgment_id);
 

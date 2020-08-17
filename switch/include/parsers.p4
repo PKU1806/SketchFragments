@@ -24,7 +24,7 @@ parser MyParser(packet_in packet,
 		transition select(hdr.ipv4.protocol) {
 			TYPE_TCP : parse_tcp;
 			TYPE_UDP : parse_udp;
-            TYPE_ICMP: accept;
+          TYPE_ICMP: accept;
 			default : accept;
 		}
     }

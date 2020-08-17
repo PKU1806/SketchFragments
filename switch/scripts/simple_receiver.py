@@ -9,7 +9,7 @@ class SFH(Packet):
     name = 'SFH'
     fields_desc = [\
             BitField('sfh_switch_id',0,16),\
-            BitField('sfh_sketch_fg',0,8),\
+            #BitField('sfh_sketch_fg',0,8),\
             BitField('sfh_fgment_id',0,32),\
             BitField('sfh_delay0',0,32),\
             BitField('sfh_delay1',0,32),\
@@ -27,9 +27,12 @@ class MIH(Packet):
     #bitfiled(<name>,<default>,<length>)
     fields_desc=[\
             BitField("mih_switch_id",0,16),\
-            BitField("mih_timestamp",0,48),\
-            BitField("mih_padding",0,16),\
-            BitField("sfh_exists_fg",0,8)]
+            BitField("mih_timestamp",0,48)]
+
+class FLAG(Packet):
+    name="flag"
+    fields_desc=[\
+            BitField("flag",0,8)]
 
 def get_if():
     iface=None
@@ -59,7 +62,8 @@ def handle_pkt(pkt):
     udp=pkt.getlayer(UDP)
     icmp=pkt.getlayer(ICMP)
     if udp:
-        mih=MIH(str(udp.payload))
+        flag=FLAG(str(udp.payload))
+        
     
     print "###[ Ethernet ]###"
     print "  src: {}".format(ether.src)
@@ -70,19 +74,23 @@ def handle_pkt(pkt):
     if icmp:
         print "ICMP packet"
     if udp:
-        print "###[ TCP/UDP ]###"
+        print "###[ UDP ]###"
         print "  sport: {}".format(udp.sport)
         print "  dport: {}".format(udp.dport)
     if udp:
-        print "###[ MIH ]###"
-        print "  mih_switch_id: {}".format(mih.mih_switch_id)
-        print "  mih_timestamp: {}".format(mih.mih_timestamp)
-        print "  sfh_exists_fg: {}".format(mih.sfh_exists_fg)
-        if mih.sfh_exists_fg== 1 :
-            sfh=SFH(str(mih.payload))
+        print "###[ FLAG ]###"
+        print " flag: {}".format(flag.flag)
+        if flag.flag&0b0100==0b0100:
+            mih=MIH(str(flag.payload))
+            print "###[ MIH ]###"
+            print "  mih_switch_id: {}".format(mih.mih_switch_id)
+            print "  mih_timestamp: {}".format(mih.mih_timestamp)
+            msg = mih.payload
+        elif flag.flag&0b010==0b010: 
+            sfh=SFH(str(flag.payload))
             print "###[ SFH ]###"
             print "  sfh_switch_id: {}".format(sfh.sfh_switch_id)
-            print "  sfh_sketch_fg: {}".format(sfh.sfh_sketch_fg)
+            #print "  sfh_sketch_fg: {}".format(sfh.sfh_sketch_fg)
             print "  sfh_fgment_id: {}".format(sfh.sfh_fgment_id)
             print "  sfh_delay0: {}".format(sfh.sfh_delay0)
             print "  sfh_delay1: {}".format(sfh.sfh_delay1)
@@ -96,7 +104,7 @@ def handle_pkt(pkt):
             print "  sfh_delay9: {}".format(sfh.sfh_delay9)
             msg = sfh.payload
         else:
-            msg = mih.payload
+            msg="none"
         print "###[ MESSAGE ]###"
         print "  msg: {}".format(str(msg))
     print

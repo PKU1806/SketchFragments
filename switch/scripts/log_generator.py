@@ -75,7 +75,7 @@ class packetReceicer(threading.Thread):
 
         self.gen_per_packet_log(cpu)
         self.collect_log(cpu)
-        if(self.counter%10==0):
+        if(self.counter%100==0):
             self.gen_log()
 
     def gen_log(self):

@@ -65,7 +65,7 @@ header udp_t {
 
 // if using udp protocol ,we will use this one to judge whether exists MIH and SFH
 header FLAG_t{
-    bit<8> flag; //0x100 for MIH; 0x010 for SFH; 0x001 for sfh_sketch_number
+    bit<8> flag; //0b100 for MIH; 0b010 for SFH; 0b001 for sfh_sketch_number
 }
 
 //part one of the bringing data
