@@ -141,27 +141,10 @@ control MyIngress(inout headers hdr,
     apply
     {   
         if (hdr.ipv4.isValid()&&hdr.ipv4.ttl > 1) {
-            if (hdr.MIH.isValid()) {
-                switch_id.read(meta.switch_id, 0);
-                sketch_fg.read(meta.sketch_fg,0);
-                swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
-
-                /******** log code starts here*******/
-                //send_to_control_plane();
-                /******** log code ends here*******/
-
-                if(hdr.udp.isValid()){
-                    hdr.udp.checksum = 0;
-                    hdr.ipv4.totalLen = hdr.ipv4.totalLen + (5);
-                    hdr.udp.length = hdr.udp.length + (5);
-                    hdr.flag.flag=hdr.flag.flag| 0b100;
-                
-                }
-                else if(hdr.tcp.isValid()) {
-                    hdr.ipv4.totalLen = hdr.ipv4.totalLen + (4);
-                    hdr.tcp.MIH_fg=1;
-                }
-            }
+            /******** log code starts here*******/
+            //send_to_control_plane();
+            /******** log code ends here*******/
+            
             
             switch (ipv4_lpm.apply().action_run){
                 ecmp_group:{
@@ -260,9 +243,35 @@ control MyEgress(inout headers hdr,
     apply
     {
         if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0&&hdr.ipv4.ttl > 1){
+            switch_id.read(meta.switch_id, 0);
+            sketch_fg.read(meta.sketch_fg,0);
+            swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
             
             update_timestamp();
-            if(hdr.MIH.isValid()){
+            
+            if (hdr.MIH.isValid()) {
+                if(hdr.udp.isValid()){
+                    hdr.udp.checksum = 0;
+                    hdr.flag.flag=hdr.flag.flag| 0b100;
+                }
+                else if(hdr.tcp.isValid()) {
+                    hdr.tcp.MIH_fg=1;
+                }
+                update_MIH_timestamp();
+            }
+            else{
+                hdr.MIH.setValid();
+               if(hdr.udp.isValid()){
+                    hdr.udp.checksum = 0;
+                    hdr.ipv4.totalLen = hdr.ipv4.totalLen + (5);
+                    hdr.udp.length = hdr.udp.length + (5);
+                    hdr.flag.flag=hdr.flag.flag| 0b100;
+                
+                }
+                else if(hdr.tcp.isValid()) {
+                    hdr.ipv4.totalLen = hdr.ipv4.totalLen + (4);
+                    hdr.tcp.MIH_fg=1;
+                }
                 update_MIH_timestamp();
             }
 

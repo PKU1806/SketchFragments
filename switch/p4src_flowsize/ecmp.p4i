@@ -1074,7 +1074,6 @@ control MyIngress(inout headers hdr,
                         if (meta.SFH_index < 3 * 64) {
                             if(hdr.udp.isValid()){
                                 hdr.udp.checksum = 0;
-
                                 hdr.ipv4.totalLen = hdr.ipv4.totalLen + (47);
                                 hdr.udp.length = hdr.udp.length + (47);
                                 hdr.flag.flag=hdr.flag.flag| 0b010;
@@ -1083,11 +1082,7 @@ control MyIngress(inout headers hdr,
 
                             }
                             else if(hdr.tcp.isValid()) {
-                                hdr.ipv4.totalLen = hdr.ipv4.totalLen + (48);
-                                hdr.tcp.dataOffset=hdr.tcp.dataOffset+(bit<4>)(12);
-                                //dataOffset: increase 1 then length increase 4bytes,we only increased 47 bytes
-                                //1 byte wasted
-
+                                hdr.ipv4.totalLen = hdr.ipv4.totalLen + (46);
                                 hdr.tcp.SFH_fg = 1;
                                 hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
                             }
@@ -1121,7 +1116,7 @@ control MyIngress(inout headers hdr,
 ****************  E G R E S S   P R O C E S S I N G   *******************
 
 *************************************************************************/
-# 450 "./ecmp.p4"
+# 445 "./ecmp.p4"
 control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata)
@@ -1296,7 +1291,7 @@ control MyEgress(inout headers hdr,
 *************   C H E C K S U M    C O M P U T A T I O N   **************
 
 *************************************************************************/
-# 623 "./ecmp.p4"
+# 618 "./ecmp.p4"
 control MyComputeChecksum(inout headers hdr, inout metadata meta)
 {
     apply
@@ -1384,7 +1379,7 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta)
 ***********************  S W I T C H  *******************************
 
 *************************************************************************/
-# 709 "./ecmp.p4"
+# 704 "./ecmp.p4"
 //switch architecture
 V1Switch(
     MyParser(),

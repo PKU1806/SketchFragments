@@ -3,8 +3,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <thread>
-#include <chrono>
+#include <string>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -14,13 +13,18 @@
 #include "header.h"
 #include "sender.h"
 
+int attachToNS(char *path) {
+	int nsid = open(path, O_RDONLY);
+	return setns(nsid, 0);
+}
+
 int main(int argc, char **argv) {
-	if (argc != 4) {
+	if (argc != 5) {
 		perror("args error.");
 		exit(1);
 	}
 
-	Sender sender(argv[1], atoi(argv[2]));
+	Simulator::Sender sender(std::string(argv[1]), atoi(argv[2]), argv[4]);
 
 	sender.send(atoi(argv[3]));
 

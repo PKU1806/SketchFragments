@@ -16,12 +16,16 @@
 #include "receiver.h"
 
 int main(int argc, char **argv) {
-	if (argc != 3) {
+	if (argc != 4) {
 		perror("args error.");
 		exit(1);
 	}
 
-	Receiver::Receiver receiver(atoi(argv[1]));
+	Simulator::Aggregator agg(Simulator::sw_num, Simulator::ar_num,
+		   	Simulator::bu_num);
+
+	Simulator::Receiver receiver(atoi(argv[1]), &agg, argv[3]);
+
 	receiver.receive(atoi(argv[2]));
 
 	return 0;

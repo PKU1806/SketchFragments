@@ -4,7 +4,7 @@ from p4utils.utils.topology import Topology
 from p4utils.utils.sswitch_API import SimpleSwitchAPI
 from scapy.all import *
 import sys
-
+import threading
 import argparse
 
 
@@ -22,9 +22,10 @@ class CPU(Packet):
             BitField('flags',0,8)]
 
 
-class packetReceicer(object):
+class packetReceicer(threading.Thread):
 
     def __init__(self, sw_name,program):
+        threading.Thread.__init__(self)
         if program=="f":
             self.topo = Topology(db="../p4src_flowsize/topology.db")  #set the topology
         elif program=="i":
@@ -34,6 +35,7 @@ class packetReceicer(object):
         self.cpu_port =  self.topo.get_cpu_port_index(self.sw_name)
         self.controller = SimpleSwitchAPI(self.thrift_port)
         self.flow={}
+        self.flag=True
         self.init()
         
 
@@ -53,22 +55,23 @@ class packetReceicer(object):
 
     def recv_msg_cpu(self, pkt):
         ## console output starts
-        print
-        print("received packet number:"+str(self.counter))
+        #print
+        #print("["+self.sw_name+"] received packet number:"+str(self.counter))
         self.counter+=1
         cpu=CPU(str(pkt))
-        ls(cpu)
+        #ls(cpu)
 
         ## console output ends
         type=(cpu.flags>>2);
-        logs=open("../switch_log/"+self.sw_name+".log","w")
+        if self.flag==True:
+            logs=open("../switch_log/"+self.sw_name+".log","w")
+            self.flag=False
+            if type==0:
+                logs.write("flowsize information collecting\n")
+            else:
+                logs.write("interval information collecting\n")
             
-        if type==0:
-            logs.write("flowsize information collecting\n")
-        else:
-            logs.write("interval information collecting\n")
-        
-        logs.close()
+            logs.close()
 
         self.gen_per_packet_log(cpu)
         self.collect_log(cpu)
@@ -165,8 +168,13 @@ class packetReceicer(object):
 
     def run_cpu_port_loop(self):
         cpu_port_intf = str(self.topo.get_cpu_port_intf(self.sw_name).replace("eth0", "eth1"))
-        # the cpu has two ports   could use two thread to sniff
+        #the cpu has two ports   could use two thread to sniff
+        print(cpu_port_intf)
+        print
         print(sniff(iface=cpu_port_intf, prn=self.recv_msg_cpu))
+    
+    def run(self):
+        self.run_cpu_port_loop()
 
 
 if __name__ == "__main__":
@@ -176,8 +184,43 @@ if __name__ == "__main__":
 
     parser=argparse.ArgumentParser()
     
-    parser.add_argument("switch",help="this switch's name")
+    parser.add_argument("-s","--switch",help="this switch's name")
     parser.add_argument("p",help="the program to be run",choices=["f","i"])
     args=parser.parse_args()
-    sw_name = args.switch
-    controller = packetReceicer(sw_name,args.p).run_cpu_port_loop()
+    
+    if args.switch==None:
+        controller1= packetReceicer("s1",args.p)
+        controller2= packetReceicer("s2",args.p)
+        controller3= packetReceicer("s3",args.p)
+        controller4= packetReceicer("s4",args.p)
+        controller5= packetReceicer("s5",args.p)
+        controller6= packetReceicer("s6",args.p)
+        controller7= packetReceicer("s7",args.p)
+        controller8= packetReceicer("s8",args.p)
+        controller9= packetReceicer("s9",args.p)
+        controller10= packetReceicer("s10",args.p)
+
+        controller1.start()
+        controller2.start()
+        controller3.start()
+        controller4.start()
+        controller5.start()
+        controller6.start()
+        controller7.start()
+        controller8.start()
+        controller9.start()
+        controller10.start()
+        
+        controller1.join()
+        controller2.join()
+        controller3.join()
+        controller4.join()
+        controller5.join()
+        controller6.join()
+        controller7.join()
+        controller8.join()
+        controller9.join()
+        controller10.join()
+    else:
+        sw_name = args.switch
+        controller1= packetReceicer(sw_name,args.p).run_cpu_port_loop()

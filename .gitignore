@@ -4,7 +4,6 @@
 /etc/correctness/*.out
 /etc/correctness/*.csv
 /etc/correctness/*.xlsx
-/client
 
 /switch/switch_log/*
 /switch/router.log

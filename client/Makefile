@@ -1,11 +1,14 @@
-all : sender receiver
+all : sender receiver traffic
 
 
-sender : sender.cpp sender.h
-	g++ sender.cpp -o sender -O2 --std=c++11
+traffic : traffic.cpp sender receiver
+	g++ traffic.cpp -o traffic -O2 --std=c++11 -lpthread -g
 
-receiver : receiver.cpp receiver.h
-	g++ receiver.cpp -o receiver -O2 --std=c++11
+sender : sender.cpp sender.h host.h
+	g++ sender.cpp -o sender -O2 --std=c++11 -g
+
+receiver : receiver.cpp receiver.h aggregator.h host.h
+	g++ receiver.cpp -o receiver -O2 --std=c++11 -g
 
 clean :
 	rm sender receiver
