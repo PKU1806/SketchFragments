@@ -144,7 +144,7 @@ void traffic_generator(int host_num, int conn_num, int done_num) {
 	int pair_index = 0;
 	int current_conn_num = 0;
 
-    vector<int> done_index_array;
+        vector<int> done_index_array;
 	int done_count = 0;
 	while (done_count != done_num){
 		int temp = rand() % host_num;
@@ -198,7 +198,7 @@ int main(int argc, char **argv) {
 
 	int host_num = config_loader();
 	int conn_num = atoi(argv[1]); //流的数量
-    int done_num = atoi(argv[2]); 
+        int done_num = atoi(argv[2]); 
 	int count = 0;
 
 	while (count < conn_num)
