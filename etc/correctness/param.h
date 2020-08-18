@@ -25,7 +25,7 @@ int Buck_Num_PerRow = 10000;
 #endif
 
 #define small
-#define lab
+//#define lab
 
 
 #ifdef znq
