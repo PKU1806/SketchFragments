@@ -36,7 +36,7 @@ int main(){
     ifstream fin(datapath, std::ios::binary);
     timestamp_t k1;
     flow_t k2_128;
-    BOBHash32 *delay_hash; delay_hash = new BOBHash32(ABS(rand()%10));
+    BOBHash32 *delay_hash; delay_hash = new BOBHash32(3);
 
     rep2(i, 0, N){
         if(i %(N/10) == 0) cout << "Loading... "<< i/(N/100) << '%' << endl;
