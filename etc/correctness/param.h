@@ -15,16 +15,23 @@
 #define MIN(a,b) ((a)<(b)?(a):(b))
 #define ABS(a) ((a)>0?(a):(-(a)))
 
-#define Lev_Num 10
-#define Buck_Num_PerRow 500
+#define Lev_Num 8
 #define Row_Num 3
 
-#define znq
+#ifndef ChangeBuckNum
+#define Buck_Num_PerRow 10000
+#else
+int Buck_Num_PerRow = 10000;
+#endif
+
 #define small
+#define lab
+
 
 #ifdef znq
 #define datapath "/mnt/e/Research/2020SketchFragments/130000.dat"
-#else
+#endif
+#ifdef lab
 #define datapath "/usr/share/dataset/CAIDA2018/dataset/130000.dat"
 #endif
 
@@ -33,6 +40,6 @@ typedef double_t timestamp_t;
 typedef map<__uint128_t, vector<unsigned> > gtmap;
 __uint128_t mistake = 0;
 //unsigned delayLevThres[Lev_Num] = {3, 10, 30, 70, 180, 400, 1000, 2000, 5000, 15000};
-unsigned delayLevThres[Lev_Num] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
-unsigned Zeros[Lev_Num] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+unsigned delayLevThres[Lev_Num] = {10, 20, 30, 40, 50, 60, 70, 80};
+unsigned Zeros[Lev_Num] = {0, 0, 0, 0, 0, 0, 0, 0};
 #endif
