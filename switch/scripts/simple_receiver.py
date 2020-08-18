@@ -77,6 +77,7 @@ def handle_pkt(pkt):
         print "###[ UDP ]###"
         print "  sport: {}".format(udp.sport)
         print "  dport: {}".format(udp.dport)
+        print "  length: {}".format(udp.len)
     if udp:
         print "###[ FLAG ]###"
         print " flag: {}".format(flag.flag)
@@ -104,9 +105,12 @@ def handle_pkt(pkt):
             print "  sfh_delay9: {}".format(sfh.sfh_delay9)
             msg = sfh.payload
         else:
-            msg="none"
+            msg=flag.payload
         print "###[ MESSAGE ]###"
-        print "  msg: {}".format(str(msg))
+        #
+        # print ""
+        print "msg length: {}".format(len(msg))
+        #ls(udp)
     print
 
 def main():
