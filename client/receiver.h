@@ -61,7 +61,7 @@ struct Receiver : Host {
 			}
 
 			betoh_header(com_header);
-			if (com_header.flag_header.exists_fg != 0) {
+			if (com_header.flag_header.exists_fg == 2 || com_header.flag_header.exists_fg == 3) {
 				aggregator->receive_header(com_header);
 			}
 		}

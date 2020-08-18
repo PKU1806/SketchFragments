@@ -157,7 +157,7 @@ struct Aggregator {
 		//printf("mih.switch_id : %u\n" , com_header.mih.switch_id);
 		//printf("mih.tim_epoch : %lu\n", com_header.mih.tim_epoch);
 		printf("sfh.switch_id : %u\n" , com_header.sfh.switch_id);
-		printf("sfh.sketch_fg : %u\n" , com_header.sfh.sketch_fg);
+		printf("sfh.sketch_fg : %u\n" , com_header.flag_header.exists_fg & 0x1);
 		printf("sfh.fgment_id : %u\n" , com_header.sfh.fgment_id);
 
 		printf("sketch fragment :\n");
@@ -170,7 +170,7 @@ struct Aggregator {
 
 	void receive_header(COM_Header &com_header) {
 		int switch_id = com_header.sfh.switch_id;
-		int sketch_fg = com_header.flag_header.exists_fg&0x1;
+		int sketch_fg = com_header.flag_header.exists_fg & 0x1;
 		int fgment_id = com_header.sfh.fgment_id;
 
 		sketch[switch_id]->receive_fgment(sketch_fg, fgment_id, com_header.sfh);

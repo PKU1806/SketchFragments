@@ -93,8 +93,7 @@ void Connector_pair(std::thread **receiver, std::thread **sender, string sname, 
 		
 		receiver[current_conn_num] = new std::thread(Connector_R, rname, rport, -1, agg);
 
-		//int sendp = flow_size_generator();
-		int sendp = 20;
+		int sendp = flow_size_generator();
 		int iterv = flow_interval_generator(lambda);
 		sender[current_conn_num] = new std::thread(Connector_S, sname, rname, rport, sendp);
 
@@ -145,7 +144,7 @@ void traffic_generator(int host_num, int conn_num) {
 
 	int pair_index = 0;
 	int current_conn_num = 0;
-	/*
+
 	for (int i = 0; i < host_num; i++)
 	{
 		for (int j = 0; j != i && j < host_num; j++)
@@ -157,11 +156,6 @@ void traffic_generator(int host_num, int conn_num) {
 		}
 		
 	}
-	*/
-	string sname = hname[0];
-	string rname = hname[1];
-	pair[pair_index] = new thread(Connector_pair, receiver, sender, sname, rname, &aggregator, std::ref(current_conn_num), conn_num);
-
 	
 	for (int i = 0; i < conn_num; i++)
 	{
@@ -196,7 +190,6 @@ int main(int argc, char **argv) {
 		{
 			udp_port_array.push_back(udp_port);
 			count++;
-		
 		}
 		
 	}

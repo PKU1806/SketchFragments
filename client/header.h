@@ -21,7 +21,7 @@ struct MIH_Header {
 
 struct SFH_Header {
     uint16_t switch_id;
-    uint8_t  sketch_fg;
+    //uint8_t  sketch_fg;
     uint32_t fgment_id;
     uint32_t delay[10];
 };
