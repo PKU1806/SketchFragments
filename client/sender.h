@@ -10,7 +10,7 @@ struct Sender : Host {
 	std::string recv_ip;
 
 	sockaddr_in addr_recv;
-	MIH_Header mih_header;
+	SEND_Header send_header;
 
 	int recv_port, sock_fd, addr_len, header_len;
 
@@ -29,21 +29,21 @@ struct Sender : Host {
 		// printf("ip: %s, port: %d\n", recv_ip.c_str(), recv_port);
 
 		addr_len = sizeof(addr_recv);
-		header_len = sizeof(mih_header);
+		header_len = sizeof(send_header);
 
 		memset((char *)&addr_recv, 0x00, addr_len);
-		memset((char *)&mih_header, 0x00, header_len);
+		memset((char *)&send_header.load_header, 0xFF, sizeof(send_header.load_header));
 
 		addr_recv.sin_family = AF_INET;
 		addr_recv.sin_addr.s_addr = inet_addr(recv_ip.c_str());
 		addr_recv.sin_port = htons(recv_port);
 
-		mih_header.exists_fg = 0;
+		send_header.flag_header.exists_fg = 0; 
 	}
 
 	void send(int maxp) {
 		for (int sendp = 0; sendp < maxp || maxp < 0; sendp++) {
-			int send_num = sendto(sock_fd, (char *)&mih_header, header_len,
+			int send_num = sendto(sock_fd, (char *)&send_header, header_len,
 				   	0, (sockaddr *)&addr_recv, addr_len);
 
 			// printf("send: %d / %d bytes (PKT : %d)\n", send_num, header_len, sendp);
