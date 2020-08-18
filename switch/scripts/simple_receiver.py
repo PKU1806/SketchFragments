@@ -71,6 +71,7 @@ def handle_pkt(pkt):
     print "###[ IP ]###"
     print "  src: {}".format(ip.src)
     print "  dst: {}".format(ip.dst)
+    print "  IP length:{}".format(ip.len)
     if icmp:
         print "ICMP packet"
     if udp:
@@ -78,9 +79,19 @@ def handle_pkt(pkt):
         print "  sport: {}".format(udp.sport)
         print "  dport: {}".format(udp.dport)
         print "  length: {}".format(udp.len)
-    if udp:
+        print "  chksum: {}".format(udp.chksum)
+        print "  udp payload length: {}".format(len(udp.payload))
+        
+        # packet_raw=raw(ip)
+        # print len(packet_raw)
+        # udp_raw=packet_raw[20:]
+        # chksum = in4_chksum(socket.IPPROTO_UDP, pkt[IP], udp_raw)
+        # print "scapy chksum:"+str(chksum)
+    
         print "###[ FLAG ]###"
         print " flag: {}".format(flag.flag)
+        print " flag payload length: {}".format(len(flag.payload))
+        
         if flag.flag&0b0100==0b0100:
             mih=MIH(str(flag.payload))
             print "###[ MIH ]###"
@@ -108,9 +119,10 @@ def handle_pkt(pkt):
             msg=flag.payload
         print "###[ MESSAGE ]###"
         #
-        # print ""
+        print (type(str(msg)))
+        print (msg)
         print "msg length: {}".format(len(msg))
-        #ls(udp)
+
     print
 
 def main():

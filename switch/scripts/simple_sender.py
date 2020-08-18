@@ -77,7 +77,7 @@ def send_packet(interface,args,program):
         pkt=pkt/TCP()
     elif args.type=="udp":
         pkt=pkt/UDP()
-        pkt=pkt/flag()/MIH()/"load0load1load2load3"
+        pkt=pkt/flag()/"load0load1load2load3"
     else:
         pkt=pkt/ICMP()
     while True:

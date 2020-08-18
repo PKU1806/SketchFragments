@@ -263,8 +263,8 @@ control MyEgress(inout headers hdr,
                     hdr.MIH.setValid();
                     if(hdr.udp.isValid()){
                         hdr.udp.checksum = 0;
-                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (5);
-                        hdr.udp.length = hdr.udp.length + (5);
+                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (4);
+                        hdr.udp.length = hdr.udp.length + (4);
                         hdr.flag.flag=hdr.flag.flag| 0b100;
                     
                     }
@@ -350,38 +350,8 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta)
             hdr.ipv4.hdrChecksum,
             HashAlgorithm.csum16);
 
-        update_checksum_with_payload(
-			!hdr.MIH.isValid() && hdr.SFH.isValid(),
-			{hdr.ipv4.srcAddr,
-			 hdr.ipv4.dstAddr,
-			 8w0,
-			 hdr.ipv4.protocol,
-			 hdr.udp.length,
-			 hdr.udp.srcPort,
-			 hdr.udp.dstPort,
-			 hdr.udp.length,
-			 hdr.MIH,
-			 hdr.SFH},
-			hdr.udp.checksum,
-			HashAlgorithm.csum16);
-
-        update_checksum_with_payload(
-			!hdr.MIH.isValid() && !hdr.SFH.isValid(),
-			{hdr.ipv4.srcAddr,
-			 hdr.ipv4.dstAddr,
-			 8w0,
-			 hdr.ipv4.protocol,
-			 hdr.udp.length,
-			 hdr.udp.srcPort,
-			 hdr.udp.dstPort,
-			 hdr.udp.length,
-			 hdr.MIH,
-			 hdr.SFH},
-			hdr.udp.checksum,
-			HashAlgorithm.csum16);
-
 		update_checksum_with_payload(
-			hdr.MIH.isValid() && !hdr.SFH.isValid(),
+			hdr.MIH.isValid(),
 			{hdr.ipv4.srcAddr,
 			 hdr.ipv4.dstAddr,
 			 8w0,
@@ -390,22 +360,9 @@ control MyComputeChecksum(inout headers hdr, inout metadata meta)
 			 hdr.udp.srcPort,
 			 hdr.udp.dstPort,
 			 hdr.udp.length,
-			 hdr.MIH},
-			hdr.udp.checksum,
-			HashAlgorithm.csum16);
-
-		update_checksum_with_payload(
-			hdr.MIH.isValid() && hdr.SFH.isValid(),
-			{hdr.ipv4.srcAddr,
-			 hdr.ipv4.dstAddr,
-			 8w0,
-			 hdr.ipv4.protocol,
-			 hdr.udp.length,
-			 hdr.udp.srcPort,
-			 hdr.udp.dstPort,
-			 hdr.udp.length,
-			 hdr.MIH,
-			 hdr.SFH},
+			 hdr.flag,
+             hdr.MIH
+			 },
 			hdr.udp.checksum,
 			HashAlgorithm.csum16);
     }
