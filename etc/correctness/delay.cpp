@@ -49,6 +49,8 @@ int main(){
         //delay = get_ChiSquare(3,3);
         int delay_lev = get_delay_lev(delay);
         sketch->insert(k2_128, delay);
+        CMsketch->insert(k2_128, delay);
+        CUsketch->insert(k2_128, delay);
         if(flowmap.find(k2_128) == flowmap.end()){
             flowmap.insert(make_pair(k2_128, 1));
         }
