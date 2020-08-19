@@ -158,6 +158,10 @@ void traffic_generator(int host_num, int conn_num) {
 
 	int pair_index = 0;
 	int current_conn_num = 0;
+	
+	ofstream out;
+        out.open("flow.txt", ios::out | ios::trunc);
+        out.close();
 
 	for (int i = 0; i < host_num; i++) {
 		for (int j = 0; j < host_num; j++) {
