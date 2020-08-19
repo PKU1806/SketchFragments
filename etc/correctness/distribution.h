@@ -15,5 +15,5 @@ unsigned get_ChiSquare(int n, int scale){
 
 unsigned get_Union(int a, int b){
     int Range = b - a;
-    return a + (random() % Range);
+    return a + (rand() % Range);
 }

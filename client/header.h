@@ -49,7 +49,6 @@ struct SEND_Header
     LOAD_Header load_header;
 };
 
-
 }
 
 #endif

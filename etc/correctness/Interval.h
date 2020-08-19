@@ -34,12 +34,12 @@ public:
     buck **bucket;
     BOBHash32 *bobhash;
     
-    row(double ts = 0.0){
+    row(double ts = 0.0, unsigned seed){
         bucket = new buck*[Buck_Num_PerRow];
         rep2(i, 0, Buck_Num_PerRow){
             bucket[i] = new buck(ts);
         }
-        bobhash = new BOBHash32(rand()%13);
+        bobhash = new BOBHash32((unsigned)seed);
     }
     ~row(){
         rep2(i, 0, Buck_Num_PerRow) if(bucket[i]) delete bucket[i];
@@ -68,7 +68,7 @@ public:
     interval_Sketch(double ts = 0.0){
         Row = new row*[Row_Num];
         rep2(i, 0, Row_Num){
-            Row[i] = new row(ts);
+            Row[i] = new row(ts,i);
         }
     }
     ~interval_Sketch(){
