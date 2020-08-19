@@ -23,7 +23,7 @@ struct SFH_Header {
     uint16_t switch_id;
     //uint8_t  sketch_fg;
     uint32_t fgment_id;
-    uint32_t delay[10];
+    uint32_t delay[8];
 };
 
 struct FLAG_Header

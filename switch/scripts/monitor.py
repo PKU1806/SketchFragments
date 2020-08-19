@@ -5,6 +5,7 @@ from p4utils.utils.sswitch_API import *
 
 import threading
 import time
+import argparse
 
 BUCKET_NUM = 64
 BIN_BUM = 10
@@ -37,29 +38,44 @@ class Monitor(threading.Thread):
         present_sketch=self.controller.register_read("sketch_fg",0)
         
         if present_sketch == 0 :
-            for index in range(0, BUCKET_NUM * BUN_NUM):
-                # temp=self.controller.register_read("array0",index)
-                # self.controller.register_write("array3",index,temp)
-                # temp=self.controller.register_read("array1",index)
-                # self.controller.register_write("array4",index,temp)
-                # temp=self.controller.register_read("array2",index)
-                # self.controller.register_write("array5",index,temp)
+            if self.program=="f":
+                for index in range(0, BUCKET_NUM * BUN_NUM):
+                    # temp=self.controller.register_read("array0",index)
+                    # self.controller.register_write("array3",index,temp)
+                    # temp=self.controller.register_read("array1",index)
+                    # self.controller.register_write("array4",index,temp)
+                    # temp=self.controller.register_read("array2",index)
+                    # self.controller.register_write("array5",index,temp)
 
-                self.controller.register_write("array3",index,0)
-                self.controller.register_write("array4",index,0)
-                self.controller.register_write("array5",index,0)
+                    self.controller.register_write("array3",index,0)
+                    self.controller.register_write("array4",index,0)
+                    self.controller.register_write("array5",index,0)
+            elif self.program=="i":
+                for index in range(0, BUCKET_NUM):
+                    self.controller.register_write("max_interval_array3",index,0)
+                    self.controller.register_write("max_interval_array4",index,0)
+                    self.controller.register_write("max_interval_array5",index,0)
+
+
         else :
-            for index in range(0, BUCKET_NUM * BIN_BUM):
-                # temp=self.controller.register_read("array3",index)
-                # self.controller.register_write("array0",index,temp)
-                # temp=self.controller.register_read("array4",index)
-                # self.controller.register_write("array1",index,temp)
-                # temp=self.controller.register_read("array5",index)
-                # self.controller.register_write("array2",index,temp)
+            if self.program=="f":
+                for index in range(0, BUCKET_NUM * BIN_BUM):
+                    # temp=self.controller.register_read("array3",index)
+                    # self.controller.register_write("array0",index,temp)
+                    # temp=self.controller.register_read("array4",index)
+                    # self.controller.register_write("array1",index,temp)
+                    # temp=self.controller.register_read("array5",index)
+                    # self.controller.register_write("array2",index,temp)
 
-                self.controller.register_write("array0",index,0)
-                self.controller.register_write("array1",index,0)
-                self.controller.register_write("array2",index,0)
+                    self.controller.register_write("array0",index,0)
+                    self.controller.register_write("array1",index,0)
+                    self.controller.register_write("array2",index,0)
+            elif self.program=="i":
+                for index in range(0, BUCKET_NUM):
+                    self.controller.register_write("max_interval_array0",index,0)
+                    self.controller.register_write("max_interval_array1",index,0)
+                    self.controller.register_write("max_interval_array2",index,0)
+
 
         for index in range(0, BUCKET_NUM * ARRAY_NUM):
             self.controller.register_write("counter0", index, 0);
@@ -144,16 +160,20 @@ class Monitor(threading.Thread):
         self.monitor()
 
 if __name__ == "__main__":
-    monitor_1 = Monitor("s1")
-    monitor_2 = Monitor("s2")
-    monitor_3 = Monitor("s3")
-    monitor_4 = Monitor("s4")
-    monitor_5 = Monitor("s5")
-    monitor_6 = Monitor("s6")
-    monitor_7 = Monitor("s7")
-    monitor_8 = Monitor("s8")
-    monitor_9 = Monitor("s9")
-    monitor_10 = Monitor("s10")
+    parser=argparse.ArgumentParser()
+    parser.add_argument("p",help="the program to be run",choices=["f","i"])
+    args=parser.parse_args()
+
+    monitor_1 = Monitor("s1",args.p)
+    monitor_2 = Monitor("s2",args.p)
+    monitor_3 = Monitor("s3",args.p)
+    monitor_4 = Monitor("s4",args.p)
+    monitor_5 = Monitor("s5",args.p)
+    monitor_6 = Monitor("s6",args.p)
+    monitor_7 = Monitor("s7",args.p)
+    monitor_8 = Monitor("s8",args.p)
+    monitor_9 = Monitor("s9",args.p)
+    monitor_10 = Monitor("s10",args.p)
 
     monitor_1.start()
     monitor_2.start()

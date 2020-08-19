@@ -99,7 +99,7 @@ struct Sketch {
 	void visor_sketch() {
 		for (int i = 0; i < ar_num; i++) {
 			printf("sketch array %d.\n", i);
-			for (int j = 0; j < 10; j++) {
+			for (int j = 0; j < 8; j++) {
 				for (int k = 0; k < bu_num; k++) {
 					printf("|%3u|", sketch[i][k].delay[j]);
 				}
@@ -122,7 +122,7 @@ struct Sketch {
 			
 			for (int j = 0; j < bu_num; j++)
 			{
-				for (int k = 0; k < 10; k++)
+				for (int k = 0; k < 8; k++)
 				{
 					out << sketch[i][j].delay[k] <<'\t';
 				}
@@ -162,9 +162,10 @@ struct Aggregator {
 
 		printf("sketch fragment :\n");
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 8; i++) {
 			printf("sfh.delay_%d : %u\n", i, com_header.sfh.delay[i]);
 		}
+		
 		printf("\n");
 	}
 

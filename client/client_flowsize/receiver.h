@@ -72,7 +72,7 @@ struct Receiver : Host {
 		com_header.sfh.switch_id = be16toh(com_header.sfh.switch_id);
 		com_header.sfh.fgment_id = be32toh(com_header.sfh.fgment_id);
 
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 8; i++) {
 			com_header.sfh.delay[i] = be32toh(com_header.sfh.delay[i]);
 		}
 	}
