@@ -263,13 +263,13 @@ control MyEgress(inout headers hdr,
                     hdr.MIH.setValid();
                     if(hdr.udp.isValid()){
                         hdr.udp.checksum = 0;
-                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (4);
-                        hdr.udp.length = hdr.udp.length + (4);
+                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (8);
+                        hdr.udp.length = hdr.udp.length + (8);
                         hdr.flag.flag=hdr.flag.flag| 0b100;
                     
                     }
                     else if(hdr.tcp.isValid()) {
-                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (4);
+                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (8);
                         hdr.tcp.MIH_fg=1;
                     }
                     update_MIH_timestamp();
