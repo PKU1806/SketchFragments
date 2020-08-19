@@ -39,7 +39,9 @@ class RoutingController(object):
         self.reset_all_registers()
 
         if program == 'f':
-            self.set_table_init()
+            self.set_table_init_for_flowsize()
+        elif program =="i":
+            self.set_table_init_for_interval()
         self.set_crc_custom_hashes()
         #self.create_hashes()
     
@@ -68,7 +70,7 @@ class RoutingController(object):
             for register in controller.get_register_arrays():
                 controller.register_reset(register)
 
-    def set_table_init(self):
+    def set_table_init_for_flowsize(self):
         for controller in self.controllers.values():
             controller.table_add("update_sketch","update_sketch0",[str(0)],[])
             controller.table_add("update_sketch","update_sketch1",[str(1)],[])
@@ -87,7 +89,17 @@ class RoutingController(object):
             controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*0)+"->"+str(BUCKET_NUM*1)],[str(0)],0)
             controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*1)+"->"+str(BUCKET_NUM*2)],[str(1)],1)
             controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*2)+"->"+str(BUCKET_NUM*3)],[str(2)],2)
-            
+        
+    def set_table_init_for_interval(self):
+        for controller in self.controllers.values():
+            controller.table_add("update_interval","update_interval_using_sketch0",[str(0)],[])
+            controller.table_add("update_interval","update_interval_using_sketch1",[str(1)],[])
+            controller.table_add("update_MIH","update_MIH_using_sketch0",[str(1)],[])
+            controller.table_add("update_MIH","update_MIH_using_sketch1",[str(0)],[])
+            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*0)+"->"+str(BUCKET_NUM*1)],[str(0)],0)
+            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*1)+"->"+str(BUCKET_NUM*2)],[str(1)],1)
+            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*2)+"->"+str(BUCKET_NUM*3)],[str(2)],2)
+ 
 
     def set_crc_custom_hashes(self):
         for sw_name in self.controllers.keys():

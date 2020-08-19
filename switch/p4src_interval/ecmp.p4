@@ -13,7 +13,7 @@
 #define BIN_CELL_BIT_WIDTH 32
 #define RANDOM_BOUND 10
 
-
+#define ARRAY_COUNTER(num) register<bit<1> >(BUCKET_NUM*3) counter##num
 //this is for timestamps
 #define COMPUTE_TIMESTAMP_HASH(num)  hash(meta.timestamp_index##num,\
             HashAlgorithm.crc32_custom, \
@@ -26,17 +26,24 @@
             (bit<32>)BUCKET_NUM);       \
 
 
-
-
 //timestamps for the maximum
 register<bit<48>>(BUCKET_NUM) max_interval_array0;
 register<bit<48>>(BUCKET_NUM) max_interval_array1;
 register<bit<48>>(BUCKET_NUM) max_interval_array2;
 
+register<bit<48>>(BUCKET_NUM) max_interval_array3;
+register<bit<48>>(BUCKET_NUM) max_interval_array4;
+register<bit<48>>(BUCKET_NUM) max_interval_array5;
+
 //timestamps of the last incoming packet
 register<bit<48>>(BUCKET_NUM) timestamp_array0;
 register<bit<48>>(BUCKET_NUM) timestamp_array1;
 register<bit<48>>(BUCKET_NUM) timestamp_array2;
+
+//counter
+ARRAY_COUNTER(0);
+ARRAY_COUNTER(1);
+ARRAY_COUNTER(2);
 
 //control plane 
 register<bit<8>>(1) sketch_fg;
@@ -168,9 +175,56 @@ control MyEgress(inout headers hdr,
                  inout metadata meta,
                  inout standard_metadata_t standard_metadata)
 {
-    
+    //get the bringable bucket index 
+	action predispose(){
+		meta.MIH_index = 3 * BUCKET_NUM;
+
+		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+		counter0.read(meta.counter_value0,meta.counter_index0);
+		if (meta.MIH_index >= 3 * BUCKET_NUM && meta.counter_value0 == 0) {
+			meta.MIH_index = meta.counter_index0;
+			meta.counter_value0 = 1;
+		}
+		counter0.write(meta.counter_index0, meta.counter_value0);
+		
+		random(meta.counter_index1, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+		counter1.read(meta.counter_value1, meta.counter_index1);
+		if (meta.MIH_index >= 3 * BUCKET_NUM && meta.counter_value1 == 0) {
+			meta.MIH_index = meta.counter_index1;
+			meta.counter_value1 = 1;
+		}
+		counter1.write(meta.counter_index1, meta.counter_value1);
+		
+		random(meta.counter_index2, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+		counter2.read(meta.counter_value2, meta.counter_index2);
+		if (meta.MIH_index >= 3 * BUCKET_NUM && meta.counter_value2 == 0) {
+			meta.MIH_index = meta.counter_index2;
+			meta.counter_value2 = 1;
+		}
+		counter2.write(meta.counter_index2, meta.counter_value2);
+
+	}
+
+    action _choose_fragment(bit<8> MIH_target_array){
+		meta.MIH_target_bucket = meta.MIH_index - 
+			(bit<32>)meta.MIH_target_array * BUCKET_NUM;
+		meta.MIH_target_array = MIH_target_array + (1 - meta.sketch_fg) * 3;
+	}
+
+    table choose_fragment{
+		key={
+			meta.MIH_index:range;
+		}
+		actions={
+			NoAction;
+			_choose_fragment;
+		}
+		size=256;
+		default_action=NoAction;
+	}
     //update timestamp and ax interval
-    action update_timestamp(){
+
+    action update_interval_using_sketch0(){
         COMPUTE_TIMESTAMP_HASH(0)
         COMPUTE_TIMESTAMP_HASH(1)
         COMPUTE_TIMESTAMP_HASH(2)
@@ -183,24 +237,25 @@ control MyEgress(inout headers hdr,
         max_interval_array1.read(meta.max_interval_value1,meta.timestamp_index1);
         max_interval_array2.read(meta.max_interval_value2,meta.timestamp_index2);
 
-        if(meta.timestamp_value0>meta.timestamp_value1){
+        if(meta.timestamp_value0>meta.timestamp_value1&&meta.timestamp_value1!=0){
             meta.timestamp_value0=meta.timestamp_value1;
         }
-        if(meta.timestamp_value0>meta.timestamp_value2){
+        if(meta.timestamp_value0>meta.timestamp_value2&&meta.timestamp_value2!=0){
             meta.timestamp_value0=meta.timestamp_value2;
         }
-        meta.timestamp_value0=standard_metadata.ingress_global_timestamp-meta.timestamp_value0;
+        if(meta.timestamp_value0!=0){
+            meta.timestamp_value0=standard_metadata.ingress_global_timestamp-meta.timestamp_value0;
 
-        if(meta.max_interval_value0<meta.timestamp_value0){
-            meta.max_interval_value0=meta.timestamp_value0;
+            if(meta.max_interval_value0<meta.timestamp_value0){
+                meta.max_interval_value0=meta.timestamp_value0;
+            }
+            if(meta.max_interval_value1<meta.timestamp_value0){
+                meta.max_interval_value1=meta.timestamp_value0;
+            }
+            if(meta.max_interval_value2<meta.timestamp_value0){
+                meta.max_interval_value2=meta.timestamp_value0;
+            }
         }
-        if(meta.max_interval_value1<meta.timestamp_value0){
-            meta.max_interval_value1=meta.timestamp_value0;
-        }
-        if(meta.max_interval_value2<meta.timestamp_value0){
-            meta.max_interval_value2=meta.timestamp_value0;
-        }
-
         max_interval_array0.write(meta.timestamp_index0,meta.max_interval_value0);
         max_interval_array1.write(meta.timestamp_index1,meta.max_interval_value1);
         max_interval_array2.write(meta.timestamp_index2,meta.max_interval_value2);
@@ -210,26 +265,106 @@ control MyEgress(inout headers hdr,
         timestamp_array2.write(meta.timestamp_index2,standard_metadata.ingress_global_timestamp);
     }
 
-    action update_MIH_timestamp()
+    action update_interval_using_sketch1(){
+        COMPUTE_TIMESTAMP_HASH(0)
+        COMPUTE_TIMESTAMP_HASH(1)
+        COMPUTE_TIMESTAMP_HASH(2)
+        
+        timestamp_array0.read(meta.timestamp_value0,meta.timestamp_index0);
+        timestamp_array1.read(meta.timestamp_value1,meta.timestamp_index1);
+        timestamp_array2.read(meta.timestamp_value2,meta.timestamp_index2);
+
+        max_interval_array3.read(meta.max_interval_value0,meta.timestamp_index0);
+        max_interval_array4.read(meta.max_interval_value1,meta.timestamp_index1);
+        max_interval_array5.read(meta.max_interval_value2,meta.timestamp_index2);
+
+        if(meta.timestamp_value0>meta.timestamp_value1&&meta.timestamp_value1!=0){
+            meta.timestamp_value0=meta.timestamp_value1;
+        }
+        if(meta.timestamp_value0>meta.timestamp_value2&&meta.timestamp_value2!=0){
+            meta.timestamp_value0=meta.timestamp_value2;
+        }
+        if(meta.timestamp_value0!=0){
+            meta.timestamp_value0=standard_metadata.ingress_global_timestamp-meta.timestamp_value0;
+
+            if(meta.max_interval_value0<meta.timestamp_value0){
+                meta.max_interval_value0=meta.timestamp_value0;
+            }
+            if(meta.max_interval_value1<meta.timestamp_value0){
+                meta.max_interval_value1=meta.timestamp_value0;
+            }
+            if(meta.max_interval_value2<meta.timestamp_value0){
+                meta.max_interval_value2=meta.timestamp_value0;
+            }
+        }
+        max_interval_array3.write(meta.timestamp_index0,meta.max_interval_value0);
+        max_interval_array4.write(meta.timestamp_index1,meta.max_interval_value1);
+        max_interval_array5.write(meta.timestamp_index2,meta.max_interval_value2);
+
+        timestamp_array0.write(meta.timestamp_index0,standard_metadata.ingress_global_timestamp);
+        timestamp_array1.write(meta.timestamp_index1,standard_metadata.ingress_global_timestamp);
+        timestamp_array2.write(meta.timestamp_index2,standard_metadata.ingress_global_timestamp);
+    }
+
+    table update_interval{
+        key={
+            meta.sketch_fg:exact;
+        }
+        actions={
+            NoAction;
+            update_interval_using_sketch0;
+            update_interval_using_sketch1;
+        }
+        size=256;
+        default_action=NoAction;
+    }
+
+    action update_MIH_using_sketch0()
     {
         // from sketch
-        max_interval_array0.read(meta.max_interval_value0,meta.timestamp_index0);
-        max_interval_array1.read(meta.max_interval_value1,meta.timestamp_index1);
-        max_interval_array2.read(meta.max_interval_value2,meta.timestamp_index2);
-        if(meta.max_interval_value0>meta.max_interval_value1){
-            meta.max_interval_value0=meta.max_interval_value1;
-        }
-        if(meta.max_interval_value0>meta.max_interval_value2){
-            meta.max_interval_value0=meta.max_interval_value2;
-        }
-
-        if(meta.max_interval_value0>hdr.MIH.mih_timestamp){
-            hdr.MIH.mih_switch_id=meta.switch_id;
+        max_interval_array0.read(meta.max_interval_value0,meta.MIH_target_bucket);
+        max_interval_array1.read(meta.max_interval_value1,meta.MIH_target_bucket);
+        max_interval_array2.read(meta.max_interval_value2,meta.MIH_target_bucket);
+        
+        if(meta.MIH_target_array==0){
             hdr.MIH.mih_timestamp=meta.max_interval_value0;
+        }
+        else if(meta.MIH_target_array==1){
+            hdr.MIH.mih_timestamp=meta.max_interval_value1;
+        }
+        else if(meta.MIH_target_array==2){
+            hdr.MIH.mih_timestamp=meta.max_interval_value2;
         }
     }
 
-    
+    action update_MIH_using_sketch1(){
+        max_interval_array3.read(meta.max_interval_value0,meta.MIH_target_bucket);
+        max_interval_array4.read(meta.max_interval_value1,meta.MIH_target_bucket);
+        max_interval_array5.read(meta.max_interval_value2,meta.MIH_target_bucket);
+        
+        if(meta.MIH_target_array==3){
+            hdr.MIH.mih_timestamp=meta.max_interval_value0;
+        }
+        else if(meta.MIH_target_array==4){
+            hdr.MIH.mih_timestamp=meta.max_interval_value1;
+        }
+        else if(meta.MIH_target_array==5){
+            hdr.MIH.mih_timestamp=meta.max_interval_value2;
+        }
+    }
+
+    table update_MIH{
+        key={
+            meta.sketch_fg:exact;
+        }
+        actions={
+            update_MIH_using_sketch0;
+            update_MIH_using_sketch1;
+            NoAction;
+        }
+        size=256;
+        default_action=NoAction;
+    }
 
     /******** log code starts here*******/
 
@@ -242,37 +377,52 @@ control MyEgress(inout headers hdr,
 
     apply
     {
+        //todo 1: random
+        //todo 2:switch
+        //todo 3:
         if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0&&hdr.ipv4.ttl > 1){
             switch_id.read(meta.switch_id, 0);
             sketch_fg.read(meta.sketch_fg,0);
             swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
             
-            update_timestamp();
+            update_interval.apply();
             if(hdr.udp.isValid()||hdr.tcp.isValid()){
-                if (hdr.MIH.isValid()) {
-                    if(hdr.udp.isValid()){
-                        hdr.udp.checksum = 0;
-                        hdr.flag.flag=hdr.flag.flag| 0b100;
+                if(meta.swap_control==0){
+                    predispose();
+                    if(meta.MIH_index < 3 * BUCKET_NUM){
+                        if (hdr.MIH.isValid()) {
+                            if(hdr.udp.isValid()){
+                                hdr.udp.checksum = 0;
+                                hdr.flag.flag=hdr.flag.flag| 0b1000;
+                                hdr.flag.flag=hdr.flag.flag& 0b1111_1011;
+                                hdr.flag.flag=hdr.flag.flag|((1 - meta.sketch_fg)<<3);
+                            }
+                            else if(hdr.tcp.isValid()) {
+                                hdr.tcp.MIH_fg=1;
+                                //abandoned
+                            }
+                        }
+                        else{
+                            hdr.MIH.setValid();
+                            if(hdr.udp.isValid()){
+                                hdr.udp.checksum = 0;
+                                hdr.ipv4.totalLen = hdr.ipv4.totalLen + (14);
+                                hdr.udp.length = hdr.udp.length + (14);
+                                hdr.flag.flag=hdr.flag.flag| 0b1000;
+                                hdr.flag.flag=hdr.flag.flag& 0b1111_1011;
+                                hdr.flag.flag=hdr.flag.flag|((1 - meta.sketch_fg)<<3);
+                            
+                            }
+                            else if(hdr.tcp.isValid()) {
+                                hdr.ipv4.totalLen = hdr.ipv4.totalLen + (14);
+                                hdr.tcp.MIH_fg=1;
+                                //abandoned
+                            }
+                            
+                        }
+                        choose_fragment.apply();
+                        update_MIH.apply();
                     }
-                    else if(hdr.tcp.isValid()) {
-                        hdr.tcp.MIH_fg=1;
-                    }
-                    update_MIH_timestamp();
-                }
-                else{
-                    hdr.MIH.setValid();
-                    if(hdr.udp.isValid()){
-                        hdr.udp.checksum = 0;
-                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (8);
-                        hdr.udp.length = hdr.udp.length + (8);
-                        hdr.flag.flag=hdr.flag.flag| 0b100;
-                    
-                    }
-                    else if(hdr.tcp.isValid()) {
-                        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (8);
-                        hdr.tcp.MIH_fg=1;
-                    }
-                    update_MIH_timestamp();
                 }
             }   
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;

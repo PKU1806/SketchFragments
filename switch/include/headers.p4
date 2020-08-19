@@ -65,13 +65,15 @@ header udp_t {
 
 // if using udp protocol ,we will use this one to judge whether exists MIH and SFH
 header FLAG_t{
-    bit<8> flag; //0b100 for MIH; 0b010 for SFH; 0b001 for sfh_sketch_number
+    bit<8> flag; //0b1000 for MIH;ob100 for MIH_sketch_number;0b010 for SFH; 0b001 for sfh_sketch_number
 }
 
 //part one of the bringing data
 header MIH_t{
     //max interval header
     bit<16>  mih_switch_id;
+    bit<32>  mih_fgment_id;
+    bit<16>  mih_padding;
     bit<48>  mih_timestamp;
 }
 
@@ -124,7 +126,7 @@ struct metadata {
     bit<32> array_value5;
     
     bit<32> SFH_index;
-
+    bit<32> MIH_index; 
     //for timestamp register
     bit<32> timestamp_index0;
     bit<32> timestamp_index1;
@@ -162,7 +164,9 @@ struct metadata {
     bit<48> interval;
 
     bit<8> SFH_target_array;                        //the sketch selected
-    bit<32> SFH_target_bucket;                      //the bucket selected
+    bit<32> SFH_target_bucket;
+    bit<8> MIH_target_array;                        //the sketch selected
+    bit<32> MIH_target_bucket;                      //the bucket selected
     bit<32> random_number;
     bit<14> ecmp_hash;
     bit<14> ecmp_group_id;

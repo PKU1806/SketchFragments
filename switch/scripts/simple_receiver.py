@@ -27,6 +27,9 @@ class MIH(Packet):
     #bitfiled(<name>,<default>,<length>)
     fields_desc=[\
             BitField("mih_switch_id",0,16),\
+            BitField("mih_fgment_id",0,32),\
+
+            BitField("mih_padding",0,16),\
             BitField("mih_timestamp",0,48)]
 
 class FLAG(Packet):

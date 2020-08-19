@@ -63,7 +63,8 @@ parser MyParser(packet_in packet,
     state parse_flag{
         packet.extract(hdr.flag);
         transition select(hdr.flag.flag){
-           4: parse_MIH;
+           12:parse_MIH;
+           8: parse_MIH;
            3: parse_SFH;
            2: parse_SFH;
            default : accept;

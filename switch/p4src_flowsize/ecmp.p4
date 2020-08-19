@@ -412,6 +412,7 @@ control MyIngress(inout headers hdr,
 								hdr.ipv4.totalLen = hdr.ipv4.totalLen + (46);
 								hdr.tcp.SFH_fg = 1;
 								hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
+								//abandoned
 							}
 
 							hdr.SFH.setValid();
