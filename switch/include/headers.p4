@@ -124,6 +124,7 @@ struct metadata {
     bit<32> array_value5;
     
     bit<32> SFH_index;
+    bit<32> SFH_random;
 
     //for timestamp register
     bit<32> timestamp_index0;
