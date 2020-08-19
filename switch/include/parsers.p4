@@ -8,13 +8,10 @@ parser MyParser(packet_in packet,
                 inout standard_metadata_t standard_metadata) {
 
     state start {
-
         transition parse_ethernet;
-
     }
 
     state parse_ethernet {
-
         packet.extract(hdr.ethernet);
         transition select(hdr.ethernet.etherType){
             TYPE_IPV4: parse_ipv4;
@@ -27,6 +24,7 @@ parser MyParser(packet_in packet,
 		transition select(hdr.ipv4.protocol) {
 			TYPE_TCP : parse_tcp;
 			TYPE_UDP : parse_udp;
+          TYPE_ICMP: accept;
 			default : accept;
 		}
     }
@@ -37,7 +35,19 @@ parser MyParser(packet_in packet,
 		meta.ipv4_srcPort = hdr.tcp.srcPort;
 		meta.ipv4_dstPort = hdr.tcp.dstPort;
 
-        transition accept;
+        transition select(hdr.tcp.MIH_fg){
+            0 : parse_SFH_of_TCP;
+            1 : parse_MIH;
+            default : accept;
+        }
+    }
+
+    state parse_SFH_of_TCP{
+        transition select(hdr.tcp.SFH_fg){
+            0 : accept;
+            1 : parse_SFH;
+            default : accept;
+        }
     }
 
     state parse_udp {
@@ -46,19 +56,26 @@ parser MyParser(packet_in packet,
 		meta.ipv4_srcPort = hdr.udp.srcPort;
 		meta.ipv4_dstPort = hdr.udp.dstPort;
 
-        transition parse_MIH;
+        transition parse_flag;
     }
 
-    state parse_MIH {
-		packet.extract(hdr.MIH);
+    //udp only
+    state parse_flag{
+        packet.extract(hdr.flag);
+        transition select(hdr.flag.flag){
+           4: parse_MIH;
+           3: parse_SFH;
+           2: parse_SFH;
+           default : accept;
+        }
+    }
+
+    state parse_MIH{
+        packet.extract(hdr.MIH);
         
-        transition select(hdr.MIH.sfh_exists_fg) {
-			0 : accept;
-			1 : parse_SFH;
-			default : accept;
-		}
+        transition  accept;
 		
-	}
+    }
 
 	state parse_SFH {
 		packet.extract(hdr.SFH);
@@ -75,17 +92,12 @@ control MyDeparser(packet_out packet, in headers hdr) {
 
         //parsed headers have to be added again into the packet.
         packet.emit(hdr.ethernet);
-
+        packet.emit(hdr.CPU);
         packet.emit(hdr.ipv4);
-
-        //Only emited if valid
-	
         packet.emit(hdr.tcp);
-
         packet.emit(hdr.udp);
-
+        packet.emit(hdr.flag);
         packet.emit(hdr.MIH);
-
         packet.emit(hdr.SFH);
     }
 }

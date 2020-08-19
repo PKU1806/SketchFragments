@@ -5,6 +5,7 @@ import socket, struct, pickle, os
 from scapy.all import Ether, sniff, Packet, BitField
 import time
 import sys
+import argparse
 
 crc32_polinomials = [0x04C11DB7, 0xEDB88320, 0xDB710641, 0x82608EDB, 0x741B8CD7, 0xEB31D82E,
                      0xD663B05, 0xBA0DC66B, 0x32583499, 0x992C1A4C, 0x32583499, 0x992C1A4C]
@@ -15,17 +16,20 @@ TIME_INTERVAL = 1000
 
 class RoutingController(object):
 
-    def __init__(self):
-
-        self.topo = Topology(db="topology.db")  #set the topology
+    def __init__(self,program):
+        if program=="f":
+            self.topo = Topology(db="../p4src_flowsize/topology.db")  #set the topology
+        elif program=="i":
+            self.topo = Topology(db="../p4src_interval/topology.db")  #set the topology
         self.controllers = {}                   #the switches
         self.custom_calcs={}
         self.register_num={}
         self.registers={}
-        self.init()
+        self.init(program)
+
         
 
-    def init(self):
+    def init(self,program):
         self.connect_to_switches()              
         self.reset_states()
         self.set_table_defaults()
@@ -34,7 +38,8 @@ class RoutingController(object):
         self.set_custom_calcs()
         self.reset_all_registers()
 
-        self.set_table_init()
+        if program == 'f':
+            self.set_table_init()
         self.set_crc_custom_hashes()
         #self.create_hashes()
     
@@ -102,6 +107,7 @@ class RoutingController(object):
     def route(self):
 
         switch_ecmp_groups = {sw_name:{} for sw_name in self.topo.get_p4switches().keys()}
+        self.topo.network_graph.remove_node("sw-cpu")
 
         for sw_name, controllers in self.controllers.items():
             for sw_dst in self.topo.get_p4switches():
@@ -178,6 +184,7 @@ class RoutingController(object):
             controller.register_write("switch_id", 0, switch_id)
             controller.register_write("swap_control", 0, 0)
             controller.register_write("sketch_fg", 0, 0)
+            controller.register_write("previous_ingress_timestamp", 0, 0)
 
         for switch_id, switch_name in enumerate(self.controllers.keys()):
             print "{} {}".format(switch_id, switch_name)
@@ -185,4 +192,7 @@ class RoutingController(object):
 
 
 if __name__ == "__main__":
-    controllers = RoutingController().main()
+    parser=argparse.ArgumentParser()
+    parser.add_argument("p",help="the program to be run",choices=["f","i"])
+    args=parser.parse_args()
+    controllers = RoutingController(args.p).main()

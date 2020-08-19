@@ -5,6 +5,9 @@
 #include <cstring>
 #include <chrono>
 #include <thread>
+#include <string>
+#include <iostream>
+#include <fstream>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -13,16 +16,18 @@
 
 #include "header.h"
 
+using namespace std;
+
 namespace Simulator {
 
 using namespace std::chrono;
 
 struct Sketch {
-	int ar_num, bu_num;
+	int ar_num, bu_num; //array_num,bucket_num
 
 	SFH_Header **sketch;
 
-	int switch_id, sketch_fg, fgment_nu;
+	int switch_id, sketch_fg, fgment_nu; //sketch_flag,fragment_num
 
 	steady_clock::time_point time_beg;
 	steady_clock::time_point time_end;
@@ -46,7 +51,7 @@ struct Sketch {
 		int aid = sfh_header.fgment_id / bu_num;
 		int bid = sfh_header.fgment_id % bu_num;
 
-		if (sfg != sketch_fg) {
+		if (sfg != sketch_fg) { 
 			recv_next_sketch(sfg);
 		}
 
@@ -88,7 +93,7 @@ struct Sketch {
 		printf("switch %d receive sketch %d using %ld ms.\n",
 			   	switch_id, sketch_fg, time_epoch.count());
 
-		// visor_sketch();
+		download_sketch();
 	}
 
 	void visor_sketch() {
@@ -101,6 +106,33 @@ struct Sketch {
 				printf("\n");
 			}
 		}
+	}
+	
+	void download_sketch(){
+
+		for (int i = 0; i < ar_num; i++)
+		{
+			ofstream out;
+			string filename = "./download_sketch/switch" + to_string(switch_id) + "_array" + to_string(i) + ".txt"; 
+			out.open(filename, ios::out | ios::trunc);
+			if (!out.is_open())
+			{
+				return;
+			}
+			
+			for (int j = 0; j < bu_num; j++)
+			{
+				for (int k = 0; k < 10; k++)
+				{
+					out << sketch[i][j].delay[k] <<'\t';
+				}
+
+				out << '\n';
+			}
+			out.close();
+			
+		}
+
 	}
 
 };
@@ -122,10 +154,10 @@ struct Aggregator {
 	}
 
 	void display_header(COM_Header &com_header) {
-		printf("mih.switch_id : %u\n" , com_header.mih.switch_id);
-		printf("mih.tim_epoch : %lu\n", com_header.mih.tim_epoch);
+		//printf("mih.switch_id : %u\n" , com_header.mih.switch_id);
+		//printf("mih.tim_epoch : %lu\n", com_header.mih.tim_epoch);
 		printf("sfh.switch_id : %u\n" , com_header.sfh.switch_id);
-		printf("sfh.sketch_fg : %u\n" , com_header.sfh.sketch_fg);
+		printf("sfh.sketch_fg : %u\n" , com_header.flag_header.exists_fg & 0x1);
 		printf("sfh.fgment_id : %u\n" , com_header.sfh.fgment_id);
 
 		printf("sketch fragment :\n");
@@ -138,7 +170,7 @@ struct Aggregator {
 
 	void receive_header(COM_Header &com_header) {
 		int switch_id = com_header.sfh.switch_id;
-		int sketch_fg = com_header.sfh.sketch_fg;
+		int sketch_fg = com_header.flag_header.exists_fg & 0x1;
 		int fgment_id = com_header.sfh.fgment_id;
 
 		sketch[switch_id]->receive_fgment(sketch_fg, fgment_id, com_header.sfh);

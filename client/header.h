@@ -16,19 +16,37 @@ const int bu_num = 64;
 struct MIH_Header {
     uint16_t switch_id;
     uint64_t tim_epoch;
-	uint8_t  exists_fg;
+    uint64_t timestamp;
 };
 
 struct SFH_Header {
     uint16_t switch_id;
-    uint8_t  sketch_fg;
+    //uint8_t  sketch_fg;
     uint32_t fgment_id;
     uint32_t delay[10];
 };
 
+struct FLAG_Header
+{
+    uint8_t exists_fg;
+};
+
+struct LOAD_Header
+{
+    uint8_t load[1400];
+};
+
 struct COM_Header {
-	MIH_Header mih;
+    FLAG_Header flag_header;
 	SFH_Header sfh;
+    LOAD_Header load_header;
+
+};
+
+struct SEND_Header
+{
+    FLAG_Header flag_header;
+    LOAD_Header load_header;
 };
 
 }

@@ -5,6 +5,7 @@
 const bit<16> TYPE_IPV4 = 0x0800;
 const bit<8> TYPE_TCP = 6;
 const bit<8> TYPE_UDP = 17;
+const bit<8> TYPE_ICMP = 1;
 
 typedef bit<9>  egressSpec_t;
 typedef bit<48> macAddr_t;
@@ -38,7 +39,10 @@ header tcp_t{
     bit<32> seqNo;
     bit<32> ackNo;
     bit<4>  dataOffset;
-    bit<4>  res;
+    bit<1>  MIH_fg;
+    bit<1>  SFH_fg;
+    bit<1>  SFH_sketch_number;
+    bit<1>  res;
     bit<1>  cwr;
     bit<1>  ece;
     bit<1>  urg;
@@ -59,21 +63,21 @@ header udp_t {
 	bit<16> checksum;
 }
 
+// if using udp protocol ,we will use this one to judge whether exists MIH and SFH
+header FLAG_t{
+    bit<8> flag; //0b100 for MIH; 0b010 for SFH; 0b001 for sfh_sketch_number
+}
+
 //part one of the bringing data
 header MIH_t{
     //max interval header
     bit<16>  mih_switch_id;
-    bit<48>  mih_timestamp;          //modified from 32 to 48
-	bit<16>  mih_padding;            //
-    bit<8>   sfh_exists_fg;                 //if SFH_fg==0 no SFH,
+    bit<48>  mih_timestamp;
 }
 
 //sketch fragment header
 header SFH_t{
-
-    //part 0:
-    bit<16> sfh_switch_id;          //switch id
-    bit<8>  sfh_sketch_fg;          //0 stands for group0,vice versa
+    bit<16> sfh_switch_id;
     bit<32> sfh_fgment_id;
 
     //sketch fragments: a bucket which contains 10 bins
@@ -87,6 +91,17 @@ header SFH_t{
 	bit<32> sfh_delay7;
 	bit<32> sfh_delay8;
 	bit<32> sfh_delay9;
+}
+
+header cpu_t{
+    ip4Addr_t srcAddr;
+    ip4Addr_t dstAddr;
+    bit<8>    protocol;
+    bit<16> srcPort;
+	bit<16> dstPort;
+    bit<48> delay;
+    bit<48> interval;
+    bit<8> flags;
 }
 
 struct metadata {
@@ -111,14 +126,16 @@ struct metadata {
     bit<32> SFH_index;
     bit<32> SFH_random;
 
-    bit<32> timestamp_index0;    //for timestamp register
-    bit<32> timestamp_index1;    //for timestamp register
-    bit<32> timestamp_index2;    //for timestamp register
+    //for timestamp register
+    bit<32> timestamp_index0;
+    bit<32> timestamp_index1;
+    bit<32> timestamp_index2;
 
     bit<48> timestamp_value0;
     bit<48> timestamp_value1;
     bit<48> timestamp_value2;
 
+    //for counter registers
     bit<32> counter_index0;
     bit<32> counter_index1;
     bit<32> counter_index2;
@@ -127,28 +144,31 @@ struct metadata {
     bit<1> counter_value1;
     bit<1> counter_value2;
 
+    bit<48> MIH_value0;
+    bit<48> MIH_value1;
+    bit<48> MIH_value2;
+    
+    //for max interval register
 
-    //the above can be refined into at most 4 indexes and 4 values  I suppose
-    // but for convenience , we used a lot of them
-
+    bit<48> max_interval_value0;
+    bit<48> max_interval_value1;
+    bit<48> max_interval_value2;
 	bit<16> switch_id;
-    bit<48> switch_delay;                           //the subst
-    bit<8>  sketch_fg;                              //
-    bit<8>  swap_control;                           //
+    bit<48> switch_delay;
+    bit<8>  sketch_fg;
+    bit<8>  swap_control;
 
     bit<32> delay_lev;
-    bit<48> previous_ingress_global_timestamp;      //the previous one of timestamp
-    bit<48> max_bucket_interval;                    //
+    bit<48> previous_ingress_global_timestamp;
+    bit<48> interval;
 
     bit<8> SFH_target_array;                        //the sketch selected
     bit<32> SFH_target_bucket;                      //the bucket selected
-    bit<32> random_number;                          //
-    
-
+    bit<32> random_number;
     bit<14> ecmp_hash;
     bit<14> ecmp_group_id;
 
-    //
+    //tmp use
     bit<32> tmp00;
     bit<32> tmp01;
     bit<32> tmp02;
@@ -185,9 +205,11 @@ struct metadata {
 
 struct headers {
     ethernet_t   ethernet;
+    cpu_t        CPU;
     ipv4_t       ipv4;
     tcp_t        tcp;
 	udp_t        udp;
+    FLAG_t       flag;
     MIH_t        MIH;
     SFH_t	     SFH;
 }
