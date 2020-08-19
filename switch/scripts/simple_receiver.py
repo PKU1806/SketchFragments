@@ -67,7 +67,7 @@ def handle_pkt(pkt):
     if udp:
         flag=FLAG(str(udp.payload))
         
-    
+    '''
     print "###[ Ethernet ]###"
     print "  src: {}".format(ether.src)
     print "  dst: {}".format(ether.dst)
@@ -75,8 +75,10 @@ def handle_pkt(pkt):
     print "  src: {}".format(ip.src)
     print "  dst: {}".format(ip.dst)
     print "  IP length:{}".format(ip.len)
+    '''
     if icmp:
         print "ICMP packet"
+    
     if udp:
         print "###[ UDP ]###"
         print "  sport: {}".format(udp.sport)

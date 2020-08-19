@@ -16,10 +16,14 @@ lock = threading.Lock()
 
 class Monitor(threading.Thread):
 
-    def __init__(self, sw_name):
+    def __init__(self, sw_name,program):
         threading.Thread.__init__(self)
-
-        self.topo = Topology(db="topology.db")
+        if program=="f":
+            self.topo = Topology(db="../p4src_flowsize/topology.db")  #set the topology
+        elif program=="i":
+            self.topo = Topology(db="../p4src_interval/topology.db")  #set the topology
+        
+        self.program=program
         self.sw_name = sw_name
         self.thrift_port = self.topo.get_thrift_port(sw_name)
         self.controller = SimpleSwitchAPI(self.thrift_port)
