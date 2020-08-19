@@ -85,26 +85,33 @@ void Connector_R(string rname, int rport, int maxp,
 
 void Connector_pair(std::thread **receiver, std::thread **sender, string sname, string rname, Simulator::Aggregator *agg, int &current_conn_num, int conn_num){
 	
-	while (current_conn_num < conn_num)
+	while (true)
 	{
+		my_mutex.lock();
+
+		if (current_conn_num >= conn_num) {
+			my_mutex.unlock();
+			break;
+		}
+
 		int udp_port_index = rand() % udp_port_array.size();
 		int rport = udp_port_array[udp_port_index];
 		udp_port_array.erase(udp_port_array.begin() + udp_port_index, udp_port_array.begin() + udp_port_index + 1);
 		
 		receiver[current_conn_num] = new std::thread(Connector_R, rname, rport, -1, agg);
 
-		int sendp = flow_size_generator();
+		// int sendp = flow_size_generator();
+		int sendp = 1;
 		int iterv = flow_interval_generator(lambda);
 		sender[current_conn_num] = new std::thread(Connector_S, sname, rname, rport, sendp);
 
 		std::cout << sname << " => " << rname << ":" << rport << "(" << sendp << ")" << std::endl;
 
-		my_mutex.lock();
 		current_conn_num++;
+
 		my_mutex.unlock();
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(iterv));
-
 	}
 	
 }
@@ -145,18 +152,23 @@ void traffic_generator(int host_num, int conn_num) {
 	int pair_index = 0;
 	int current_conn_num = 0;
 
-	for (int i = 0; i < host_num; i++)
-	{
-		for (int j = 0; j != i && j < host_num; j++)
-		{
-			string sname = hname[i];
-			string rname = hname[j];
-			pair[pair_index] = new thread(Connector_pair, receiver, sender, sname, rname, &aggregator, std::ref(current_conn_num), conn_num);
-			pair_index++;
+	for (int i = 0; i < host_num; i++) {
+		for (int j = 0; j < host_num; j++) {
+			if (j != i) {
+				string sname = hname[i];
+				string rname = hname[j];
+
+				pair[pair_index++] = new thread(Connector_pair, receiver, sender, sname, rname,
+					   	&aggregator, std::ref(current_conn_num), conn_num);
+			}
 		}
-		
 	}
 	
+	for (int i = 0; i < host_num * (host_num - 1); i++)
+	{
+		pair[i] -> join();
+	}
+
 	for (int i = 0; i < conn_num; i++)
 	{
 		receiver[i] -> join();
@@ -165,11 +177,6 @@ void traffic_generator(int host_num, int conn_num) {
 	for (int i = 0; i < conn_num; i++)
 	{
 		sender[i] -> join();
-	}
-	
-	for (int i = 0; i < host_num*(host_num - 1); i++)
-	{
-		pair[i] -> join();
 	}
 }
 
