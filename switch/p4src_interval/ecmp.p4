@@ -134,96 +134,6 @@ control MyIngress(inout headers hdr,
     }
 
     /******************* inherited code ends here       ************************/
-
-
-    /******** log code starts here*******/
-
-    action send_to_control_plane(){
-        meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
-        clone3(CloneType.E2E,100,meta);//mirror id = 100
-    }
-
-    /******** log code ends here*******/
-
-    apply
-    {   
-        if (hdr.ipv4.isValid()&&hdr.ipv4.ttl > 1) {
-            /******** log code starts here*******/
-            //send_to_control_plane();
-            /******** log code ends here*******/
-            
-            
-            switch (ipv4_lpm.apply().action_run){
-                ecmp_group:{
-                    ecmp_group_to_nhop.apply();
-                }
-            }
-        }
-        else{
-            drop();
-        }
-        
-    }
-    
-}
-
-/*************************************************************************
-****************  E G R E S S   P R O C E S S I N G   *******************
-*************************************************************************/
-
-control MyEgress(inout headers hdr,
-                 inout metadata meta,
-                 inout standard_metadata_t standard_metadata)
-{
-    //get the bringable bucket index 
-	action predispose(){
-		meta.MIH_index = 3 * BUCKET_NUM;
-
-		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
-		counter0.read(meta.counter_value0,meta.counter_index0);
-		if (meta.MIH_index >= 3 * BUCKET_NUM && meta.counter_value0 == 0) {
-			meta.MIH_index = meta.counter_index0;
-			meta.counter_value0 = 1;
-		}
-		counter0.write(meta.counter_index0, meta.counter_value0);
-		
-		random(meta.counter_index1, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
-		counter1.read(meta.counter_value1, meta.counter_index1);
-		if (meta.MIH_index >= 3 * BUCKET_NUM && meta.counter_value1 == 0) {
-			meta.MIH_index = meta.counter_index1;
-			meta.counter_value1 = 1;
-		}
-		counter1.write(meta.counter_index1, meta.counter_value1);
-		
-		random(meta.counter_index2, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
-		counter2.read(meta.counter_value2, meta.counter_index2);
-		if (meta.MIH_index >= 3 * BUCKET_NUM && meta.counter_value2 == 0) {
-			meta.MIH_index = meta.counter_index2;
-			meta.counter_value2 = 1;
-		}
-		counter2.write(meta.counter_index2, meta.counter_value2);
-
-	}
-
-    action _choose_fragment(bit<8> MIH_target_array){
-		meta.MIH_target_bucket = meta.MIH_index - 
-			(bit<32>)meta.MIH_target_array * BUCKET_NUM;
-		meta.MIH_target_array = MIH_target_array + (1 - meta.sketch_fg) * 3;
-	}
-
-    table choose_fragment{
-		key={
-			meta.MIH_index:range;
-		}
-		actions={
-			NoAction;
-			_choose_fragment;
-		}
-		size=256;
-		default_action=NoAction;
-	}
-    //update timestamp and ax interval
-
     action update_interval_using_sketch0(){
         COMPUTE_TIMESTAMP_HASH(0)
         COMPUTE_TIMESTAMP_HASH(1)
@@ -319,6 +229,99 @@ control MyEgress(inout headers hdr,
         default_action=NoAction;
     }
 
+
+    /******** log code starts here*******/
+
+    action send_to_control_plane(){
+        meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;
+        clone3(CloneType.E2E,100,meta);//mirror id = 100
+    }
+
+    /******** log code ends here*******/
+
+    apply
+    {   
+        if (hdr.ipv4.isValid()&&hdr.ipv4.ttl > 1) {
+            /******** log code starts here*******/
+            //send_to_control_plane();
+            /******** log code ends here*******/
+            switch_id.read(meta.switch_id, 0);
+            sketch_fg.read(meta.sketch_fg,0);
+            swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
+            
+            update_interval.apply();
+            
+            switch (ipv4_lpm.apply().action_run){
+                ecmp_group:{
+                    ecmp_group_to_nhop.apply();
+                }
+            }
+        }
+        else{
+            drop();
+        }
+        
+    }
+    
+}
+
+/*************************************************************************
+****************  E G R E S S   P R O C E S S I N G   *******************
+*************************************************************************/
+
+control MyEgress(inout headers hdr,
+                 inout metadata meta,
+                 inout standard_metadata_t standard_metadata)
+{
+    //get the bringable bucket index 
+	action predispose(){
+		meta.MIH_index = 3 * BUCKET_NUM;
+
+		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+		counter0.read(meta.counter_value0,meta.counter_index0);
+		if (meta.MIH_index >= 3 * BUCKET_NUM && meta.counter_value0 == 0) {
+			meta.MIH_index = meta.counter_index0;
+			meta.counter_value0 = 1;
+		}
+		counter0.write(meta.counter_index0, meta.counter_value0);
+		
+		random(meta.counter_index1, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+		counter1.read(meta.counter_value1, meta.counter_index1);
+		if (meta.MIH_index >= 3 * BUCKET_NUM && meta.counter_value1 == 0) {
+			meta.MIH_index = meta.counter_index1;
+			meta.counter_value1 = 1;
+		}
+		counter1.write(meta.counter_index1, meta.counter_value1);
+		
+		random(meta.counter_index2, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+		counter2.read(meta.counter_value2, meta.counter_index2);
+		if (meta.MIH_index >= 3 * BUCKET_NUM && meta.counter_value2 == 0) {
+			meta.MIH_index = meta.counter_index2;
+			meta.counter_value2 = 1;
+		}
+		counter2.write(meta.counter_index2, meta.counter_value2);
+
+	}
+
+    action _choose_fragment(bit<8> MIH_target_array){
+		meta.MIH_target_bucket = meta.MIH_index - 
+			(bit<32>)meta.MIH_target_array * BUCKET_NUM;
+		meta.MIH_target_array = MIH_target_array + (1 - meta.sketch_fg) * 3;
+	}
+
+    table choose_fragment{
+		key={
+			meta.MIH_index:range;
+		}
+		actions={
+			NoAction;
+			_choose_fragment;
+		}
+		size=256;
+		default_action=NoAction;
+	}
+    //update timestamp and ax interval
+
     action update_MIH_using_sketch0()
     {
         // from sketch
@@ -377,33 +380,14 @@ control MyEgress(inout headers hdr,
 
     apply
     {
-        //todo 1: random
-        //todo 2:switch
-        //todo 3:
         if(hdr.ipv4.isValid()&&standard_metadata.instance_type ==0&&hdr.ipv4.ttl > 1){
-            switch_id.read(meta.switch_id, 0);
-            sketch_fg.read(meta.sketch_fg,0);
-            swap_control.read(meta.swap_control,0);//0 bring-able ;1 forbidden
-            
-            update_interval.apply();
+
             if(hdr.udp.isValid()||hdr.tcp.isValid()){
-                if(meta.swap_control==0){
-                    predispose();
-                    if(meta.MIH_index < 3 * BUCKET_NUM){
-                        if (hdr.MIH.isValid()) {
-                            if(hdr.udp.isValid()){
-                                hdr.udp.checksum = 0;
-                                hdr.flag.flag=hdr.flag.flag| 0b1000;
-                                hdr.flag.flag=hdr.flag.flag& 0b1111_1011;
-                                hdr.flag.flag=hdr.flag.flag|((1 - meta.sketch_fg)<<3);
-                            }
-                            else if(hdr.tcp.isValid()) {
-                                hdr.tcp.MIH_fg=1;
-                                //abandoned
-                            }
-                        }
-                        else{
-                            hdr.MIH.setValid();
+                if(meta.swap_control==0&&!hdr.MIH.isValid()){
+                    random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
+                    if (meta.random_number <= 1) {
+                        predispose();
+                        if(meta.MIH_index < 3 * BUCKET_NUM){
                             if(hdr.udp.isValid()){
                                 hdr.udp.checksum = 0;
                                 hdr.ipv4.totalLen = hdr.ipv4.totalLen + (14);
@@ -418,10 +402,12 @@ control MyEgress(inout headers hdr,
                                 hdr.tcp.MIH_fg=1;
                                 //abandoned
                             }
-                            
+                            hdr.MIH.setValid();
+                            hdr.MIH.mih_switch_id = meta.switch_id;
+							hdr.MIH.mih_fgment_id = meta.MIH_index;
+                            choose_fragment.apply();
+                            update_MIH.apply();
                         }
-                        choose_fragment.apply();
-                        update_MIH.apply();
                     }
                 }
             }   

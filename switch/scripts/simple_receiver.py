@@ -95,12 +95,14 @@ def handle_pkt(pkt):
         print " flag: {}".format(flag.flag)
         print " flag payload length: {}".format(len(flag.payload))
         
-        if flag.flag&0b0100==0b0100:
+        if flag.flag&0b1000==0b1000:
             mih=MIH(str(flag.payload))
             print "###[ MIH ]###"
             print "  mih_switch_id: {}".format(mih.mih_switch_id)
             print "  mih_timestamp: {}".format(mih.mih_timestamp)
+            print "  mih_fgment_id: {}".format(mih.mih_fgment_id)
             msg = mih.payload
+            
         elif flag.flag&0b010==0b010: 
             sfh=SFH(str(flag.payload))
             print "###[ SFH ]###"
