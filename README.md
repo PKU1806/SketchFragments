@@ -6,7 +6,7 @@
 5. 窗口B进入switch文件夹中script文件夹
 6. 窗口B等待窗口Amininet启动后，键入`python routing_controller.py f`启动flowsize的配置脚本，或者键入`python routing_controller.py i`启动interval的配置脚本
 7. 至此，mininet基本环境已配置完成
-8. 窗口C进入switch文件夹中script文件夹，键入`python log_generator.py {f/i}`启动switch端的log 生成脚本
+8. 窗口C进入switch文件夹中script文件夹，先键入`mx sw-cpu`,再键入`python log_generator.py {f/i}`启动switch端的log 生成脚本
 
 
 # p4app.json配置注意项：
