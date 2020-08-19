@@ -100,12 +100,19 @@ void Connector_pair(std::thread **receiver, std::thread **sender, string sname, 
 		
 		receiver[current_conn_num] = new std::thread(Connector_R, rname, rport, -1, agg);
 
-		// int sendp = flow_size_generator();
-		int sendp = 1;
+		int sendp = flow_size_generator();
 		int iterv = flow_interval_generator(lambda);
 		sender[current_conn_num] = new std::thread(Connector_S, sname, rname, rport, sendp);
 
 		std::cout << sname << " => " << rname << ":" << rport << "(" << sendp << ")" << std::endl;
+
+		ofstream out;
+		out.open("flow.txt", ios::out | ios::app);
+		if (out.is_open())
+		{
+			out << sname << " => " << rname << ":" << rport << "(" << sendp << ")" << '\n';
+		}
+		out.close();
 
 		current_conn_num++;
 
