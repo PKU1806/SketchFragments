@@ -165,6 +165,7 @@ struct Aggregator {
 		for (int i = 0; i < 8; i++) {
 			printf("sfh.delay_%d : %u\n", i, com_header.sfh.delay[i]);
 		}
+		
 		printf("\n");
 	}
 
