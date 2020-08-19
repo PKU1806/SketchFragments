@@ -91,8 +91,8 @@ header SFH_t{
 	bit<32> sfh_delay5;
 	bit<32> sfh_delay6;
 	bit<32> sfh_delay7;
-	bit<32> sfh_delay8;
-	bit<32> sfh_delay9;
+	//bit<32> sfh_delay8;
+	//bit<32> sfh_delay9;
 }
 
 header cpu_t{

@@ -9,7 +9,7 @@
 
 //test factors , volatile
 #define BUCKET_NUM 64
-#define BIN_NUM 10
+#define BIN_NUM 8
 #define BIN_CELL_BIT_WIDTH 32
 #define RANDOM_BOUND 10
 
@@ -154,8 +154,8 @@ control MyIngress(inout headers hdr,
 	   array0.read(meta.tmp05,meta.SFH_target_bucket*BIN_NUM+5);
 	   array0.read(meta.tmp06,meta.SFH_target_bucket*BIN_NUM+6);
 	   array0.read(meta.tmp07,meta.SFH_target_bucket*BIN_NUM+7);
-	   array0.read(meta.tmp08,meta.SFH_target_bucket*BIN_NUM+8);
-	   array0.read(meta.tmp09,meta.SFH_target_bucket*BIN_NUM+9);
+	   //array0.read(meta.tmp08,meta.SFH_target_bucket*BIN_NUM+8);
+	   //array0.read(meta.tmp09,meta.SFH_target_bucket*BIN_NUM+9);
 
 	   array1.read(meta.tmp10,meta.SFH_target_bucket*BIN_NUM+0);
 	   array1.read(meta.tmp11,meta.SFH_target_bucket*BIN_NUM+1);
@@ -165,8 +165,8 @@ control MyIngress(inout headers hdr,
 	   array1.read(meta.tmp15,meta.SFH_target_bucket*BIN_NUM+5);
 	   array1.read(meta.tmp16,meta.SFH_target_bucket*BIN_NUM+6);
 	   array1.read(meta.tmp17,meta.SFH_target_bucket*BIN_NUM+7);
-	   array1.read(meta.tmp18,meta.SFH_target_bucket*BIN_NUM+8);
-	   array1.read(meta.tmp19,meta.SFH_target_bucket*BIN_NUM+9);
+	   //array1.read(meta.tmp18,meta.SFH_target_bucket*BIN_NUM+8);
+	   //array1.read(meta.tmp19,meta.SFH_target_bucket*BIN_NUM+9);
 
 	   array2.read(meta.tmp20,meta.SFH_target_bucket*BIN_NUM+0);
 	   array2.read(meta.tmp21,meta.SFH_target_bucket*BIN_NUM+1);
@@ -176,8 +176,8 @@ control MyIngress(inout headers hdr,
 	   array2.read(meta.tmp25,meta.SFH_target_bucket*BIN_NUM+5);
 	   array2.read(meta.tmp26,meta.SFH_target_bucket*BIN_NUM+6);
 	   array2.read(meta.tmp27,meta.SFH_target_bucket*BIN_NUM+7);
-	   array2.read(meta.tmp28,meta.SFH_target_bucket*BIN_NUM+8);
-	   array2.read(meta.tmp29,meta.SFH_target_bucket*BIN_NUM+9);
+	   //array2.read(meta.tmp28,meta.SFH_target_bucket*BIN_NUM+8);
+	   //array2.read(meta.tmp29,meta.SFH_target_bucket*BIN_NUM+9);
 
 	   if(meta.SFH_target_array==0){
 		   hdr.SFH.sfh_delay0=meta.tmp00;
@@ -188,8 +188,8 @@ control MyIngress(inout headers hdr,
 		   hdr.SFH.sfh_delay5=meta.tmp05;
 		   hdr.SFH.sfh_delay6=meta.tmp06;
 		   hdr.SFH.sfh_delay7=meta.tmp07;
-		   hdr.SFH.sfh_delay8=meta.tmp08;
-		   hdr.SFH.sfh_delay9=meta.tmp09;
+		   //hdr.SFH.sfh_delay8=meta.tmp08;
+		   //hdr.SFH.sfh_delay9=meta.tmp09;
 	   }
 	   else if(meta.SFH_target_array==1){
 		   hdr.SFH.sfh_delay0=meta.tmp10;
@@ -200,8 +200,8 @@ control MyIngress(inout headers hdr,
 		   hdr.SFH.sfh_delay5=meta.tmp15;
 		   hdr.SFH.sfh_delay6=meta.tmp16;
 		   hdr.SFH.sfh_delay7=meta.tmp17;
-		   hdr.SFH.sfh_delay8=meta.tmp18;
-		   hdr.SFH.sfh_delay9=meta.tmp19;
+		   //hdr.SFH.sfh_delay8=meta.tmp18;
+		   //hdr.SFH.sfh_delay9=meta.tmp19;
 	   }
 	   else{
 		   hdr.SFH.sfh_delay0=meta.tmp20;
@@ -212,8 +212,8 @@ control MyIngress(inout headers hdr,
 		   hdr.SFH.sfh_delay5=meta.tmp25;
 		   hdr.SFH.sfh_delay6=meta.tmp26;
 		   hdr.SFH.sfh_delay7=meta.tmp27;
-		   hdr.SFH.sfh_delay8=meta.tmp28;
-		   hdr.SFH.sfh_delay9=meta.tmp29;
+		   //hdr.SFH.sfh_delay8=meta.tmp28;
+		   //hdr.SFH.sfh_delay9=meta.tmp29;
 	   }
 	}
 
@@ -227,8 +227,8 @@ control MyIngress(inout headers hdr,
 	   array3.read(meta.tmp05,meta.SFH_target_bucket*BIN_NUM+5);
 	   array3.read(meta.tmp06,meta.SFH_target_bucket*BIN_NUM+6);
 	   array3.read(meta.tmp07,meta.SFH_target_bucket*BIN_NUM+7);
-	   array3.read(meta.tmp08,meta.SFH_target_bucket*BIN_NUM+8);
-	   array3.read(meta.tmp09,meta.SFH_target_bucket*BIN_NUM+9);
+	   //array3.read(meta.tmp08,meta.SFH_target_bucket*BIN_NUM+8);
+	   //array3.read(meta.tmp09,meta.SFH_target_bucket*BIN_NUM+9);
 
 	   array4.read(meta.tmp10,meta.SFH_target_bucket*BIN_NUM+0);
 	   array4.read(meta.tmp11,meta.SFH_target_bucket*BIN_NUM+1);
@@ -238,8 +238,8 @@ control MyIngress(inout headers hdr,
 	   array4.read(meta.tmp15,meta.SFH_target_bucket*BIN_NUM+5);
 	   array4.read(meta.tmp16,meta.SFH_target_bucket*BIN_NUM+6);
 	   array4.read(meta.tmp17,meta.SFH_target_bucket*BIN_NUM+7);
-	   array4.read(meta.tmp18,meta.SFH_target_bucket*BIN_NUM+8);
-	   array4.read(meta.tmp19,meta.SFH_target_bucket*BIN_NUM+9);
+	   //array4.read(meta.tmp18,meta.SFH_target_bucket*BIN_NUM+8);
+	   //array4.read(meta.tmp19,meta.SFH_target_bucket*BIN_NUM+9);
 
 	   array5.read(meta.tmp20,meta.SFH_target_bucket*BIN_NUM+0);
 	   array5.read(meta.tmp21,meta.SFH_target_bucket*BIN_NUM+1);
@@ -249,8 +249,8 @@ control MyIngress(inout headers hdr,
 	   array5.read(meta.tmp25,meta.SFH_target_bucket*BIN_NUM+5);
 	   array5.read(meta.tmp26,meta.SFH_target_bucket*BIN_NUM+6);
 	   array5.read(meta.tmp27,meta.SFH_target_bucket*BIN_NUM+7);
-	   array5.read(meta.tmp28,meta.SFH_target_bucket*BIN_NUM+8);
-	   array5.read(meta.tmp29,meta.SFH_target_bucket*BIN_NUM+9);
+	   //array5.read(meta.tmp28,meta.SFH_target_bucket*BIN_NUM+8);
+	   //array5.read(meta.tmp29,meta.SFH_target_bucket*BIN_NUM+9);
 
 	   if(meta.SFH_target_array==3){
 		   hdr.SFH.sfh_delay0=meta.tmp00;
@@ -261,8 +261,8 @@ control MyIngress(inout headers hdr,
 		   hdr.SFH.sfh_delay5=meta.tmp05;
 		   hdr.SFH.sfh_delay6=meta.tmp06;
 		   hdr.SFH.sfh_delay7=meta.tmp07;
-		   hdr.SFH.sfh_delay8=meta.tmp08;
-		   hdr.SFH.sfh_delay9=meta.tmp09;
+		   //hdr.SFH.sfh_delay8=meta.tmp08;
+		   //hdr.SFH.sfh_delay9=meta.tmp09;
 	   }
 	   else if(meta.SFH_target_array==4){
 		   hdr.SFH.sfh_delay0=meta.tmp10;
@@ -273,8 +273,8 @@ control MyIngress(inout headers hdr,
 		   hdr.SFH.sfh_delay5=meta.tmp15;
 		   hdr.SFH.sfh_delay6=meta.tmp16;
 		   hdr.SFH.sfh_delay7=meta.tmp17;
-		   hdr.SFH.sfh_delay8=meta.tmp18;
-		   hdr.SFH.sfh_delay9=meta.tmp19;
+		   //hdr.SFH.sfh_delay8=meta.tmp18;
+		   //hdr.SFH.sfh_delay9=meta.tmp19;
 	   }
 	   else{
 		   hdr.SFH.sfh_delay0=meta.tmp20;
@@ -285,8 +285,8 @@ control MyIngress(inout headers hdr,
 		   hdr.SFH.sfh_delay5=meta.tmp25;
 		   hdr.SFH.sfh_delay6=meta.tmp26;
 		   hdr.SFH.sfh_delay7=meta.tmp27;
-		   hdr.SFH.sfh_delay8=meta.tmp28;
-		   hdr.SFH.sfh_delay9=meta.tmp29;
+		   //hdr.SFH.sfh_delay8=meta.tmp28;
+		   //hdr.SFH.sfh_delay9=meta.tmp29;
 	   }
 	}
 
@@ -401,15 +401,15 @@ control MyIngress(inout headers hdr,
 						if (meta.SFH_index < 3 * BUCKET_NUM) {
 							if(hdr.udp.isValid()){
 								hdr.udp.checksum = 0;
-								hdr.ipv4.totalLen = hdr.ipv4.totalLen + (46);
-								hdr.udp.length = hdr.udp.length + (46);
+								hdr.ipv4.totalLen = hdr.ipv4.totalLen + (38);
+								hdr.udp.length = hdr.udp.length + (38);
 								hdr.flag.flag=hdr.flag.flag| 0b010;
 								hdr.flag.flag= hdr.flag.flag & 0b1111_1110;
 								hdr.flag.flag =hdr.flag.flag |(1 - meta.sketch_fg);
 							
 							}
 							else if(hdr.tcp.isValid()) {
-								hdr.ipv4.totalLen = hdr.ipv4.totalLen + (46);
+								hdr.ipv4.totalLen = hdr.ipv4.totalLen + (38);
 								hdr.tcp.SFH_fg = 1;
 								hdr.tcp.SFH_sketch_number = (bit<1>)(1 - meta.sketch_fg);
 								//abandoned

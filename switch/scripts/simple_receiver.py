@@ -18,9 +18,9 @@ class SFH(Packet):
             BitField('sfh_delay4',0,32),\
             BitField('sfh_delay5',0,32),\
             BitField('sfh_delay6',0,32),\
-            BitField('sfh_delay7',0,32),\
-            BitField('sfh_delay8',0,32),\
-            BitField('sfh_delay9',0,32)]
+            #BitField('sfh_delay7',0,32),\
+            #BitField('sfh_delay8',0,32),\
+            BitField('sfh_delay7',0,32)]
 
 class MIH(Packet):
     name="MIH"
@@ -102,7 +102,7 @@ def handle_pkt(pkt):
             print "  mih_timestamp: {}".format(mih.mih_timestamp)
             print "  mih_fgment_id: {}".format(mih.mih_fgment_id)
             msg = mih.payload
-            
+
         elif flag.flag&0b010==0b010: 
             sfh=SFH(str(flag.payload))
             print "###[ SFH ]###"
@@ -117,8 +117,8 @@ def handle_pkt(pkt):
             print "  sfh_delay5: {}".format(sfh.sfh_delay5)
             print "  sfh_delay6: {}".format(sfh.sfh_delay6)
             print "  sfh_delay7: {}".format(sfh.sfh_delay7)
-            print "  sfh_delay8: {}".format(sfh.sfh_delay8)
-            print "  sfh_delay9: {}".format(sfh.sfh_delay9)
+            #print "  sfh_delay8: {}".format(sfh.sfh_delay8)
+            #print "  sfh_delay9: {}".format(sfh.sfh_delay9)
             msg = sfh.payload
         else:
             msg=flag.payload
