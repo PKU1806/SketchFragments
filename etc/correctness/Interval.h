@@ -15,16 +15,17 @@ public:
         delta_t = 0.0, last_ts = lt;
     }
     void insert(double ts){
+        if(last_ts < 1e-5) {last_ts = ts; return;}
         double tmp = (ts - last_ts);
         delta_t = max(delta_t, tmp);
         last_ts = ts;
     }
     void init(double ts){
-        last_ts = ts;
+        last_ts = ts; delta_t = 0;
     }
     double query(){
         //cout << delta_t << endl;
-        return last_ts;
+        return delta_t;
     }
     ~buck(){ }
 };
@@ -34,7 +35,7 @@ public:
     buck **bucket;
     BOBHash32 *bobhash;
     
-    row(double ts = 0.0, unsigned seed){
+    row(unsigned seed, double ts = 0.0){
         bucket = new buck*[Buck_Num_PerRow];
         rep2(i, 0, Buck_Num_PerRow){
             bucket[i] = new buck(ts);
@@ -52,8 +53,9 @@ public:
     }
     void insert(const flow_t flow, const double timestamp){
         int pos = get_hash(flow);
-        if(bucket[pos]->last_ts < (1)) bucket[pos]->init(timestamp);
-        else bucket[pos]->insert(timestamp);
+        //if(bucket[pos]->last_ts < 1e-7) bucket[pos]->init(timestamp);
+        //else bucket[pos]->insert(timestamp);
+        bucket[pos]->insert(timestamp);
     }
     double query(const flow_t flow){
         int pos = get_hash(flow);
@@ -68,7 +70,7 @@ public:
     interval_Sketch(double ts = 0.0){
         Row = new row*[Row_Num];
         rep2(i, 0, Row_Num){
-            Row[i] = new row(ts,i);
+            Row[i] = new row((unsigned)i,ts);
         }
     }
     ~interval_Sketch(){
@@ -81,15 +83,13 @@ public:
             Row[i]->insert(flow, timestamp);
         }
     }
-    double query(const flow_t flow, bool flag){
+    double query(const flow_t flow, bool flag=0){
         double Min = 1e12;
         
         rep2(i, 0, Row_Num){
             double curr = Row[i]->query(flow);
-            
             if(curr <= Min) Min = curr;
         }
-        if(flag==true) cout << Min << endl;
         return Min;
     }
 };
