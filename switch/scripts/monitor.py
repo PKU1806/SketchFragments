@@ -8,7 +8,7 @@ import time
 import argparse
 
 BUCKET_NUM = 64
-BIN_BUM = 10
+BIN_NUM = 8
 ARRAY_NUM = 3
 
 UPDATE_INTERVAL = 600
@@ -32,14 +32,14 @@ class Monitor(threading.Thread):
 
 
     def sketch_swap(self):
-
+        print ("start swapping sketch for switch "+self.sw_name)
         self.controller.register_write("swap_control",0,1)
     
         present_sketch=self.controller.register_read("sketch_fg",0)
         
         if present_sketch == 0 :
             if self.program=="f":
-                for index in range(0, BUCKET_NUM * BUN_NUM):
+                for index in range(0, BUCKET_NUM * BIN_NUM):
                     # temp=self.controller.register_read("array0",index)
                     # self.controller.register_write("array3",index,temp)
                     # temp=self.controller.register_read("array1",index)
@@ -59,7 +59,7 @@ class Monitor(threading.Thread):
 
         else :
             if self.program=="f":
-                for index in range(0, BUCKET_NUM * BIN_BUM):
+                for index in range(0, BUCKET_NUM * BIN_NUM):
                     # temp=self.controller.register_read("array3",index)
                     # self.controller.register_write("array0",index,temp)
                     # temp=self.controller.register_read("array4",index)
@@ -84,12 +84,16 @@ class Monitor(threading.Thread):
 
         self.controller.register_write("swap_control",0,0)
         self.controller.register_write("sketch_fg",0,1-present_sketch)
+        print ("end swapping sketch")
+        print ("currently using sketch "+ str(1-present_sketch)+" to record")
+        print ("currently using sketch "+ str(present_sketch)+" to bring\n")
 
-        lock.acquire()
-        self.visor()
-        lock.release()
 
-        time.sleep(UPDATE_INTERVAL - 2)
+        #lock.acquire()
+        #self.visor()
+        #lock.release()
+
+        #time.sleep(UPDATE_INTERVAL - 2)
     
     def visor(self):
         sf = self.controller.register_read("sketch_fg", 0)
@@ -164,6 +168,18 @@ if __name__ == "__main__":
     parser.add_argument("p",help="the program to be run",choices=["f","i"])
     args=parser.parse_args()
 
+    Monitor("s1",args.p).sketch_swap()
+    Monitor("s2",args.p).sketch_swap()
+    Monitor("s3",args.p).sketch_swap()
+    Monitor("s4",args.p).sketch_swap()
+    Monitor("s5",args.p).sketch_swap()
+    Monitor("s6",args.p).sketch_swap()
+    Monitor("s7",args.p).sketch_swap()
+    Monitor("s8",args.p).sketch_swap()
+    Monitor("s9",args.p).sketch_swap()
+    Monitor("s10",args.p).sketch_swap()
+
+'''
     monitor_1 = Monitor("s1",args.p)
     monitor_2 = Monitor("s2",args.p)
     monitor_3 = Monitor("s3",args.p)
@@ -196,3 +212,4 @@ if __name__ == "__main__":
     monitor_8.join()
     monitor_9.join()
     monitor_10.join()
+'''
