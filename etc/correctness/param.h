@@ -19,7 +19,7 @@
 #define Row_Num 3
 
 #ifndef ChangeBuckNum
-#define Buck_Num_PerRow 10000
+#define Buck_Num_PerRow 100000
 #else
 int Buck_Num_PerRow = 10000;
 #endif
