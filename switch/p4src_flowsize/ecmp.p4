@@ -98,7 +98,7 @@ control MyIngress(inout headers hdr,
 
 	//get the bringable bucket index 
 	action predispose(){
-		meta.SFH_index = 3 * BUCKET_NUM;
+		
 
 		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
 		counter0.read(meta.counter_value0,meta.counter_index0);
@@ -396,8 +396,10 @@ control MyIngress(inout headers hdr,
 				if (meta.swap_control == 0 && (!hdr.SFH.isValid())) {//this packet is vacant 
 					random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
 					if (meta.random_number <= 1) {//the probility allows
-						predispose();//compute the index of bucket
-						
+						meta.SFH_index = 3 * BUCKET_NUM;
+						while(meta.SFH_index==3 * BUCKET_NUM){
+							predispose();//compute the index of bucket
+						}
 						if (meta.SFH_index < 3 * BUCKET_NUM) {
 							if(hdr.udp.isValid()){
 								hdr.udp.checksum = 0;
