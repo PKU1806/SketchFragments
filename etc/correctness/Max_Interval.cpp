@@ -30,7 +30,8 @@ int print_uint128(__uint128_t n) {
 
 int main(){
     //srand(time(0));
-    interval_Sketch** sketch;
+    //interval_Sketch** sketch;
+    MinMaxSketch** sketch;
     //sketch = new interval_Sketch();
     rep2(i, 0, mistake_string.size()){
         mistake *= 10;
@@ -58,9 +59,9 @@ int main(){
     else{
         flowmap[k2_128] += 1;
     }
-    sketch = new interval_Sketch*[10];
+    sketch = new MinMaxSketch*[10];
     for(int i = 0; i < 10; i++){
-        sketch[i] = new interval_Sketch(0);
+        sketch[i] = new MinMaxSketch(0);
         gt_ts.push_back(map<flow_t, double>());
         gt_ts[i].insert(make_pair(k2_128, k1));
     }
@@ -96,7 +97,7 @@ int main(){
         vector<int> ind = full_packet[i].first;
         for(int j = 0; j < len; j++){
             double interval;
-            interval = ABS((this_switch[j].second - sketch[i]->query(this_switch[j].first, false)));
+            interval = ABS((this_switch[j].second - sketch[i]->query(this_switch[j].first)));
             
             sketch[i]->insert(this_switch[j].first, this_switch[j].second);
             
@@ -149,7 +150,7 @@ int main(){
         }
     }
     */
-    int topk = 100;
+    int topk = 10;
     int falsecnt = 0;
     //map<flow_t, unsigned> ordered_flowmap;
     vector<pair<flow_t,unsigned>> sorttmp;
@@ -159,22 +160,21 @@ int main(){
         sortit++;
     }
     sort(sorttmp.begin(),sorttmp.end(),Comp);
-    rep2(i, 0, 10){
+    rep2(i, 0, 1){
 
         rep2(j, 0, topk){
             flow_t flowname = sorttmp[j].first;
             timestamp_t max_interval = sketch[i]->query(flowname);
             timestamp_t gt_max_interval = sketch_flow_max_interval[i][flowname];
-            if(max_interval > gt_max_interval && i==0) cout << max_interval << ',' << gt_max_interval << endl;
-                 
+            if(i==0) cout << max_interval << ',' << gt_max_interval << endl;
         
             are += (ABS(gt_max_interval-max_interval))/(gt_max_interval);
 
         }
     }
     //cout << flowmap[]
-    cout << falsecnt << endl;
-    are /= (topk*10);
+    //cout << falsecnt << endl;
+    are /= (topk*1);
     //if(ABS(cnt) >1e-7) are /= cnt;
     cout << "flow number is " << flowmap.size() << endl;
     cout << "bucket number per row is " << Buck_Num_PerRow << endl;
