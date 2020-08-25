@@ -142,6 +142,7 @@ struct metadata {
     bit<32> counter_index0;
     bit<32> counter_index1;
     bit<32> counter_index2;
+    bit<32> counter_index3;
 
     bit<1> counter_value0;
     bit<1> counter_value1;
