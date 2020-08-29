@@ -275,7 +275,7 @@ control MyEgress(inout headers hdr,
 {
     //get the bringable bucket index 
 	action predispose(){
-		
+		meta.MIH_index = 3 * BUCKET_NUM;
 
 		random(meta.counter_index0, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
 		counter0.read(meta.counter_value0,meta.counter_index0);
@@ -301,6 +301,10 @@ control MyEgress(inout headers hdr,
 		}
 		counter2.write(meta.counter_index2, meta.counter_value2);
 
+		random(meta.counter_index3, (bit<32>)0, (bit<32>)(3 * BUCKET_NUM - 1));
+		if (meta.MIH_index >= 3 * BUCKET_NUM) {
+			meta.MIH_index = meta.counter_index3;
+		}
 	}
 
     action _choose_fragment(bit<8> MIH_target_array){
@@ -387,9 +391,9 @@ control MyEgress(inout headers hdr,
                     random(meta.random_number, (bit<32>)0, (bit<32>)RANDOM_BOUND - 1);
                     if (meta.random_number <= 1) {
                         meta.MIH_index = 3 * BUCKET_NUM;
-                        while(meta.MIH_index == 3 * BUCKET_NUM){
-                            predispose();
-                        }
+
+						predispose();
+                        
                         if(meta.MIH_index < 3 * BUCKET_NUM){
                             if(hdr.udp.isValid()){
                                 hdr.udp.checksum = 0;
