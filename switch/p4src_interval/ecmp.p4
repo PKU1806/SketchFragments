@@ -309,7 +309,7 @@ control MyEgress(inout headers hdr,
 
     action _choose_fragment(bit<8> MIH_target_array){
 		meta.MIH_target_bucket = meta.MIH_index - 
-			(bit<32>)meta.MIH_target_array * BUCKET_NUM;
+			(bit<32>)MIH_target_array * BUCKET_NUM;
 		meta.MIH_target_array = MIH_target_array + (1 - meta.sketch_fg) * 3;
 	}
 

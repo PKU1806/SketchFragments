@@ -57,7 +57,7 @@ def isNotOutgoing(my_mac):
 
 def handle_pkt(pkt):
     global counter
-    print ("Packet "+str(counter)+" Received:")
+    #print ("Packet "+str(counter)+" Received:")
     counter+=1
     ether = pkt.getlayer(Ether)
     ip = pkt.getlayer(IP)
@@ -77,25 +77,27 @@ def handle_pkt(pkt):
     print "  IP length:{}".format(ip.len)
     '''
     if icmp:
-        print "ICMP packet"
+        #print "ICMP packet"
+        pass
     
     if udp:
+        '''
         print "###[ UDP ]###"
         print "  sport: {}".format(udp.sport)
         print "  dport: {}".format(udp.dport)
         print "  length: {}".format(udp.len)
         print "  chksum: {}".format(udp.chksum)
         print "  udp payload length: {}".format(len(udp.payload))
-        
+        '''
         # packet_raw=raw(ip)
         # print len(packet_raw)
         # udp_raw=packet_raw[20:]
         # chksum = in4_chksum(socket.IPPROTO_UDP, pkt[IP], udp_raw)
         # print "scapy chksum:"+str(chksum)
     
-        print "###[ FLAG ]###"
-        print " flag: {}".format(flag.flag)
-        print " flag payload length: {}".format(len(flag.payload))
+        # print "###[ FLAG ]###"
+        # print " flag: {}".format(flag.flag)
+        # print " flag payload length: {}".format(len(flag.payload))
         
         if flag.flag&0b1000==0b1000:
             mih=MIH(str(flag.payload))
@@ -107,30 +109,31 @@ def handle_pkt(pkt):
 
         elif flag.flag&0b010==0b010: 
             sfh=SFH(str(flag.payload))
-            print "###[ SFH ]###"
-            print "  sfh_switch_id: {}".format(sfh.sfh_switch_id)
-            #print "  sfh_sketch_fg: {}".format(sfh.sfh_sketch_fg)
-            print "  sfh_fgment_id: {}".format(sfh.sfh_fgment_id)
-            print "  sfh_delay0: {}".format(sfh.sfh_delay0)
-            print "  sfh_delay1: {}".format(sfh.sfh_delay1)
-            print "  sfh_delay2: {}".format(sfh.sfh_delay2)
-            print "  sfh_delay3: {}".format(sfh.sfh_delay3)
-            print "  sfh_delay4: {}".format(sfh.sfh_delay4)
-            print "  sfh_delay5: {}".format(sfh.sfh_delay5)
-            print "  sfh_delay6: {}".format(sfh.sfh_delay6)
-            print "  sfh_delay7: {}".format(sfh.sfh_delay7)
+            if (sfh.sfh_fgment_id==64 or sfh.sfh_fgment_id==63 or sfh.sfh_fgment_id==65 ) :
+                print "###[ SFH ]###"
+                print "  sfh_switch_id: {}".format(sfh.sfh_switch_id)
+                #print "  sfh_sketch_fg: {}".format(sfh.sfh_sketch_fg)
+                print "  sfh_fgment_id: {}".format(sfh.sfh_fgment_id)
+                print "  sfh_delay0: {}".format(sfh.sfh_delay0)
+                print "  sfh_delay1: {}".format(sfh.sfh_delay1)
+                print "  sfh_delay2: {}".format(sfh.sfh_delay2)
+                print "  sfh_delay3: {}".format(sfh.sfh_delay3)
+                print "  sfh_delay4: {}".format(sfh.sfh_delay4)
+                print "  sfh_delay5: {}".format(sfh.sfh_delay5)
+                print "  sfh_delay6: {}".format(sfh.sfh_delay6)
+                print "  sfh_delay7: {}".format(sfh.sfh_delay7)
             #print "  sfh_delay8: {}".format(sfh.sfh_delay8)
             #print "  sfh_delay9: {}".format(sfh.sfh_delay9)
             msg = sfh.payload
         else:
             msg=flag.payload
-        print "###[ MESSAGE ]###"
+        #print "###[ MESSAGE ]###"
         #
-        print (type(str(msg)))
-        print (msg)
-        print "msg length: {}".format(len(msg))
+        #print (type(str(msg)))
+        #print (msg)
+        #print "msg length: {}".format(len(msg))
 
-    print
+    #print
 
 def main():
     ifaces = filter(lambda i: 'eth' in i, os.listdir('/sys/class/net/'))

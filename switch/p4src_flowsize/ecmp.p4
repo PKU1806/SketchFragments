@@ -132,7 +132,7 @@ control MyIngress(inout headers hdr,
 
 	action _choose_fragment(bit<8> SFH_target_array){
 		meta.SFH_target_bucket = meta.SFH_index - 
-			(bit<32>)meta.SFH_target_array * BUCKET_NUM;
+			(bit<32>)SFH_target_array * BUCKET_NUM;
 		meta.SFH_target_array = SFH_target_array + (1 - meta.sketch_fg) * 3;
 	}
 
@@ -182,6 +182,7 @@ control MyIngress(inout headers hdr,
 	   array2.read(meta.tmp27,meta.SFH_target_bucket*BIN_NUM+7);
 	   //array2.read(meta.tmp28,meta.SFH_target_bucket*BIN_NUM+8);
 	   //array2.read(meta.tmp29,meta.SFH_target_bucket*BIN_NUM+9);
+		
 
 	   if(meta.SFH_target_array==0){
 		   hdr.SFH.sfh_delay0=meta.tmp00;
@@ -500,7 +501,7 @@ control MyEgress(inout headers hdr,
 		COMPUTE_ARRAY_HASH(4)
 		COMPUTE_ARRAY_HASH(5)
 
-		bit<32>tmp_min=0x5fffffff;
+		bit<32>tmp_min=0x5fff_ffff;
 
 		array3.read(meta.array_value3, (meta.array_index3 * BIN_NUM + meta.delay_lev));
 		if(tmp_min>=meta.array_value3){
