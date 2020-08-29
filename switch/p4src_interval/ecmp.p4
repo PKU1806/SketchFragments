@@ -431,7 +431,7 @@ control MyEgress(inout headers hdr,
                 meta.swap_control = (bit<8>)hdr.tcp.SFH_fg;
             }
             else  if(hdr.udp.isValid()){
-                meta.swap_control = (hdr.flag.flag&0b010)>>1;
+                meta.swap_control = (hdr.flag.flag&0b1000)>>3;
             }
             
             /*********  log code starts here  ********* */

@@ -145,7 +145,7 @@ class packetReceicer(threading.Thread):
         interval=tmp_interval[-9:-6]+"s "+tmp_interval[-6:-3]+"ms "+tmp_interval[-3:]+"us"
         sketch_fg=(cpu.flags>>1)&0x1;
         has_SFH=cpu.flags&0x1;
-        type=(cpu.flags>>2);
+        type=(cpu.flags>>2)&0x1;
 
         
         logs.write('{"switch name":"'+self.sw_name+'",')
@@ -160,6 +160,9 @@ class packetReceicer(threading.Thread):
         if type==0:
             logs.write('",'+'"using sketch":"'+str(sketch_fg)+'",')
             logs.write('"bring SFH":"'+str(bool(has_SFH)))
+        else :
+            logs.write('",'+'"using sketch":"'+str(sketch_fg)+'",')
+            logs.write('"bring MIH":"'+str(bool(has_SFH)))
         logs.write(" }}\n")
         logs.close()
 
