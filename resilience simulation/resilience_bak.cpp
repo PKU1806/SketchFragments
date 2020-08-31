@@ -6,33 +6,18 @@
 #include <algorithm>
 #include <ctime>
 
-#include <unordered_map>
-
 using namespace std;
 
 vector<pair<string, vector<string>>> up_link;
 vector<pair<string, vector<string>>> down_link;
-
-unordered_map<string, vector<string>> up_link_map;
-unordered_map<string, vector<string>> down_link_map;
-
-vector<string> server = {"h1", "h2", "h3", "h4", "h5", "h6", "h7", "h8", "h9", "h10", "h11", "h12", "h13", "h14", "h15", "h16"};
-vector<string> switch_ = {"s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12", "s13", "s14", "s15", "s16", "s17", "s18", "s19", "s20"};
-
 vector<string> done_server;
-
-unordered_map<string, bool*> switch_repo;
-unordered_map<string, int> switch_repo_size;
-
-unordered_map<string, bool> is_server;
-unordered_map<string, bool> is_done_server;
-unordered_map<string, bool> is_aggregated_switch;
-
+vector<string> server = {"h1", "h2", "h3", "h4", "h5", "h6", "h7", "h8", "h9", "h10", "h11", "h12", "h13", "h14", "h15", "h16"};
+vector<pair<string, vector<int>>> fragments;
+vector<string> aggregated_switch_array;
 int server_num = 16;
 int switch_num = 20;
 int random_bound = 10;
-// int sketch_fragment_num = 65536 * 3;
-int sketch_fragment_num;
+int sketch_fragment_num = 64 * 3;
 
 void init_up_link(vector<pair<string, vector<string>>> &link){
     link.push_back(make_pair("h1", vector<string> {"s13"}));
@@ -93,6 +78,29 @@ void init_down_link(vector<pair<string, vector<string>>> &link){
 
 }
 
+void init_fragments(vector<pair<string, vector<int>>> &arr){
+    arr.push_back(make_pair("s1", vector<int> {}));
+    arr.push_back(make_pair("s2", vector<int> {}));
+    arr.push_back(make_pair("s3", vector<int> {}));
+    arr.push_back(make_pair("s4", vector<int> {}));
+    arr.push_back(make_pair("s5", vector<int> {}));
+    arr.push_back(make_pair("s6", vector<int> {}));
+    arr.push_back(make_pair("s7", vector<int> {}));
+    arr.push_back(make_pair("s8", vector<int> {}));
+    arr.push_back(make_pair("s9", vector<int> {}));
+    arr.push_back(make_pair("s10", vector<int> {}));
+    arr.push_back(make_pair("s11", vector<int> {}));
+    arr.push_back(make_pair("s12", vector<int> {}));
+    arr.push_back(make_pair("s13", vector<int> {}));
+    arr.push_back(make_pair("s14", vector<int> {}));
+    arr.push_back(make_pair("s15", vector<int> {}));
+    arr.push_back(make_pair("s16", vector<int> {}));
+    arr.push_back(make_pair("s17", vector<int> {}));
+    arr.push_back(make_pair("s18", vector<int> {}));
+    arr.push_back(make_pair("s19", vector<int> {}));
+    arr.push_back(make_pair("s20", vector<int> {}));
+}
+
 void done_k_server(int done_num, vector<string> &done_server){
     int done_count = 0;
 	while (done_count != done_num){
@@ -101,75 +109,51 @@ void done_k_server(int done_num, vector<string> &done_server){
 		if (find(done_server.begin(), done_server.end(), str) == done_server.end()){
 			done_server.push_back(str);
 			done_count++;
-			cout << "done server: " << str << endl;
 		}
 	}
 }
 
-string next_node(unordered_map<string, vector<string>> & link_map, string current_node,
-	   	unordered_map<string, bool> & is_pass_node){
+string next_node(vector<pair<string, vector<string>>> link, string current_node, vector<string> &pass_node){
     string node;
-    vector<string> next_node_vector = link_map[current_node];
-
+    vector<string> next_node_vector;
+    for(vector<pair<string, vector<string>>>::iterator it = link.begin(); it != link.end(); ++it){
+        if((*it).first == current_node){
+            next_node_vector = (*it).second;
+            break;
+        }
+    }
     if(next_node_vector.size() == 1){
         return next_node_vector[0];
     }else{
         int index = rand() % next_node_vector.size();
-        while(is_pass_node[next_node_vector[index]]){
+        while(find(pass_node.begin(), pass_node.end(), next_node_vector[index]) != pass_node.end()){
             index = rand() % next_node_vector.size();
         }
         return next_node_vector[index];
     }
 }
 
-void aggregator(string switch_id, int fragment_id, int &aggregated_sketch_num){
-	auto aggregated_fragments = switch_repo[switch_id];
+void aggregator(vector<pair<string, vector<int>>> &arr, vector<string> &aggregated_switch_array, string switch_id, int fragment_id, int &aggregated_sketch_num){
+    for(vector<pair<string, vector<int>>>::iterator it = arr.begin(); it != arr.end(); ++it){
+        //若该碎片还未收集过，则插入
+        if((*it).first == switch_id && find((*it).second.begin(), (*it).second.end(), fragment_id) == (*it).second.end()){
+            (*it).second.push_back(fragment_id);
 
-	if (!aggregated_fragments[fragment_id]) {
-		aggregated_fragments[fragment_id] = true;
-		switch_repo_size[switch_id] += 1;
+			if((*it).second.size() == sketch_fragment_num){
+				if(find(aggregated_switch_array.begin(), aggregated_switch_array.end(), switch_id) == aggregated_switch_array.end()){
+					aggregated_switch_array.push_back(switch_id);
+					aggregated_sketch_num++;
+					cout<<"switch "<<switch_id<<" has been aggregated!"<<endl;
+				}
+			}
 
-		if (switch_repo_size[switch_id] == sketch_fragment_num) {
-			is_aggregated_switch[switch_id] = true;
-			aggregated_sketch_num++;
-
-			cout<<"switch "<<switch_id<<" has been aggregated!"<<endl;
-		}
-	}
-}
-
-void init() {
-	for (auto server_name : server) {
-		is_server[server_name] = true;
-	}
-
-	for (auto done_server_name : done_server) {
-		is_done_server[done_server_name] = true;
-	}
-
-	for (auto link_pair : up_link) {
-		up_link_map[link_pair.first] = link_pair.second;
-	}
-
-	for (auto link_pair : down_link) {
-		down_link_map[link_pair.first] = link_pair.second;
-	}
-
-	for (auto switch_name : switch_) {
-		switch_repo_size[switch_name] = 0;
-		switch_repo[switch_name] = new bool[sketch_fragment_num];
-		for (int i = 0; i < sketch_fragment_num; i++) {
-			switch_repo[switch_name][i] = false;
-		}
-	}
+            break;
+        }
+    }
 }
 
 int main()
 {
-	cout<<"Please input the sketch_fragment_num * 3: ";
-	cin>>sketch_fragment_num;
-	sketch_fragment_num = sketch_fragment_num * 3;
-
 	int done_num;
 	cout<<"Please input the done_server_num: ";
 	cin>>done_num;
@@ -177,13 +161,12 @@ int main()
     int packet_num = 0;
     int aggregated_sketch_num = 0;
 
-    srand((unsigned)time(0));
+    // srand((unsigned)time(0));
 
     init_up_link(up_link);
     init_down_link(down_link);
+    init_fragments(fragments);
     done_k_server(done_num, done_server);
-
-	init();
 
     while(aggregated_sketch_num != switch_num){
         if(done_server.size() < server_num - 1 ){
@@ -194,21 +177,19 @@ int main()
 
             int send_server_index = rand() % server_num + 1;
             string send_server = "h" + to_string(send_server_index);
-
-            while(is_done_server[send_server]){
+            while(find(done_server.begin(), done_server.end(), send_server) != done_server.end()){
                 send_server_index = rand() % server_num + 1;
                 send_server = "h" + to_string(send_server_index);
             }
 
             int count = 0; //跳数
             string current_node = send_server;
-
-            unordered_map<string, bool> is_pass_node;
-			is_pass_node[send_server] = true;
+            vector<string> pass_node_array;
+            pass_node_array.push_back(send_server);
 
             while(count <= 6){
                 if(direction_flag == 0){
-                    string NextNode = next_node(up_link_map, current_node, is_pass_node);
+                    string NextNode = next_node(up_link, current_node, pass_node_array);
 
                     //若还未携带碎片
                     if(fragment_flag == 0){
@@ -236,9 +217,9 @@ int main()
                     current_node = NextNode;
 
                 }else{
-                    string NextNode = next_node(down_link_map, current_node, is_pass_node);
+                    string NextNode = next_node(down_link, current_node, pass_node_array);
                     //若还未到达服务器
-                    if(!is_server[NextNode]){
+                    if(find(server.begin(), server.end(), NextNode) == server.end()){
                         //若还未携带碎片
                         if(fragment_flag == 0){
                             int temp = rand() % random_bound;
@@ -248,11 +229,12 @@ int main()
                                 fragment_id = rand() % sketch_fragment_num;
                                 fragment_flag = 1;
                             }
+
                         }
                     }else{
                         //若到达的服务器未done掉且携带了碎片，则收集碎片
-                        if(!is_done_server[NextNode] && fragment_flag == 1){
-                            aggregator(fragment_switch_id, fragment_id, aggregated_sketch_num);
+                        if(find(done_server.begin(), done_server.end(), NextNode) == done_server.end() && fragment_flag == 1){
+                            aggregator(fragments, aggregated_switch_array, fragment_switch_id, fragment_id, aggregated_sketch_num);
                         }
                         break;
                     }
