@@ -32,7 +32,7 @@ int server_num = 16;
 int switch_num = 20;
 int random_bound = 10;
 // int sketch_fragment_num = 65536 * 3;
-int sketch_fragment_num = 16 * 3;
+int sketch_fragment_num = 32 * 3;
 
 void init_up_link(vector<pair<string, vector<string>>> &link){
     link.push_back(make_pair("h1", vector<string> {"s13"}));
@@ -168,11 +168,13 @@ int main()
     int packet_num = 0;
     int aggregated_sketch_num = 0;
 
-    srand((unsigned)time(0));
+    // srand((unsigned)time(0));
 
     init_up_link(up_link);
     init_down_link(down_link);
     done_k_server(done_num, done_server);
+
+	init();
 
     while(aggregated_sketch_num != switch_num){
         if(done_server.size() < server_num - 1 ){
@@ -183,7 +185,8 @@ int main()
 
             int send_server_index = rand() % server_num + 1;
             string send_server = "h" + to_string(send_server_index);
-            while(!is_done_server[send_server]){
+
+            while(is_done_server[send_server]){
                 send_server_index = rand() % server_num + 1;
                 send_server = "h" + to_string(send_server_index);
             }
@@ -193,6 +196,7 @@ int main()
 
             unordered_map<string, bool> is_pass_node;
 			is_pass_node[send_server] = true;
+
 
             while(count <= 6){
                 if(direction_flag == 0){
