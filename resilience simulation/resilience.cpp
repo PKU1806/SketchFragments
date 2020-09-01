@@ -109,7 +109,7 @@ void done_k_server(int done_num, vector<string> &done_server){
 string next_node(unordered_map<string, vector<string>> & link_map, string current_node,
 	   	unordered_map<string, bool> & is_pass_node){
     string node;
-    vector<string> next_node_vector = link_map[current_node];
+    vector<string> & next_node_vector = link_map[current_node];
 
     if(next_node_vector.size() == 1){
         return next_node_vector[0];
@@ -139,6 +139,7 @@ void aggregator(string switch_id, int fragment_id, int &aggregated_sketch_num){
 }
 
 void init() {
+
 	for (auto server_name : server) {
 		is_server[server_name] = true;
 	}
@@ -174,10 +175,14 @@ int main()
 	cout<<"Please input the done_server_num: ";
 	cin>>done_num;
 
+	int seed;
+	cout<<"Please input the random seed: ";
+	cin>>seed;
+
+	srand(seed);
+
     int packet_num = 0;
     int aggregated_sketch_num = 0;
-
-    srand((unsigned)time(0));
 
     init_up_link(up_link);
     init_down_link(down_link);
@@ -267,9 +272,14 @@ int main()
         }
 
         packet_num++;
+        if (packet_num % 100000 == 0) {
+            cout << "packet num: " << packet_num << endl;
+        }
     }
 
     cout<<"It has sent "<<packet_num<<" packets!"<<endl;
+
+    cout << "The run time is: " <<(double)clock() / CLOCKS_PER_SEC << "s" << endl;
 
     return 0;
 }
