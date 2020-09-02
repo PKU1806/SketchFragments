@@ -21,6 +21,8 @@
 启动switch/script/monitor.py
 # error生成
 启动switch/script/error.py
+# priority生成
+见switch文件夹下的readme
 # 简易scapy收发包
 配合mx命令，启动switch/script/simple_sender.py  switch/script/simple_receiver.py 
 # hint 
