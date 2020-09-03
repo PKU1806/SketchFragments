@@ -4,6 +4,8 @@
 /etc/correctness/*.csv
 /etc/correctness/*.xlsx
 
+/client/client_flowsize/host.config
+
 /switch/switch_log/*
 /switch/router.log
 
@@ -11,6 +13,8 @@
 /switch/p4src_flowsize/pcap/*
 /switch/p4src_flowsize/ecmp.p4i
 /switch/p4src_flowsize/ecmp.json
+/switch/p4src_flowsize/ecmp_priority.p4i
+/switch/p4src_flowsize/ecmp_priority.json
 /switch/p4src_flowsize/topology.db
 
 
@@ -18,4 +22,6 @@
 /switch/p4src_interval/pcap/*
 /switch/p4src_interval/ecmp.p4i
 /switch/p4src_interval/ecmp.json
+/switch/p4src_interval/ecmp_priority.p4i
+/switch/p4src_interval/ecmp_priority.json
 /switch/p4src_interval/topology.db

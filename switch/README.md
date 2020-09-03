@@ -52,3 +52,18 @@ folder：
 2. the packet's compatibility：solved
 
 
+# core switch priority set
+1. Go to the directory where you have bmv2 installed. Go to PATH_TO_BMV2/targets/simple_switch/simple_switch.h. look for the line // #define SSWITCH_PRIORITY_QUEUEING_ON and uncomment it.
+
+2. Compile and install bmv2 again.
+
+3. Copy and edit PATH_TO_P4C/p4include/v1model.p4 in another location. You will have to add the following metadata fields inside the standard_metadata struct. You can find a v1model.p4 with that added already in this directory.
+
+    @alias("queueing_metadata.qid")           bit<5>  qid;
+    @alias("intrinsic_metadata.priority")     bit<3> priority;
+
+4. Copy the v1model.p4 to the global path: cp v1model.p4 /usr/local/share/p4c/p4include/. Remember that every time you update p4c this file will be overwritten and the metadata fields might be removed.
+
+5. 启动mininet
+6. 在CLI中输入`p4switch_reboot sw_name --p4src ecmp_priority.p4`
+7. 开始其余正常步骤

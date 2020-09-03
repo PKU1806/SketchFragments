@@ -7,6 +7,7 @@
 #include <ctime>
 
 #include <unordered_map>
+#include <windows.h>
 
 using namespace std;
 
@@ -133,12 +134,18 @@ void aggregator(string switch_id, int fragment_id, int &aggregated_sketch_num){
 			is_aggregated_switch[switch_id] = true;
 			aggregated_sketch_num++;
 
-			cout<<"switch "<<switch_id<<" has been aggregated!"<<endl;
+			//cout<<"switch "<<switch_id<<" has been aggregated!"<<endl;
 		}
 	}
 }
 
 void init() {
+    up_link_map.clear();
+    down_link_map.clear();
+    is_done_server.clear();
+    is_server.clear();
+    is_aggregated_switch.clear();
+
 
 	for (auto server_name : server) {
 		is_server[server_name] = true;
@@ -165,32 +172,27 @@ void init() {
 	}
 }
 
-int main()
-{
-	cout<<"Please input the sketch_fragment_num * 3: ";
-	cin>>sketch_fragment_num;
-	sketch_fragment_num = sketch_fragment_num * 3;
+void delete_memory(){
+    for (auto switch_name : switch_){
+        delete switch_repo[switch_name];
+    }
+}
 
-	int done_num;
-	cout<<"Please input the done_server_num: ";
-	cin>>done_num;
-
-	int seed;
-	cout<<"Please input the random seed: ";
-	cin>>seed;
-
-	srand(seed);
-
+int resilience_simulation(int done_num, int iterator_index){
     int packet_num = 0;
     int aggregated_sketch_num = 0;
 
+    srand(iterator_index);
+
+    done_server = {};
     init_up_link(up_link);
     init_down_link(down_link);
     done_k_server(done_num, done_server);
 
 	init();
 
-    while(aggregated_sketch_num != switch_num){
+    DWORD time_start = GetTickCount();
+    while(aggregated_sketch_num != switch_num && (GetTickCount() - time_start) <= 300){
         if(done_server.size() < server_num - 1 ){
             int direction_flag = 0; // 0 is up, 1 is down;
             int fragment_flag = 0; // 0 表示未携带碎片
@@ -272,14 +274,43 @@ int main()
         }
 
         packet_num++;
-        if (packet_num % 100000 == 0) {
-            cout << "packet num: " << packet_num << endl;
-        }
+
     }
+
+    delete_memory();
 
     cout<<"It has sent "<<packet_num<<" packets!"<<endl;
 
-    cout << "The run time is: " <<(double)clock() / CLOCKS_PER_SEC << "s" << endl;
+    return aggregated_sketch_num;
+}
+
+int main()
+{
+	cout<<"Please input the sketch_fragment_num * 3: ";
+	cin>>sketch_fragment_num;
+	sketch_fragment_num = sketch_fragment_num * 3;
+
+	int done_num;
+	cout<<"Please input the done_server_num: ";
+	cin>>done_num;
+
+	int reduction_num = 0;
+	double avg_aggregated_rate = 0.0;
+
+	for(int i = 0; i < 1000; ++i){
+        cout<<"Seed = "<<i<<endl;
+        int aggregated_num = resilience_simulation(done_num, i);
+        cout<<"Aggregated rate: ("<<aggregated_num<<"/"<<switch_num<<")"<<endl;
+        avg_aggregated_rate += (double)aggregated_num/switch_num;
+        if(aggregated_num == switch_num){
+            reduction_num++;
+        }
+	}
+
+	avg_aggregated_rate /= 1000;
+
+	cout<<"Reduction rate: ("<<reduction_num<<"/1000)"<<endl;
+	cout<<"avg_aggregated_rate: "<<avg_aggregated_rate;
 
     return 0;
 }
