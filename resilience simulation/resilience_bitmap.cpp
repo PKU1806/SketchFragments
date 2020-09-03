@@ -21,8 +21,11 @@ vector<string> switch_ = {"s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", 
 
 vector<string> done_server;
 
-unordered_map<string, bool*> switch_repo;
 unordered_map<string, int> switch_repo_size;
+unordered_map<string, bool*> switch_repo;
+unordered_map<string, bool*> switch_bitmap_1;
+unordered_map<string, bool*> switch_bitmap_2;
+unordered_map<string, bool*> switch_bitmap_3;
 
 unordered_map<string, bool> is_server;
 unordered_map<string, bool> is_done_server;
@@ -32,7 +35,9 @@ int server_num = 16;
 int switch_num = 20;
 int random_bound = 10;
 // int sketch_fragment_num = 65536 * 3;
+
 int sketch_fragment_num;
+int bitmap_stage_num;
 
 void init_up_link(vector<pair<string, vector<string>>> &link){
     link.push_back(make_pair("h1", vector<string> {"s13"}));
@@ -157,11 +162,51 @@ void init() {
 
 	for (auto switch_name : switch_) {
 		switch_repo_size[switch_name] = 0;
+
 		switch_repo[switch_name] = new bool[sketch_fragment_num];
 		for (int i = 0; i < sketch_fragment_num; i++) {
 			switch_repo[switch_name][i] = false;
 		}
+
+		switch_bitmap_1[switch_name] = new bool[sketch_fragment_num];
+		switch_bitmap_2[switch_name] = new bool[sketch_fragment_num];
+		switch_bitmap_3[switch_name] = new bool[sketch_fragment_num];
+		for (int i = 0; i < sketch_fragment_num; i++) {
+			switch_bitmap_1[switch_name][i] = false;
+			switch_bitmap_2[switch_name][i] = false;
+			switch_bitmap_3[switch_name][i] = false;
+		}
 	}
+}
+
+int fragmentSelect(string switch_id) {
+	int fragment_id;
+	
+	if (bitmap_stage_num >= 1) {
+		fragment_id = rand() % sketch_fragment_num;
+		if (switch_bitmap_1[switch_id][fragment_id] == false) {
+			switch_bitmap_1[switch_id][fragment_id] = true;
+			return fragment_id;
+		}
+	}
+
+	if (bitmap_stage_num >= 2) {
+		fragment_id = rand() % sketch_fragment_num;
+		if (switch_bitmap_2[switch_id][fragment_id] == false) {
+			switch_bitmap_2[switch_id][fragment_id] = true;
+			return fragment_id;
+		}
+	}
+
+	if (bitmap_stage_num >= 3) {
+		fragment_id = rand() % sketch_fragment_num;
+		if (switch_bitmap_3[switch_id][fragment_id] == false) {
+			switch_bitmap_3[switch_id][fragment_id] = true;
+			return fragment_id;
+		}
+	}
+
+	return rand() % sketch_fragment_num;
 }
 
 int main()
@@ -173,6 +218,9 @@ int main()
 	int done_num;
 	cout<<"Please input the done_server_num: ";
 	cin>>done_num;
+
+	cout<<"Please input the bitmap_stage_num: ";
+	cin >> bitmap_stage_num;
 
     int packet_num = 0;
     int aggregated_sketch_num = 0;
@@ -216,7 +264,7 @@ int main()
                         //以1/random_bound概率携带碎片
                         if(temp == 0){
                             fragment_switch_id = NextNode;
-                            fragment_id = rand() % sketch_fragment_num;
+                            fragment_id = fragmentSelect(fragment_switch_id);
                             fragment_flag = 1;
                         }
 
@@ -245,7 +293,7 @@ int main()
                             //以1/random_bound概率携带碎片
                             if(temp == 0){
                                 fragment_switch_id = NextNode;
-                                fragment_id = rand() % sketch_fragment_num;
+                                fragment_id = fragmentSelect(fragment_switch_id);
                                 fragment_flag = 1;
                             }
                         }
