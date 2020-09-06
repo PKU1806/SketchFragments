@@ -1,12 +1,14 @@
 #include <iostream>
 #include <cstdlib>
+#include <cstdio>
 #include <string>
 #include <vector>
 #include <utility>
 #include <algorithm>
 #include <ctime>
-
+#include <cstring>
 #include <unordered_map>
+#include <fstream>
 
 using namespace std;
 
@@ -181,7 +183,7 @@ void init() {
 
 int fragmentSelect(string switch_id) {
 	int fragment_id;
-	
+
 	if (bitmap_stage_num >= 1) {
 		fragment_id = rand() % sketch_fragment_num;
 		if (switch_bitmap_1[switch_id][fragment_id] == false) {
@@ -209,23 +211,22 @@ int fragmentSelect(string switch_id) {
 	return rand() % sketch_fragment_num;
 }
 
-int main()
+int main(int argc, char **argv)
 {
-	cout<<"Please input the sketch_fragment_num * 3: ";
-	cin>>sketch_fragment_num;
-	sketch_fragment_num = sketch_fragment_num * 3;
+    if (argc != 5) {
+		perror("args error.");
+		exit(1);
+	}
 
-	int done_num;
-	cout<<"Please input the done_server_num: ";
-	cin>>done_num;
+	sketch_fragment_num = atoi(argv[1]) * 3;
+	bitmap_stage_num = atoi(argv[2]);
+	int done_num = atoi(argv[3]);
+	int random_seed = atoi(argv[4]);
 
-	cout<<"Please input the bitmap_stage_num: ";
-	cin >> bitmap_stage_num;
-
-    int packet_num = 0;
+    long long int packet_num = 0;
     int aggregated_sketch_num = 0;
 
-    srand((unsigned)time(0));
+    srand(random_seed);
 
     init_up_link(up_link);
     init_down_link(down_link);
@@ -321,6 +322,12 @@ int main()
     }
 
     cout<<"It has sent "<<packet_num<<" packets!"<<endl;
+
+    ofstream out;
+    string log_filename = "log_" + to_string(sketch_fragment_num) + ".txt";
+    out.open(log_filename, ios::trunc | ios::out);
+    out << sketch_fragment_num << " " << bitmap_stage_num << " " << done_num << " " << random_seed << ": packet_num = "<< packet_num <<endl;
+    out.close();
 
     return 0;
 }
