@@ -416,6 +416,13 @@ control MyEgress(inout headers hdr,
                             update_MIH.apply();
                         }
                     }
+                    random(meta.random_number, (bit<32>)0, (bit<32>)10);
+					if(meta.random_number==5){
+						standard_metadata.priority=7;
+					}
+					else{
+						standard_metadata.priority=0;
+					}
                 }
             }   
             meta.switch_delay = standard_metadata.egress_global_timestamp-standard_metadata.ingress_global_timestamp;

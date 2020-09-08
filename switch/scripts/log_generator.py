@@ -75,7 +75,7 @@ class packetReceicer(threading.Thread):
 
         self.gen_per_packet_log(cpu)
         self.collect_log(cpu)
-        if(self.counter%100==0):
+        if(self.counter%1000==0):
             self.gen_log()
 
     def gen_log(self):
@@ -106,7 +106,7 @@ class packetReceicer(threading.Thread):
         else:
             self.flow[flow_key]={"packnum":1,"0->1":0,"1->2":0,\
                 "2->3":0,"3->4":0,"4->5":0,"5->6":0,"6->7":0\
-                ,"7->8":0,"8->9":0,"9+":0}
+                ,"7+":0}#"7->8":0,"8->9":0,"9+":0}
             self.flow[flow_key][self.get_lev(cpu.delay)]+=1
             
     def get_lev(self,delay):
@@ -125,12 +125,12 @@ class packetReceicer(threading.Thread):
             return "5->6"
         elif delay<time_interval*7:
             return "6->7"
-        elif delay<time_interval*8:
-            return "7->8"
-        elif delay<time_interval*9:
-            return "8->9"
+        # elif delay<time_interval*8:
+        #     return "7->8"
+        # elif delay<time_interval*9:
+        #     return "8->9"
         else:
-            return "9+"
+            return "7+"
 
 
     def gen_per_packet_log(self,cpu):
@@ -145,7 +145,7 @@ class packetReceicer(threading.Thread):
         interval=tmp_interval[-9:-6]+"s "+tmp_interval[-6:-3]+"ms "+tmp_interval[-3:]+"us"
         sketch_fg=(cpu.flags>>1)&0x1;
         has_SFH=cpu.flags&0x1;
-        type=(cpu.flags>>2);
+        type=(cpu.flags>>2)&0x1;
 
         
         logs.write('{"switch name":"'+self.sw_name+'",')
@@ -160,6 +160,9 @@ class packetReceicer(threading.Thread):
         if type==0:
             logs.write('",'+'"using sketch":"'+str(sketch_fg)+'",')
             logs.write('"bring SFH":"'+str(bool(has_SFH)))
+        else :
+            logs.write('",'+'"using sketch":"'+str(sketch_fg)+'",')
+            logs.write('"bring MIH":"'+str(bool(has_SFH)))
         logs.write(" }}\n")
         logs.close()
 
