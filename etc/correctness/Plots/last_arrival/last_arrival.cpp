@@ -1,12 +1,13 @@
-#include"Interval_old.h"
+//#include"Interval_old.h"
+#include <bits/stdc++.h>
+#include "param.h"
 #include"Interval.h"
 #include"packet.h"
-
 using namespace std;
 
 const int N = 1000000;
 //const int N = 1000;
-int topkthres = 1000;
+
 map<flow_t, vector<double>> GT;
 map<flow_t, uint32_t> flowmap;
 
@@ -58,7 +59,9 @@ int calcu(ofstream &stlog){
     
     map<flow_t, timestamp_t> sketch_flow_last_timestamp;
     map<flow_t, timestamp_t> sketch_flow_max_interval;
-    
+    double aae = 0;
+    double correct_cnt = 0;
+    double allcnt = 0;
     rep2(i, 1, N){
         if(i %(N/10) == 0) std::cout << "Loading... "<< i/(N/100) << '%' << endl;
         k2_128 = 0, k1 = 0;
@@ -71,12 +74,25 @@ int calcu(ofstream &stlog){
         else{
             flowmap[k2_128] += 1;
         }
+
+        double sketch_last_ts = sketch->last_arrival(k2_128);
         sketch->insert(k2_128, k1);
         //sketch_old->insert(k2_128,k1);
         //initialize ground truth
+        double gt_last_ts = 0;
         if(sketch_flow_last_timestamp.find(k2_128)==sketch_flow_last_timestamp.end()){
             sketch_flow_last_timestamp.insert(make_pair(k2_128, k1));
+            gt_last_ts = 0;
         }
+        else{
+            gt_last_ts = sketch_flow_last_timestamp[k2_128];
+        }
+        if(ABS(gt_last_ts)>1e-9){
+            aae += ABS(gt_last_ts-sketch_last_ts);
+            if(ABS(gt_last_ts-sketch_last_ts) < 1e-9) correct_cnt += 1;
+            allcnt += 1;
+        }
+
         if(sketch_flow_max_interval.find(k2_128)==sketch_flow_max_interval.end()){
             sketch_flow_max_interval.insert(make_pair(k2_128, 0));
         }
@@ -85,13 +101,17 @@ int calcu(ofstream &stlog){
         sketch_flow_last_timestamp[k2_128] = k1;
         //if(gt_interval>GTMAX) GTMAX = gt_interval;
     }
+    aae /= allcnt;
+    correct_cnt /= allcnt;
+    stlog << Row_Num*Buck_Num_PerRow*2*8/1024 << ',' << correct_cnt << ',' << aae << endl;
+    /*
     double are = 0;
     double are_old = 0;
     double cnt = 0.0;
     double correct_cnt = 0.0;
     double wrong_cnt = 0.0;
     
-    int topk = topkthres;
+    int topk = 1000;
     int falsecnt = 0;
     vector<pair<flow_t,unsigned>> sorttmp;
     map<flow_t, unsigned>::iterator sortit = flowmap.begin();
@@ -120,33 +140,24 @@ int calcu(ofstream &stlog){
     cout << "are is     " << are << endl;
     //cout << "are_old is " << are_old << endl;
     cout << GTMAX << endl;
-    stlog << topkthres << ',' << are << endl;
+    stlog << (double)Buck_Num_PerRow*Row_Num*2*8/1024 << ',' << are << endl;
     //if(sketch_old) delete sketch_old;
+    */
     if(sketch) delete sketch;
     if(delay_hash) delete delay_hash;
     return 0;
 }
 
 int main(){
-    ofstream stlog("./row2_maxinterval_topk.csv", std::ios::out | std::ios::trunc);
-    double basic_buck_num = 65536;
-    Row_Num = 2;
-    stlog << "top-k, ARE" << endl;
-    topkthres = 10;
-    while(topkthres <= 50000){
-        Buck_Num_PerRow = (int)((double)basic_buck_num*3/(double)Row_Num);
-        calcu(stlog);
-        if(topkthres <= 100) topkthres += 10;
-        else if(topkthres <= 1000) topkthres += 100;
-        else if(topkthres <= 10000) topkthres += 1000;
-        else topkthres += 10000;
-    }
-    /*
+    ofstream stlog("./row6_lastarrival_memory.csv", std::ios::out | std::ios::trunc);
+    double basic_buck_num = 2048;
+    Row_Num = 6;
+    stlog << "Memory(kB), Correct Rate, AAE" << endl;
     while(basic_buck_num <= 1024*1024*4){
         Buck_Num_PerRow = (int)((double)basic_buck_num*3/(double)Row_Num);
         cout << Buck_Num_PerRow << endl;
         calcu(stlog);
         basic_buck_num *= 2;
-    }*/
+    }
     return 0;
 }

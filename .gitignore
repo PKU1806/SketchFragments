@@ -1,4 +1,5 @@
 /.vscode/
+/.idea/
 /utils/__pycache__
 /etc/correctness/*.out
 /etc/correctness/*.csv

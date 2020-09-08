@@ -127,4 +127,12 @@ public:
         }
         return Min;
     }
+    double last_arrival(const flow_t &flow){
+        double Min = 1e100;
+        rep2(i, 0, Row_Num){
+            double last_ts = tsRow[i]->query(flow);
+            if(last_ts < Min) Min = last_ts;
+        }
+        return Min;
+    }
 };
