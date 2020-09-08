@@ -324,8 +324,8 @@ control MyIngress(inout headers hdr,
 			hdr.ipv4.dstAddr,
 			meta.ipv4_srcPort,
 			meta.ipv4_dstPort,
-			hdr.ipv4.protocol,
-			 tmp
+			hdr.ipv4.protocol
+			// tmp
 			},
 			num_nhops);
 

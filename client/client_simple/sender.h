@@ -7,14 +7,14 @@
 namespace Simulator {
 
 struct Sender : Host {
-	std::string recv_ip;
+	std::string send_ip, recv_ip;
 
 	sockaddr_in addr_recv;
 	SEND_Header send_header;
 
 	int recv_port, sock_fd, addr_len, header_len;
 
-	Sender(std::string ip, int port, std::string pid) : Host(pid) {
+	Sender(std::string sip, std::string rip, int port, std::string pid) : Host(pid) {
 
 		sock_fd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -23,7 +23,8 @@ struct Sender : Host {
 			exit(1);
 		}
 
-		recv_ip = ip;
+		send_ip = sip;
+		recv_ip = rip;
 		recv_port = port;
 
 		// printf("ip: %s, port: %d\n", recv_ip.c_str(), recv_port);
@@ -49,13 +50,14 @@ struct Sender : Host {
 			// printf("send: %d / %d bytes (PKT : %d)\n", send_num, header_len, sendp);
 			// printf("recv ip: %s, recv port: %d\n", recv_ip.c_str(), recv_port);
 
+			printf("send (%6d) : %s -> %s.\n", sendp, send_ip.c_str(), recv_ip.c_str());
+
 			if (send_num < 0) {
 				perror("sendto error.");
 				exit(1);
 			}
 
-			// change to 0.1s
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			// std::this_thread::sleep_for(std::chrono::milliseconds(40));
 		}
 	}
 
