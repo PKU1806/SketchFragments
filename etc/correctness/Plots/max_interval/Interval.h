@@ -103,6 +103,8 @@ public:
             if(tsRow) delete tsRow;
             if(intRow) delete intRow;
         }
+        if(tsRow) delete tsRow;
+        if(intRow) delete intRow;
     }
     void insert(const flow_t &flow, const timestamp_t &ts){
         rep2(i, 0, Row_Num){

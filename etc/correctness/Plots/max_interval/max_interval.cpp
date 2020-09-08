@@ -28,11 +28,11 @@ int print_uint128(__uint128_t n) {
   return printf("%s", s);
 }
 
-int main(){
+int calcu(ofstream &stlog){
     srand(time(0));
-    interval_Sketch* sketch_old;
+    //interval_Sketch* sketch_old;
     MinMaxSketch* sketch;
-    sketch_old = new interval_Sketch(0);
+    //sketch_old = new interval_Sketch(0);
     sketch = new MinMaxSketch(0);
     /*
     rep2(i, 0, mistake_string.size()){
@@ -44,7 +44,7 @@ int main(){
     timestamp_t k1 = 0;
     flow_t k2_128 = 0;
     BOBHash32 *delay_hash; delay_hash = new BOBHash32(ABS(rand()%10));
-    
+    cout << 1 << endl;
     double GTMAX = 0;
     fin.read((char*)&k2_128, 13);
     fin.read((char*)&k1, sizeof(timestamp_t));
@@ -72,7 +72,7 @@ int main(){
             flowmap[k2_128] += 1;
         }
         sketch->insert(k2_128, k1);
-        sketch_old->insert(k2_128,k1);
+        //sketch_old->insert(k2_128,k1);
         //initialize ground truth
         if(sketch_flow_last_timestamp.find(k2_128)==sketch_flow_last_timestamp.end()){
             sketch_flow_last_timestamp.insert(make_pair(k2_128, k1));
@@ -91,7 +91,7 @@ int main(){
     double correct_cnt = 0.0;
     double wrong_cnt = 0.0;
     
-    int topk = 100;
+    int topk = 1000;
     int falsecnt = 0;
     vector<pair<flow_t,unsigned>> sorttmp;
     map<flow_t, unsigned>::iterator sortit = flowmap.begin();
@@ -105,20 +105,38 @@ int main(){
         flow_t flowname = sorttmp[j].first;
         timestamp_t max_interval = sketch->query(flowname);
         timestamp_t gt_max_interval = sketch_flow_max_interval[flowname];
-        timestamp_t old_max_interval = sketch_old->query(flowname);
+        //timestamp_t old_max_interval = sketch_old->query(flowname);
         //cout << max_interval << ',' << gt_max_interval << endl;
-        are_old += (ABS(gt_max_interval-old_max_interval))/(gt_max_interval);
+        //are_old += (ABS(gt_max_interval-old_max_interval))/(gt_max_interval);
         are += (ABS(gt_max_interval-max_interval))/(gt_max_interval);
         if(gt_max_interval>GTMAX) GTMAX = gt_max_interval;
     }
     
     are /= (topk);
-    are_old /= (topk);
+    //are_old /= (topk);
     cout << "flow number is " << flowmap.size() << endl;
     cout << "bucket number per row is " << Buck_Num_PerRow << endl;
     cout << "row number is " << Row_Num << endl;
     cout << "are is     " << are << endl;
-    cout << "are_old is " << are_old << endl;
+    //cout << "are_old is " << are_old << endl;
     cout << GTMAX << endl;
+    stlog << (double)Buck_Num_PerRow*Row_Num*2*8/1024 << ',' << are << endl;
+    //if(sketch_old) delete sketch_old;
+    if(sketch) delete sketch;
+    if(delay_hash) delete delay_hash;
+    return 0;
+}
+
+int main(){
+    ofstream stlog("./row3_top1000_lastarrival_memory.csv", std::ios::out | std::ios::trunc);
+    double basic_buck_num = 2048;
+    Row_Num = 3;
+    stlog << "Memory(kB), ARE" << endl;
+    while(basic_buck_num <= 1024*1024){
+        Buck_Num_PerRow = (int)((double)basic_buck_num*3/(double)Row_Num);
+        cout << Buck_Num_PerRow << endl;
+        calcu(stlog);
+        basic_buck_num *= 2;
+    }
     return 0;
 }
