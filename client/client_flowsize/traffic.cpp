@@ -32,26 +32,64 @@ map<string, string> host_pid, host_ip;
 
 std::mutex my_mutex;
 vector<int> udp_port_array;
-float lambda = 0.001;
+float lambda = 0.001; // 0.00005;
+
+vector<float> prob_array;
+vector<int> flow_size_array;
+
+inline int bigrand()
+{
+	return rand()%1000 + rand()%1000*1000 + rand()%1000*1000000;
+}
+
+void load_flowsize_distri(char file[])
+{
+	prob_array.clear();
+	flow_size_array.clear();
+
+    ifstream is(file, ios::in);
+    string buf;
+
+    int cnt = 0;
+    while (getline(is, buf))
+    {
+        int s, rd;
+        float p;
+        rd = sscanf(buf.c_str(), "%d 1 %f", &s, &p);
+        if (rd < 2)
+        	break;
+        prob_array.push_back(p);
+        flow_size_array.push_back(s);
+        cnt++;
+    }
+
+    printf("distribution loaded. (%d levels)\n", cnt);
+}
 
 int flow_size_generator(){
-    float prob_array[9] = {0.0, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99, 1.0};
-    int flow_size_array[9] = {100, 1000, 3000, 4000, 10000, 400000, 3000000, 90000000, 900000000};
+    // float prob_array[9] = {0.0, 0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99, 1.0};
+    // int flow_size_array[9] = {100, 1000, 3000, 4000, 10000, 400000, 3000000, 90000000, 900000000};
+
+	// only send 1 packet
+	// return 1; 
+
+    int num_lv = prob_array.size();
     
-    float prob = (float)(rand() % 101) / 100;
+    float prob = bigrand() / (1e9-1);
     int index;
 
     if (prob == prob_array[0]){
         return flow_size_array[0];
     }else{
-        for (int i = 1; i < 9; ++i){
+        for (int i = 0; i < num_lv; ++i){
             if (prob <= prob_array[i]){
                 index = i;
                 break;
             }
         }
 
-		return (int)(flow_size_array[index] - (prob_array[index] - prob)/(prob_array[index] - prob_array[index-1])*(flow_size_array[index] - flow_size_array[index-1]));
+		int size = (int)(flow_size_array[index] - (prob_array[index] - prob)/(prob_array[index] - prob_array[index-1])*(flow_size_array[index] - flow_size_array[index-1]));
+    	return size / 1460; // 1460 bit per pkt
     }
 
 }
@@ -197,12 +235,16 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
+	// distribution file
+	load_flowsize_distri("distri.txt");
+
 	int host_num = config_loader();
 	int conn_num = atoi(argv[1]); 
 	int count = 0;
 
 	while (count < conn_num)
 	{
+		// fixed port
 		int udp_port = rand() % 2000 + 20000;
 		if (find(udp_port_array.begin(), udp_port_array.end(), udp_port) == udp_port_array.end())
 		{

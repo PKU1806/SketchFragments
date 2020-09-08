@@ -161,35 +161,14 @@ if __name__ == "__main__":
 	Monitor("s9",args.p).sketch_swap()
 	Monitor("s10",args.p).sketch_swap()
 	'''
-	monitor_1 = Monitor("s1",args.p)
-	monitor_2 = Monitor("s2",args.p)
-	monitor_3 = Monitor("s3",args.p)
-	monitor_4 = Monitor("s4",args.p)
-	monitor_5 = Monitor("s5",args.p)
-	monitor_6 = Monitor("s6",args.p)
-	monitor_7 = Monitor("s7",args.p)
-	monitor_8 = Monitor("s8",args.p)
-	monitor_9 = Monitor("s9",args.p)
-	monitor_10 = Monitor("s10",args.p)
+	num_switch = 20
+	monitors = []
 
-	monitor_1.start()
-	monitor_2.start()
-	monitor_3.start()
-	monitor_4.start()
-	monitor_5.start()
-	monitor_6.start()
-	monitor_7.start()
-	monitor_8.start()
-	monitor_9.start()
-	monitor_10.start()
+	for i in range(num_switch):
+		monitors.append(Monitor("s"+str(i+1),args.p))
 
-	monitor_1.join()
-	monitor_2.join()
-	monitor_3.join()
-	monitor_4.join()
-	monitor_5.join()
-	monitor_6.join()
-	monitor_7.join()
-	monitor_8.join()
-	monitor_9.join()
-	monitor_10.join()
+	for i in range(num_switch):
+		monitors[i].start()
+
+	for i in range(num_switch):
+		monitors[i].join()

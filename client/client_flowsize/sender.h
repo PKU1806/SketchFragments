@@ -54,7 +54,8 @@ struct Sender : Host {
 				exit(1);
 			}
 
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			// change to 0.1s
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		}
 	}
 

@@ -1,4 +1,5 @@
 import nnpy
+import time
 import struct
 from p4utils.utils.topology import Topology
 from p4utils.utils.sswitch_API import SimpleSwitchAPI
@@ -149,20 +150,21 @@ class packetReceicer(threading.Thread):
 
         
         logs.write('{"switch name":"'+self.sw_name+'",')
-        logs.write('"packet number":"'+str(self.counter-1)+'","packet_info:{')
+        logs.write('"packet number":"'+str(self.counter-1)+'","packet_info":{')
         logs.write('"srcAddr":"'+str(srcAddr)+'",')
-        logs.write('"dsrAddr":"'+str(dstAddr)+'",')
+        logs.write('"dstAddr":"'+str(dstAddr)+'",')
         logs.write('"protocol":"'+str(cpu.protocol)+'",')
         logs.write('"srcPort":"'+str(cpu.srcPort)+'",')
         logs.write('"dstPort":"'+str(cpu.dstPort)+'",')
         logs.write('"delay ":"'+delay+'",')
         logs.write('"interval":"'+interval)
+        logs.write('"timestamp":'+str(time.time()))
         if type==0:
             logs.write('",'+'"using sketch":"'+str(sketch_fg)+'",')
-            logs.write('"bring SFH":"'+str(bool(has_SFH)))
+            logs.write('"bring SFH":'+str(bool(has_SFH)))
         else :
             logs.write('",'+'"using sketch":"'+str(sketch_fg)+'",')
-            logs.write('"bring MIH":"'+str(bool(has_SFH)))
+            logs.write('"bring MIH":'+str(bool(has_SFH)))
         logs.write(" }}\n")
         logs.close()
 
@@ -191,39 +193,20 @@ if __name__ == "__main__":
     parser.add_argument("p",help="the program to be run",choices=["f","i"])
     args=parser.parse_args()
     
-    if args.switch==None:
-        controller1= packetReceicer("s1",args.p)
-        controller2= packetReceicer("s2",args.p)
-        controller3= packetReceicer("s3",args.p)
-        controller4= packetReceicer("s4",args.p)
-        controller5= packetReceicer("s5",args.p)
-        controller6= packetReceicer("s6",args.p)
-        controller7= packetReceicer("s7",args.p)
-        controller8= packetReceicer("s8",args.p)
-        controller9= packetReceicer("s9",args.p)
-        controller10= packetReceicer("s10",args.p)
+    controllers = []
 
-        controller1.start()
-        controller2.start()
-        controller3.start()
-        controller4.start()
-        controller5.start()
-        controller6.start()
-        controller7.start()
-        controller8.start()
-        controller9.start()
-        controller10.start()
+    if args.switch==None:
+        num_switch = 20
+
+        for i in range(num_switch):
+            controllers.append(packetReceicer("s"+str(i+1),args.p))
+
+        for i in range(num_switch):
+            controllers[i].start()
         
-        controller1.join()
-        controller2.join()
-        controller3.join()
-        controller4.join()
-        controller5.join()
-        controller6.join()
-        controller7.join()
-        controller8.join()
-        controller9.join()
-        controller10.join()
+        for i in range(num_switch):
+            controllers[i].join()
+
     else:
         sw_name = args.switch
-        controller1= packetReceicer(sw_name,args.p).run_cpu_port_loop()
+        controllers.append(packetReceicer(sw_name,args.p).run_cpu_port_loop())
