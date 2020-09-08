@@ -38,16 +38,20 @@ public:
     BOBHash32 *bobhash;
     
     row(double ts, unsigned seed){
-        bucket = new buck*[Buck_Num_PerRow];
+        cout << "row" << endl;
+        cout << Buck_Num_PerRow << endl;
+        bucket = new buck*[(unsigned)Buck_Num_PerRow];
+        cout << Buck_Num_PerRow << endl;
         rep2(i, 0, Buck_Num_PerRow){
             bucket[i] = new buck(ts);
         }
         bobhash = new BOBHash32((unsigned)seed);
+        cout << "row end" << endl;
     }
     ~row(){
         rep2(i, 0, Buck_Num_PerRow) if(bucket[i]) delete bucket[i];
         if(bobhash) delete bobhash;
-        delete bucket;
+        if(bucket) delete bucket;
     }
     
     int get_hash(const flow_t flow){
@@ -68,10 +72,12 @@ class interval_Sketch{
 public:
     row **Row;
     interval_Sketch(double ts = 0.0){
+        cout << "inter" << endl;
         Row = new row*[Row_Num];
         rep2(i, 0, Row_Num){
             Row[i] = new row(ts,(unsigned)(i+rand())%25);
         }
+        cout << "inter end" << endl;
     }
     ~interval_Sketch(){
         rep2(i, 0, Row_Num) if(Row[i]) delete Row[i];
