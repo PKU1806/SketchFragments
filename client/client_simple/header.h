@@ -33,6 +33,7 @@ struct FLAG_Header
 
 struct LOAD_Header
 {
+	uint16_t packet_id;
     uint8_t load[1400];
 };
 

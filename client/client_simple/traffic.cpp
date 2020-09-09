@@ -29,12 +29,14 @@ using namespace std;
 
 map<string, string> hostPID, hostIP;
 map<string, thread*> hostThread;
+map<string, mutex*> hostMutex;
 
 vector<thread*> connThread;
 
 void ThreadSend(string sname, string rname, int maxp) {
 	Simulator::Sender sender(hostIP[sname], hostIP[rname], 50806, hostPID[sname]);
 
+	sender.set_mutex(hostMutex[sname]);
 	sender.send(maxp);
 }
 
@@ -57,6 +59,7 @@ void EndhostLoader() {
 		hostPID[rname] = pid;
 		hostIP[rname] = ip;
 		hostThread[rname] = new thread(ThreadRecv, rname);
+		hostMutex[rname] = new mutex;
 	}
 }
 
@@ -81,7 +84,7 @@ void TrafficLoader() {
 int main(int argc, char **argv) {
 	EndhostLoader();
 
-	// TrafficLoader();
+	TrafficLoader();
 
 	std::this_thread::sleep_for(std::chrono::seconds(3600));
 
