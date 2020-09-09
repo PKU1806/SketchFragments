@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 
 host_num=16
 

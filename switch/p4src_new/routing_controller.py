@@ -15,34 +15,25 @@ TIME_INTERVAL = 1000
 
 class RoutingController(object):
 
-    def __init__(self,program):
-        if program=="f":
-            self.topo = Topology(db="../p4src_flowsize/topology.db")  #set the topology
-        elif program=="i":
-            self.topo = Topology(db="../p4src_interval/topology.db")  #set the topology
+    def __init__(self):
+        self.topo = Topology(db="./topology.db")  #set the topology
         self.controllers = {}                   #the switches
         self.custom_calcs={}
         self.register_num={}
         self.registers={}
-        self.init(program)
+        self.init()
 
         
 
-    def init(self,program):
+    def init(self):
         self.connect_to_switches()              
         self.reset_states()
         self.set_table_defaults()
-
-        
         self.set_custom_calcs()
         self.reset_all_registers()
 
-        if program == 'f':
-            self.set_table_init_for_flowsize()
-        elif program =="i":
-            self.set_table_init_for_interval()
         self.set_crc_custom_hashes()
-        #self.create_hashes()
+
     
     
 
@@ -69,35 +60,6 @@ class RoutingController(object):
             for register in controller.get_register_arrays():
                 controller.register_reset(register)
 
-    def set_table_init_for_flowsize(self):
-        for controller in self.controllers.values():
-            controller.table_add("update_sketch","update_sketch0",[str(0)],[])
-            controller.table_add("update_sketch","update_sketch1",[str(1)],[])
-            controller.table_add("update_SFH","update_using_sketch0",[str(1)],[])
-            controller.table_add("update_SFH","update_using_sketch1",[str(0)],[])
-            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*0)+"->"+str(TIME_INTERVAL*1-1)],[str(0)],0)
-            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*1)+"->"+str(TIME_INTERVAL*2-1)],[str(1)],1)
-            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*2)+"->"+str(TIME_INTERVAL*3-1)],[str(2)],2)
-            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*3)+"->"+str(TIME_INTERVAL*4-1)],[str(3)],3)
-            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*4)+"->"+str(TIME_INTERVAL*5-1)],[str(4)],4)
-            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*5)+"->"+str(TIME_INTERVAL*6-1)],[str(5)],5)
-            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*6)+"->"+str(TIME_INTERVAL*7-1)],[str(6)],6)
-            # controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*7)+"->"+str(TIME_INTERVAL*8)],[str(7)],7)
-            # controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*8)+"->"+str(TIME_INTERVAL*9)],[str(8)],8)
-            controller.table_add("get_delay_lev","_get_delay_lev",[str(TIME_INTERVAL*7)+"->"+str(TIME_INTERVAL*1000)],[str(7)],7)
-            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*0)+"->"+str(BUCKET_NUM*1-1)],[str(0)],0)
-            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*1)+"->"+str(BUCKET_NUM*2-1)],[str(1)],1)
-            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*2)+"->"+str(BUCKET_NUM*3)],[str(2)],2)
-        
-    def set_table_init_for_interval(self):
-        for controller in self.controllers.values():
-            controller.table_add("update_interval","update_interval_using_sketch0",[str(0)],[])
-            controller.table_add("update_interval","update_interval_using_sketch1",[str(1)],[])
-            controller.table_add("update_MIH","update_MIH_using_sketch0",[str(1)],[])
-            controller.table_add("update_MIH","update_MIH_using_sketch1",[str(0)],[])
-            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*0)+"->"+str(BUCKET_NUM*1-1)],[str(0)],0)
-            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*1)+"->"+str(BUCKET_NUM*2-1)],[str(1)],1)
-            controller.table_add("choose_fragment","_choose_fragment",[str(BUCKET_NUM*2)+"->"+str(BUCKET_NUM*3-1)],[str(2)],2)
  
 
     def set_crc_custom_hashes(self):
@@ -107,18 +69,14 @@ class RoutingController(object):
                 self.controllers[sw_name].set_crc32_parameters(custom_crc32, crc32_polinomials[i], 0xffffffff, 0xffffffff, True, True)
                 i+=1
 
-    def create_hashes(self):
-        self.hashes = []
-        for i in range(self.register_num):
-            self.hashes.append(Crc(32, crc32_polinomials[i], True, 0xffffffff, True, 0xffffffff))
-
+   
     
 
 
     def route(self):
 
         switch_ecmp_groups = {sw_name:{} for sw_name in self.topo.get_p4switches().keys()}
-        self.topo.network_graph.remove_node("sw-cpu")
+        # self.topo.network_graph.remove_node("sw-cpu")
 
         for sw_name, controllers in self.controllers.items():
             for sw_dst in self.topo.get_p4switches():
@@ -191,11 +149,11 @@ class RoutingController(object):
     def main(self):
         self.route()
 
-        for switch_id, controller in enumerate(self.controllers.values()):
-            controller.register_write("switch_id", 0, switch_id)
-            controller.register_write("swap_control", 0, 0)
-            controller.register_write("sketch_fg", 0, 0)
-            controller.register_write("previous_ingress_timestamp", 0, 0)
+        # for switch_id, controller in enumerate(self.controllers.values()):
+            # controller.register_write("switch_id", 0, switch_id)
+            # controller.register_write("swap_control", 0, 0)
+            # controller.register_write("sketch_fg", 0, 0)
+            # controller.register_write("previous_ingress_timestamp", 0, 0)
 
         for switch_id, switch_name in enumerate(self.controllers.keys()):
             print "{} {}".format(switch_id, switch_name)
@@ -203,7 +161,4 @@ class RoutingController(object):
 
 
 if __name__ == "__main__":
-    parser=argparse.ArgumentParser()
-    parser.add_argument("p",help="the program to be run",choices=["f","i"])
-    args=parser.parse_args()
-    controllers = RoutingController(args.p).main()
+    controllers = RoutingController().main()

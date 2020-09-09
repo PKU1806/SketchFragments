@@ -8,6 +8,9 @@ import sys
 import threading
 import argparse
 
+class FLAG(Packet):
+	name = 'flag'
+	fields_desc = [BitField('ingress_timestamp',0,48),BitField('egress_timestamp',0,48)]
 
 
 class packetReceiver():
@@ -15,7 +18,7 @@ class packetReceiver():
 	def __init__(self, sw_name, iface_name, logf):
 		self.sw_name = str(sw_name)
 		self.iface_name = str(iface_name)
-		self.topo = Topology(db="../p4src_flowsize/topology.db")
+		self.topo = Topology(db="./topology.db")
 		self.logf = logf
 
 		self.thrift_port = self.topo.get_thrift_port(sw_name)
@@ -33,18 +36,13 @@ class packetReceiver():
 		udp=pkt.getlayer(UDP)
 		icmp=pkt.getlayer(ICMP)
 		if(ip!=None and udp!=None):
-			print("get\n")
-			#ls(ip)
 			self.gen_per_packet_log(ip,udp)
 		else:
 			pass
 	def gen_per_packet_log(self,ip,udp):
 		
 		logs=open(self.logf,"a")
-		change=lambda x: '.'.join([str(x/(256**i)%256) for i in range(3,-1,-1)])
 		
-		# srcAddr=change(ip.src)
-		# dstAddr=change(ip.dst)
 		
 		logs.write('{"switch name":"'+self.sw_name+'",')
 		logs.write('"packet number":"'+str(self.counter-1)+'","packet_info":{')
@@ -52,7 +50,12 @@ class packetReceiver():
 		logs.write('"dstAddr":"'+str(ip.dst)+'",')
 		logs.write('"protocol":"'+str(ip.proto)+'",')
 		logs.write('"srcPort":"'+str(udp.sport)+'",')
-		logs.write('"dstPort":"'+str(udp.dport)+'",')
+		logs.write('"dstPort":"'+str(udp.dport))
+		flag=FLAG(str(udp.payload))
+		if flag!=None:
+			logs.write(',"ingress timestamp":"'+str(flag.ingress_timestamp)+'",')
+			logs.write('"egress timestamp":"'+str(flag.egress_timestamp))
+			
 		logs.write(" }}\n")
 		logs.close()
 
