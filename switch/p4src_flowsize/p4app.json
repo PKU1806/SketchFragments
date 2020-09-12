@@ -30,336 +30,432 @@
                 "s1",
                 "s5",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s1",
                 "s7",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s1",
                 "s9",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s1",
                 "s11",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s2",
                 "s5",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s2",
                 "s7",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s2",
                 "s9",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s2",
                 "s11",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s3",
                 "s6",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s3",
                 "s8",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s3",
                 "s10",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s3",
                 "s12",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s4",
                 "s6",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s4",
                 "s8",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s4",
                 "s10",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s4",
                 "s12",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s5",
                 "s13",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s5",
                 "s14",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s6",
                 "s13",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s6",
                 "s14",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s7",
                 "s15",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s7",
                 "s16",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s8",
                 "s15",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s8",
                 "s16",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s9",
                 "s17",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s9",
                 "s18",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s10",
                 "s17",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s10",
                 "s18",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s11",
                 "s19",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s11",
                 "s20",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s12",
                 "s19",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s12",
                 "s20",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s13",
                 "h1",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s13",
                 "h2",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s14",
                 "h3",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s14",
                 "h4",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s15",
                 "h5",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s15",
                 "h6",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s16",
                 "h7",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s16",
                 "h8",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s17",
                 "h9",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s17",
                 "h10",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s18",
                 "h11",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s18",
                 "h12",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s19",
                 "h13",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s19",
                 "h14",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s20",
                 "h15",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ],
             [
                 "s20",
                 "h16",
                 {
-                    "bw": 1
+                    "bw": 1,
+                    "queue_length": 1000000,
+                    "delay": "200ms"
                 }
             ]
         ],

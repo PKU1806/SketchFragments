@@ -26,6 +26,9 @@ struct Receiver : Host {
 			exit(1);
 		}
 
+		int nRecvBuf = 128 * 1024 * 1024;
+		setsockopt(sock_fd, SOL_SOCKET, SO_RCVBUF, (const char*) &nRecvBuf, sizeof(int));
+
 		recv_ip = rip;
 		recv_port = port;
 
@@ -58,7 +61,14 @@ struct Receiver : Host {
 			// printf("send ip: %s, send port: %d.\n",
 			// 	   	inet_ntoa(addr_send.sin_addr), addr_send.sin_port);
 
-			printf("recv (%6d) : %s.\n", recvp, recv_ip.c_str());
+			if (com_header.flag_header.exists_fg) {
+				printf("recv (%6d, %6d) : %s.\n", recvp, 
+						com_header.load_header.packet_id, recv_ip.c_str());
+			}
+			else {
+				printf("recv (%6d, %6d) : %s.\n", recvp, 
+						com_header.sfh.switch_id, recv_ip.c_str());
+			}
 
 			if (recv_num < 0) {
 				perror("recvfrom error.");
