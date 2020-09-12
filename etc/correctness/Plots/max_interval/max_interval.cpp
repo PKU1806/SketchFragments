@@ -129,7 +129,7 @@ double calcu(ofstream &stlog){
 
 void ave(ofstream & stlog){
     double arecnt = 0;
-    int avetimes = 10;
+    int avetimes = 100;
     rep2(i, 0, (unsigned)avetimes){
         arecnt += calcu(stlog);
     }
@@ -139,9 +139,9 @@ void ave(ofstream & stlog){
 }
 
 int main(){
-    ofstream stlog("./row2_basicbucknum262144_maxinterval_topk.csv", std::ios::out | std::ios::trunc);
+    ofstream stlog("./row4_basicbucknum262144_maxinterval_topk.csv", std::ios::out | std::ios::trunc);
     double basic_buck_num = 65536*4;
-    Row_Num = 2;
+    Row_Num = 4;
     stlog << "top-k, ARE" << endl;
     topkthres = 10;
     while(topkthres <= 50000){
