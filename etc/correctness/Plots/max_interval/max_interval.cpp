@@ -28,7 +28,7 @@ int print_uint128(__uint128_t n) {
   return printf("%s", s);
 }
 
-int calcu(ofstream &stlog){
+double calcu(ofstream &stlog){
     srand(time(0));
     //interval_Sketch* sketch_old;
     MinMaxSketch* sketch;
@@ -114,28 +114,39 @@ int calcu(ofstream &stlog){
     
     are /= (topk);
     //are_old /= (topk);
-    cout << "flow number is " << flowmap.size() << endl;
-    cout << "bucket number per row is " << Buck_Num_PerRow << endl;
-    cout << "row number is " << Row_Num << endl;
-    cout << "are is     " << are << endl;
+    //cout << "flow number is " << flowmap.size() << endl;
+    //cout << "bucket number per row is " << Buck_Num_PerRow << endl;
+    //cout << "row number is " << Row_Num << endl;
+    //cout << "are is     " << are << endl;
     //cout << "are_old is " << are_old << endl;
-    cout << GTMAX << endl;
-    stlog << topkthres << ',' << are << endl;
+    //cout << GTMAX << endl;
+    //stlog << topkthres << ',' << are << endl;
     //if(sketch_old) delete sketch_old;
     if(sketch) delete sketch;
     if(delay_hash) delete delay_hash;
-    return 0;
+    return are;
+}
+
+void ave(ofstream & stlog){
+    double arecnt = 0;
+    int avetimes = 10;
+    rep2(i, 0, (unsigned)avetimes){
+        arecnt += calcu(stlog);
+    }
+    arecnt /= (double) avetimes;
+    stlog << topkthres << ',' << arecnt;
+    return;
 }
 
 int main(){
-    ofstream stlog("./row2_maxinterval_topk.csv", std::ios::out | std::ios::trunc);
-    double basic_buck_num = 65536;
+    ofstream stlog("./row2_basicbucknum262144_maxinterval_topk.csv", std::ios::out | std::ios::trunc);
+    double basic_buck_num = 65536*4;
     Row_Num = 2;
     stlog << "top-k, ARE" << endl;
     topkthres = 10;
     while(topkthres <= 50000){
         Buck_Num_PerRow = (int)((double)basic_buck_num*3/(double)Row_Num);
-        calcu(stlog);
+        ave(stlog);
         if(topkthres <= 100) topkthres += 10;
         else if(topkthres <= 1000) topkthres += 100;
         else if(topkthres <= 10000) topkthres += 1000;
