@@ -1,7 +1,7 @@
 #ifndef SKETCH
 #define SKETCH
 #include"param.h"
-
+#include "EMFSD.h"
 int get_delay_lev(unsigned delay){
     rep2(i, 0, Lev_Num-1){
         if(delay < delayLevThres[i]) return i;
@@ -23,6 +23,11 @@ public:
     unsigned query(unsigned delay){
         int lev = get_delay_lev(delay);
         return Bin[lev];
+    }
+    unsigned query_all(){
+        int cnt = 0;
+        rep2(i, 0, Lev_Num) cnt += Bin[i];
+        return cnt;
     }
     ~buck(){
         if(Bin)delete[] Bin;
@@ -65,6 +70,9 @@ public:
         //cout << "pos " << pos << endl;
         if(mask[pos])return (int)bucket[pos]->query(delay);
         else return -1; 
+    }
+    int query_all(const unsigned pos){
+        return (int)bucket[pos]->query_all();
     }
 };
 
@@ -121,6 +129,42 @@ public:
         }
         if(flag) return Min;
         else return -1;
+    }
+    int get_cardinality(){
+        double zero_cnt = 0;
+        rep2(i, 0, Buck_Num_PerRow){
+            if(Row[0]->query_all((unsigned)i) == 0) zero_cnt += 1;
+        }
+        return (int)((double)Buck_Num_PerRow * log(Buck_Num_PerRow/(double)zero_cnt));
+    }
+    void get_distribution(vector<double> &dist, vector<double> &mice_dist){
+        
+        int Maxrec = 0;
+        uint32_t temp[Buck_Num_PerRow];
+        rep2(i, 0, Buck_Num_PerRow){
+            if(Row[0]->query_all((unsigned)i) > Maxrec) Maxrec = Row[0]->query_all((unsigned)i);
+            temp[i] = Row[0]->query_all((unsigned)i);
+        }
+        mice_dist.resize(Maxrec + 1);
+        rep2(i, 0, Buck_Num_PerRow){
+            int flowsizetmp = Row[0]->query_all((unsigned)i);
+            mice_dist[flowsizetmp]++;
+        }
+    
+        EMFSD *em_fsd_algo = new EMFSD();
+        em_fsd_algo->set_counters(Buck_Num_PerRow, temp);
+        rep2(i, 0, 10){
+            cout << "epoch " << i << endl;
+            em_fsd_algo->next_epoch();
+        }
+        dist = em_fsd_algo->ns;
+    }
+    void get_entropy(int &tot, double &entr, vector<double> &mice_dist)
+    {
+        for (int i = 1; i < mice_dist.size(); i++){
+            tot += mice_dist[i] * i;
+            entr += mice_dist[i] * i * log2(i);
+		}
     }
 };
 

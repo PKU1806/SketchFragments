@@ -134,13 +134,13 @@ void ave(ofstream & stlog){
         arecnt += calcu(stlog);
     }
     arecnt /= (double) avetimes;
-    stlog << topkthres << ',' << arecnt;
+    stlog << topkthres << ',' << arecnt << endl;
     return;
 }
 
 int main(){
     ofstream stlog("./row4_basicbucknum262144_maxinterval_topk.csv", std::ios::out | std::ios::trunc);
-    double basic_buck_num = 65536*4;
+    double basic_buck_num = 65536*2*2;
     Row_Num = 4;
     stlog << "top-k, ARE" << endl;
     topkthres = 10;

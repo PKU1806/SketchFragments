@@ -33,7 +33,7 @@ double collect_rate = 1.0;
 
 
 #ifdef znq
-#define datapath "/mnt/e/Research/2020SketchFragments/130000.dat"
+#define datapath "/Users/Naiqian/Research/2020SketchFragments/130000.dat"
 #endif
 #ifdef lab
 #define datapath "/usr/share/dataset/CAIDA2018/dataset/130000.dat"
