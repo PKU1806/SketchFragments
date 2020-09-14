@@ -105,9 +105,7 @@ private:
     };
 
     static constexpr int factorial(int n) {
-        if (n == 0 || n == 1)
-            return 1;
-        return factorial(n - 1) * n;
+        return (n == 0 || n == 1) ? 1:(factorial(n - 1) * n);
     }
 
     double get_p_from_beta(BetaGenerator & bt, double lambda, vector<double> & now_dist, double now_n)
