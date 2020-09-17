@@ -40,7 +40,7 @@ CMSketch::init()
 
 	for (int i = 0; i < num_hash; ++i)
 	{
-		hash[i].initialize(i + 1); //rand() % MAX_PRIME32);
+		hash[i].initialize(rand() % MAX_PRIME32);
 	}
 }
 
@@ -51,20 +51,14 @@ CMSketch::status()
 }
 
 void
-CMSketch::insert(int v)
+CMSketch::insert(int x, int v)
 {
 	int i = 0, base = 0;
 
 	for (i = 0, base = 0; i < num_hash; ++i, base += row_size)
 	{
-		int pos = hash[i].run((char*)&v, sizeof(int)) % row_size + base;
-		cnt[pos]++;
-	}
-
-	int est = query_freq(v);
-	if (est > 100)
-	{
-		hp.insert(v, est);
+		int pos = hash[i].run((char*)&x, sizeof(int)) % row_size + base;
+		cnt[pos] += v;
 	}
 }
 

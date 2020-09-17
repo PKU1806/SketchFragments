@@ -7,6 +7,7 @@ using std::vector;
 using std::pair;
 
 typedef pair<int, int> PII;
+typedef long long LL;
 #define mp std::make_pair
 #define ft first
 #define sc second
@@ -21,7 +22,12 @@ public:
 		std::cout << "No init function." << std::endl;
 	}
 
-	virtual void insert(int x)
+	virtual void insert(int x, int v)
+	{
+		std::cout << "No insert function." << std::endl;
+	}
+
+	virtual void insert_interval(int x, LL now)
 	{
 		std::cout << "No insert function." << std::endl;
 	}
@@ -32,6 +38,11 @@ public:
 	}
 
 	virtual bool query_exist(int x)
+	{
+		std::cout << "No query function." << std::endl;
+	}
+
+	virtual int query_max(int x)
 	{
 		std::cout << "No query function." << std::endl;
 	}

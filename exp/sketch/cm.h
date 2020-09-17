@@ -19,7 +19,7 @@ public:
 	CMSketch(int size, int num_hash);
 	~CMSketch();
 	void init();
-	void insert(int v);
+	void insert(int x, int v);
 	int query_freq(int v);
 	vector<PII> query_heavyhitter(int threshold);
 	vector<PII> query_topk(int k);

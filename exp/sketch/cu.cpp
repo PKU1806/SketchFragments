@@ -39,7 +39,7 @@ CUSketch::init()
 
 	for (int i = 0; i < num_hash; ++i)
 	{
-		hash[i].initialize(i + 1); //rand() % MAX_PRIME32);
+		hash[i].initialize(rand() % MAX_PRIME32);
 	}
 }
 
@@ -50,26 +50,42 @@ CUSketch::status()
 }
 
 void
-CUSketch::insert(int v)
+CUSketch::insert(int x, int v)
 {
-	int minp = INT_MAX;
-	int i = 0, base = 0;
-	int sav_pos[10];
-
-	for (i = 0, base = 0; i < num_hash; ++i, base += row_size)
+	while (v)
 	{
-		int pos = hash[i].run((char*)&v, sizeof(int)) % row_size + base;
-		sav_pos[i] = pos;
-		minp = min(minp, cnt[pos]);
+		int minus = v;
+
+		int minp = INT_MAX, secp = INT_MAX;
+		int i = 0, base = 0;
+		int sav_pos[10];
+
+		for (i = 0, base = 0; i < num_hash; ++i, base += row_size)
+		{
+			int pos = hash[i].run((char*)&x, sizeof(int)) % row_size + base;
+			sav_pos[i] = pos;
+			minp = min(minp, cnt[pos]);
+		}
+
+		for (i = 0; i < num_hash; ++i)
+		{
+			int pos = sav_pos[i];
+			if (cnt[pos] != minp)
+				secp = min(secp, cnt[pos]);
+		}
+
+		minus = min(minus, secp - minp);
+
+		for (i = 0, base = 0; i < num_hash; ++i, base += row_size)
+		{
+			int pos = sav_pos[i];
+			// int pos = hash[i].run((char*)&v, sizeof(int)) % row_size + base;
+			if (cnt[pos] == minp)
+				cnt[pos] += minus;
+		}
+
+		v -= minus;
 	}
-
-	for (i = 0, base = 0; i < num_hash; ++i, base += row_size)
-	{
-		int pos = sav_pos[i];
-		// int pos = hash[i].run((char*)&v, sizeof(int)) % row_size + base;
-		if (cnt[pos] == minp)
-			cnt[pos]++;
-	}	
 }
 
 int

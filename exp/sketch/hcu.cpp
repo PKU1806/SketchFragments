@@ -16,6 +16,7 @@ size(size), num_hash(num_hash)
 	}
 	cnt = new int[size];
 	fp = new int[size];
+	prev = new LL[size];
 	hash = new BOBHash32[num_hash];
 
 	row_size = size / num_hash;
@@ -27,6 +28,8 @@ HCUSketch::~HCUSketch()
 		delete [] cnt;
 	if (fp)
 		delete [] fp;
+	if (prev)
+		delete [] prev;
 	if (hash)
 		delete [] hash;
 }
@@ -36,10 +39,11 @@ HCUSketch::init()
 {
 	memset(cnt, 0, size * sizeof(int));
 	memset(fp, 0, size * sizeof(int));
+	memset(prev, 0, size * sizeof(LL));
 
 	for (int i = 0; i < num_hash; ++i)
 	{
-		hash[i].initialize(i + 1); //rand() % MAX_PRIME32);
+		hash[i].initialize(rand() % MAX_PRIME32);
 	}
 }
 
@@ -50,20 +54,67 @@ HCUSketch::status()
 }
 
 void
-HCUSketch::insert(int v)
+HCUSketch::insert(int x, int v)
 {
-	int minp = INT_MAX;
+	while (v)
+	{
+		int minus = v;
+
+		int minp = INT_MAX, secp = INT_MAX;
+		int i = 0, base = 0;
+		int sav_pos[10];
+
+		for (i = 0, base = 0; i < num_hash; ++i, base += row_size)
+		{
+			int pos = hash[i].run((char*)&x, sizeof(int)) % row_size + base;
+			sav_pos[i] = pos;
+			if (minp >= cnt[pos])
+			{
+				minp = cnt[pos];
+			}
+			else
+			{
+				secp = min(secp, cnt[pos]);
+				minus = min(minus, secp - minp);
+			}
+		}
+
+		minp = INT_MAX;
+		for (i = 0; i < num_hash; ++i)
+		{
+			int pos = sav_pos[i];
+			minp = min(minp, cnt[pos]);
+			if (cnt[pos] == minp)
+				cnt[pos] += minus;
+		}
+
+		v -= minus;
+	}
+}
+
+void
+HCUSketch::insert_interval(int v, LL now)
+{
 	int i = 0, base = 0;
 
 	for (i = 0, base = 0; i < num_hash; ++i, base += row_size)
 	{
 		int pos = hash[i].run((char*)&v, sizeof(int)) % row_size + base;
-		if (cnt[pos] <= minp)
+		if (prev[pos] != 0 && now - prev[pos] < 10000000)
 		{
-			minp = cnt[pos];
-			cnt[pos]++;
+			LL interval = (now - prev[pos]) / 10;
+			if (interval > INT_MAX)
+			{
+				printf("help!\n");
+			}
+			cnt[pos] = max(cnt[pos], int(interval));
+			// printf("in! %d(%lld %lld)  ", cnt[pos], prev[pos], now);
 		}
-	}	
+		if(now == 0)
+			printf("!!!!!!!!!!!!!\n");
+		prev[pos] = now;
+	}
+	// printf("\n");
 }
 
 int

@@ -16,7 +16,7 @@ public:
 	CUSketch(int size, int num_hash);
 	~CUSketch();
 	void init();
-	void insert(int v);
+	void insert(int x, int v);
 	int query_freq(int v);
 	void status();
 	CUSketch* merge(CUSketch *q);
