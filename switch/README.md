@@ -1,39 +1,31 @@
-/*
- * @Author: Leo Appleby 
- * @Date: 2020-08-01 16:36:28 
- * @Last Modified by: Leo Appleby
- * @Last Modified time: 2020-08-08 20:57:04
- */
-
-# 文件/文件夹介绍
+#  description to files and folders
 folder：
-1. include：部份p4的源代码，包括header和parser
+1. include:some p4 codes，including header and parser
    1. header.p4
    2. parser.p4
-2. p4src_flowsize:用于flowsize实验的代码
-   1. ecmp.p4:p4源代码
-   2. p4app.json:p4配置文件
-   3. log文件夹:mininet自动生成
-   4. pcap文件夹:mininet自动生成
-   5. ecmp.json:mininet自动生成
-   6. ecmp.p4i:mininet自动生成
-   7. topology.db:mininet自动生成
-3. p4src_interval:用于包间隔实验的代码(介绍同上)
-4. scripts：各类python脚本
-   1. error.py：生成loop，blackhole或者重置路由表
-   2. log_generator.py：生成switch上的log
-   3. monitor.py：用于进行sketch的切换
-   4. routing-controller.py：基本的路由表配置，寄存器配置，hash函数配置等
-   5. simple_receiver.py：简单的收包脚本，可简单解析包
-   6. simple_sender.py：简单的发包脚本，支持三种协议
-   7. visor.py：打印所有的sketch内部的信息
-   
-5. switch_log:运行时使用脚本会生成，记录了switch上的信息
+2. p4src_flowsize:codes for flowsize simulation
+   1. ecmp.p4:p4 source code
+   2. p4app.json:p4 configuration code
+   3. log folder:mininet automatically generated
+   4. pcap folder:mininet automatically generated
+   5. ecmp.json:mininet automatically generated
+   6. ecmp.p4i:mininet automatically generated
+   7. topology.db:mininet automatically generated
+3. p4src_interval:codes for interval simulation
+4. scripts：python scripts
+   1. error.py：generate loop，blackhole or reset the router table
+   2. log_generator.py：generate switch's log
+   3. monitor.py：swap the switch's sketch
+   4. routing-controller.py：basic router configuration,register configuration,hash function configuration.
+   5. simple_receiver.py
+   6. simple_sender.py
+   7. visor.py：print sketches of switch
+5. switch_log
 
 
 
-# 使用方法
-## 基本步骤 
+# usage
+## basic steps 
 1. get into the `../switch/p4src_……` folder
 2. activate tmux and create duplicate windows
 3. window A as the mininet console ,type ` sudo p4run ` to evoke the mininet
@@ -64,6 +56,6 @@ folder：
 
 4. Copy the v1model.p4 to the global path: cp v1model.p4 /usr/local/share/p4c/p4include/. Remember that every time you update p4c this file will be overwritten and the metadata fields might be removed.
 
-5. 启动mininet
-6. 在CLI中输入`p4switch_reboot sw_name --p4src ecmp_priority.p4`
-7. 开始其余正常步骤
+5. start mininet
+6. input in CLI:`p4switch_reboot sw_name --p4src ecmp_priority.p4`
+7. the rest steps
