@@ -36,7 +36,6 @@ unordered_map<string, bool> is_aggregated_switch;
 int server_num = 16;
 int switch_num = 20;
 int random_bound = 10;
-// int sketch_fragment_num = 65536 * 3;
 
 int sketch_fragment_num;
 int bitmap_stage_num;
@@ -236,8 +235,8 @@ int main(int argc, char **argv)
 
     while(aggregated_sketch_num != switch_num){
         if(done_server.size() < server_num - 1 ){
-            int direction_flag = 0; // 0 is up, 1 is down;
-            int fragment_flag = 0; // 0 表示未携带碎片
+            int direction_flag = 0; 
+            int fragment_flag = 0; 
             int fragment_id = 0;
             string fragment_switch_id;
 
@@ -249,7 +248,7 @@ int main(int argc, char **argv)
                 send_server = "h" + to_string(send_server_index);
             }
 
-            int count = 0; //跳数
+            int count = 0; 
             string current_node = send_server;
 
             unordered_map<string, bool> is_pass_node;
@@ -259,10 +258,9 @@ int main(int argc, char **argv)
                 if(direction_flag == 0){
                     string NextNode = next_node(up_link_map, current_node, is_pass_node);
 
-                    //若还未携带碎片
                     if(fragment_flag == 0){
                         int temp = rand() % random_bound;
-                        //以1/random_bound概率携带碎片
+                        
                         if(temp == 0){
                             fragment_switch_id = NextNode;
                             fragment_id = fragmentSelect(fragment_switch_id);
@@ -272,11 +270,11 @@ int main(int argc, char **argv)
                     }
 
                     count++;
-                    //若已经上到最顶层，则下一跳强制向下
+                    
                     if(count >= 3){
                         direction_flag = 1;
                     }else{
-                        //下一跳以50%的概率向下
+                       
                         if(rand() % 10 <= 4){
                             direction_flag = 1;
                         }
@@ -286,12 +284,11 @@ int main(int argc, char **argv)
 
                 }else{
                     string NextNode = next_node(down_link_map, current_node, is_pass_node);
-                    //若还未到达服务器
+                   
                     if(!is_server[NextNode]){
-                        //若还未携带碎片
                         if(fragment_flag == 0){
                             int temp = rand() % random_bound;
-                            //以1/random_bound概率携带碎片
+                            
                             if(temp == 0){
                                 fragment_switch_id = NextNode;
                                 fragment_id = fragmentSelect(fragment_switch_id);
@@ -299,7 +296,7 @@ int main(int argc, char **argv)
                             }
                         }
                     }else{
-                        //若到达的服务器未done掉且携带了碎片，则收集碎片
+                        
                         if(!is_done_server[NextNode] && fragment_flag == 1){
                             aggregator(fragment_switch_id, fragment_id, aggregated_sketch_num);
                         }
