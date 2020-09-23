@@ -26,3 +26,6 @@
 
 包含对于switch log的分析，以及基于log的数据集生成。需要注意client端与switch端对于一个switch的名字表述不同，需要`sw_map`文件做映射。
 
+### sim
+
+直接生成模拟的trace（analysis需要先从mininet获得log才能转成trace），也支持生成analysis可读取的log
