@@ -15,9 +15,10 @@
 /.vscode/
 /.idea/
 /utils/__pycache__
-/etc/correctness/*.out
-/etc/correctness/*.csv
-/etc/correctness/*.xlsx
+/correctness_verification/*.out
+/correctness_verification/*.csv
+/correctness_verification/*.xlsx
+/correctness_verification/*.txt
 
 /client/client_flowsize/host.config
 

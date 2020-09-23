@@ -1,6 +1,0 @@
-flow_size 93703
-#define Lev_Num 8
-#define Buck_Num_PerRow 10000
-#define Row_Num 3
-
-10000*8*3*4/8 = 117.2 kiB
